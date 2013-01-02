@@ -1,21 +1,22 @@
 //
-//  TCCalendarActionDelegate.m
-//  Timecop-iOS
+//  PBActionDelegate.m
+//  PBFoundation
 //
 //  Created by Nick Bolton on 11/26/12.
 //  Copyright (c) 2012 Pixelbleed LLC. All rights reserved.
 //
 
-#import "TCCalendarActionDelegate.h"
+#import "PBActionDelegate.h"
 
-@interface TCCalendarActionDelegate()
+@interface PBActionDelegate()
 
-@property (nonatomic, retain) NSMutableDictionary *targetMap;
-@property (nonatomic, retain) NSMutableDictionary *actionMap;
+@property (nonatomic, strong) NSMutableDictionary *targetMap;
+@property (nonatomic, strong) NSMutableDictionary *actionMap;
+@property (nonatomic, strong) NSMutableDictionary *userContextMap;
 
 @end
 
-@implementation TCCalendarActionDelegate
+@implementation PBActionDelegate
 
 - (id)init {
 
@@ -24,22 +25,22 @@
     if (self != nil) {
         self.targetMap = [NSMutableDictionary dictionary];
         self.actionMap = [NSMutableDictionary dictionary];
+        self.userContextMap = [NSMutableDictionary dictionary];
     }
 
     return self;
 }
 
-- (void)dealloc {
-    [_targetMap release], _targetMap = nil;
-    [_actionMap release], _actionMap = nil;
-    [super dealloc];
-}
-
-
-- (void)addTarget:(id)target action:(SEL)action toButton:(NSInteger)buttonIndex {
+- (void)addTarget:(id)target
+           action:(SEL)action
+      userContext:(id)userContext
+         toButton:(NSInteger)buttonIndex {
     NSValue *selectorAsValue = [NSValue valueWithPointer:action];
     [_targetMap setObject:target forKey:@(buttonIndex)];
     [_actionMap setObject:selectorAsValue forKey:@(buttonIndex)];
+    if (userContext != nil) {
+        [_userContextMap setObject:userContext forKey:@(buttonIndex)];
+    }
 }
 
 - (void)actionSheet:(UIActionSheet *)actionSheet
@@ -51,8 +52,10 @@ didDismissWithButtonIndex:(NSInteger)buttonIndex {
 
         NSValue *selectorValue = [_actionMap objectForKey:@(buttonIndex)];
 
+        id userContext = [_userContextMap objectForKey:@(buttonIndex)];
+
         SEL sel = selectorValue.pointerValue;
-        [target performSelector:sel];
+        [target performSelector:sel withObject:userContext];
     }
 }
 

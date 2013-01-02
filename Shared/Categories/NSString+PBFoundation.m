@@ -7,7 +7,6 @@
 //
 
 #import "NSString+PBFoundation.h"
-#import <Carbon/Carbon.h>
 
 @implementation NSString (PBFoundation)
 
@@ -17,6 +16,19 @@
 #else
     return (__bridge NSString *)CSCopyMachineName();
 #endif
+}
+
++ (NSString *)safeString:(NSString *)value {
+    if (value != nil) {
+        return value;
+    }
+    return @"";
+}
+
+- (NSString *)trimmedValue {
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+
+    return [self stringByTrimmingCharactersInSet:whitespace];
 }
 
 @end

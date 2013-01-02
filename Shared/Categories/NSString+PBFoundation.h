@@ -11,5 +11,7 @@
 @interface NSString (PBFoundation)
 
 + (NSString *)machineName;
++ (NSString *)safeString:(NSString *)value;
+- (NSString *)trimmedValue;
 
 @end

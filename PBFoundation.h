@@ -11,4 +11,14 @@
 
 #import "NSString+PBFoundation.h"
 
+#if TARGET_OS_IPHONE
+#import "PBActionDelegate.h"
+#import "UIAlertView+PBFoundation.h"
+#import "UIColor+PBFoundation.h"
+#import "UIImage+PBFoundation.h"
+#import "UIView+PBFoundation.h"
+#endif
+
+#define PBLoc(key) NSLocalizedString(key, nil)
+
 #endif
