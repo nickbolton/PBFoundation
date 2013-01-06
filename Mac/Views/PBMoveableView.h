@@ -18,6 +18,6 @@
 
 @interface PBMoveableView : NSView
 
-@property (nonatomic, weak) id <PBMoveableViewDelegate> delegate;
+@property (nonatomic, weak) IBOutlet id <PBMoveableViewDelegate> delegate;
 
 @end
