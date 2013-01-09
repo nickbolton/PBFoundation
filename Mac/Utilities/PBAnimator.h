@@ -11,11 +11,11 @@
 
 @interface PBAnimator : NSObject
 
-- (void)animateWithDuration:(NSTimeInterval)duration 
++ (void)animateWithDuration:(NSTimeInterval)duration
              timingFunction:(CAMediaTimingFunction *)timingFunction
                   animation:(void (^)(void))animationBlock;
 
-- (void)animateWithDuration:(NSTimeInterval)duration 
++ (void)animateWithDuration:(NSTimeInterval)duration
              timingFunction:(CAMediaTimingFunction *)timingFunction
                   animation:(void (^)(void))animationBlock
                  completion:(void (^)(void))completionBlock;

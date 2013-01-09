@@ -10,9 +10,57 @@
 #import "PBAnimator.h"
 #import <objc/runtime.h>
 
-static char kPBViewObjectKey;
+#define ARC4RANDOM_MAX      0x100000000
+#define MIN_DIFFERENCE      0.15f
 
 @implementation NSView (PBFoundation)
+
+- (void)DEBUG_colorizeSelfAndSubviews {
+    [self DEBUG_colorizeSelfAndSubviews:0];
+}
+
+- (void)DEBUG_colorizeSelfAndSubviews:(NSInteger)depth {
+
+    static NSArray *initialColors = nil;
+
+    if (initialColors == nil) {
+        initialColors = @[
+        [NSColor redColor],
+        [NSColor yellowColor],
+        [NSColor greenColor],
+        [NSColor blueColor],
+        [NSColor purpleColor],
+        [NSColor orangeColor],
+        [NSColor brownColor],
+        [NSColor blackColor],
+        ];
+    }
+
+    NSArray *subviews = [self subviews];
+
+    NSColor *color;
+
+    if (depth < initialColors.count) {
+        color = [initialColors objectAtIndex:depth];
+    } else {
+        double r = ((double)arc4random() / ARC4RANDOM_MAX);
+        double g = ((double)arc4random() / ARC4RANDOM_MAX);
+        double b = ((double)arc4random() / ARC4RANDOM_MAX);
+        
+        color = [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1.0f];
+    }
+
+    NSTextField *testField = [[NSTextField alloc] initWithFrame:self.bounds];
+    testField.backgroundColor = color;
+    [self addSubview:testField positioned:NSWindowBelow relativeTo:nil];
+
+    for (NSInteger i = 0; i < (NSInteger)[subviews count]; i++) {
+        NSView *subview = [subviews objectAtIndex:i];
+
+        [subview DEBUG_colorizeSelfAndSubviews:depth+1];
+    }
+}
+
 - (void)fadeInView:(NSView *)newView {
 
     [self fadeInView:newView
@@ -27,14 +75,7 @@ static char kPBViewObjectKey;
     newView.alphaValue = 0.0f;
     [newView setHidden:NO];
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    objc_setAssociatedObject(newView,
-                             &kPBViewObjectKey,
-                             animator,
-                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    [animator
+    [PBAnimator
      animateWithDuration:PB_WINDOW_ANIMATION_DURATION
      timingFunction:PB_EASE_IN
      animation:^{
@@ -46,7 +87,7 @@ static char kPBViewObjectKey;
              middleBlock();
          }
 
-         [animator
+         [PBAnimator
           animateWithDuration:PB_WINDOW_ANIMATION_DURATION
           timingFunction:PB_EASE_OUT
           animation:^{
@@ -58,11 +99,6 @@ static char kPBViewObjectKey;
               if (completionBlock != nil) {
                   completionBlock();
               }
-
-              objc_setAssociatedObject(newView,
-                                       &kPBViewObjectKey,
-                                       nil,
-                                       OBJC_ASSOCIATION_RETAIN_NONATOMIC);
           }];
      }];
 }
@@ -72,14 +108,7 @@ static char kPBViewObjectKey;
 timingFunction:(CAMediaTimingFunction *)timingFunction
 completionBlock:(void (^)(void))completionBlock {
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    objc_setAssociatedObject(self,
-                             &kPBViewObjectKey,
-                             animator,
-                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    [animator
+    [PBAnimator
      animateWithDuration:duration
      timingFunction:timingFunction
      animation:^{
@@ -97,12 +126,7 @@ completionBlock:(void (^)(void))completionBlock {
          if (completionBlock != nil) {
              completionBlock();
          }
-         [self setAnimations:nil];
-         
-         objc_setAssociatedObject(self,
-                                  &kPBViewObjectKey,
-                                  nil,
-                                  OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+         [self setAnimations:nil];         
      }];
 }
 
@@ -111,14 +135,7 @@ completionBlock:(void (^)(void))completionBlock {
            timingFunction:(CAMediaTimingFunction *)timingFunction
           completionBlock:(void (^)(void))completionBlock {
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    objc_setAssociatedObject(self,
-                             &kPBViewObjectKey,
-                             animator,
-                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    [animator
+    [PBAnimator
      animateWithDuration:duration
      timingFunction:timingFunction
      animation:^{
@@ -128,10 +145,6 @@ completionBlock:(void (^)(void))completionBlock {
          if (completionBlock != nil) {
              completionBlock();
          }
-         objc_setAssociatedObject(self,
-                                  &kPBViewObjectKey,
-                                  nil,
-                                  OBJC_ASSOCIATION_RETAIN_NONATOMIC);
      }];
 }
 
@@ -139,16 +152,9 @@ completionBlock:(void (^)(void))completionBlock {
        timingFunction:(CAMediaTimingFunction *)timingFunction
       completionBlock:(void (^)(void))completionBlock {
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    objc_setAssociatedObject(self,
-                             &kPBViewObjectKey,
-                             animator,
-                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
     [self setHidden:NO];
 
-    [animator
+    [PBAnimator
      animateWithDuration:duration
      timingFunction:timingFunction
      animation:^{
@@ -158,10 +164,6 @@ completionBlock:(void (^)(void))completionBlock {
          if (completionBlock != nil) {
              completionBlock();
          }
-         objc_setAssociatedObject(self,
-                                  &kPBViewObjectKey,
-                                  nil,
-                                  OBJC_ASSOCIATION_RETAIN_NONATOMIC);
      }];
 }
 
@@ -169,14 +171,7 @@ completionBlock:(void (^)(void))completionBlock {
         timingFunction:(CAMediaTimingFunction *)timingFunction
        completionBlock:(void (^)(void))completionBlock {
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    objc_setAssociatedObject(self,
-                             &kPBViewObjectKey,
-                             animator,
-                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    [animator
+    [PBAnimator
      animateWithDuration:duration
      timingFunction:timingFunction
      animation:^{
@@ -187,10 +182,6 @@ completionBlock:(void (^)(void))completionBlock {
          if (completionBlock != nil) {
              completionBlock();
          }
-         objc_setAssociatedObject(self,
-                                  &kPBViewObjectKey,
-                                  nil,
-                                  OBJC_ASSOCIATION_RETAIN_NONATOMIC);
      }];
 }
 
@@ -198,14 +189,7 @@ completionBlock:(void (^)(void))completionBlock {
              middleBlock:(void (^)(void))middleBlock
          completionBlock:(void (^)(void))completionBlock {
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    objc_setAssociatedObject(self,
-                             &kPBViewObjectKey,
-                             animator,
-                             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    [animator
+    [PBAnimator
      animateWithDuration:duration
      timingFunction:PB_EASE_IN
      animation:^{
@@ -216,7 +200,7 @@ completionBlock:(void (^)(void))completionBlock {
              middleBlock();
          }
 
-         [animator
+         [PBAnimator
           animateWithDuration:duration
           timingFunction:PB_EASE_OUT
           animation:^{
@@ -226,12 +210,7 @@ completionBlock:(void (^)(void))completionBlock {
               if (completionBlock != nil) {
                   completionBlock();
               }
-              objc_setAssociatedObject(self,
-                                       &kPBViewObjectKey,
-                                       nil,
-                                       OBJC_ASSOCIATION_RETAIN_NONATOMIC);
           }];
-
      }];
 }
 
@@ -341,7 +320,7 @@ completionBlock:(void (^)(void))completionBlock {
     }
 }
 
-- (void)findViews:(NSMutableArray **)views OfType:(Class)clazz {
+- (void)findViews:(NSMutableArray **)views ofType:(Class)clazz {
 
     if (*views == NULL) return;
 
@@ -350,8 +329,19 @@ completionBlock:(void (^)(void))completionBlock {
     }
 
     for (NSView *view in self.subviews) {
-        [view findViews:views OfType:clazz];
+        [view findViews:views ofType:clazz];
     }
+}
+
+- (id)findFirstParentOfType:(Class)clazz {
+
+    NSView *parent = self.superview;
+
+    if ([parent isKindOfClass:clazz]) {
+        return parent;
+    }
+
+    return [parent findFirstParentOfType:clazz];
 }
 
 - (CALayer *)layerFromContents {

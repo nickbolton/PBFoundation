@@ -13,6 +13,8 @@ typedef void(^NSViewAnimationCompletionBlock)(id userContext);
 
 @interface NSView (PBFoundation)
 
+- (void)DEBUG_colorizeSelfAndSubviews;
+
 - (void)animateToNewFrame:(NSRect)newFrame
                  duration:(CGFloat)duration
            timingFunction:(CAMediaTimingFunction *)timingFunction
@@ -55,6 +57,7 @@ completionBlock:(void (^)(void))completionBlock;
 - (void)fixHeight:(BOOL)fixed;
 
 - (void)dumpViewHierarchy:(NSUInteger)indentLevel;
-- (void)findViews:(NSMutableArray **)views OfType:(Class)clazz;
+- (void)findViews:(NSMutableArray **)views ofType:(Class)clazz;
+- (id)findFirstParentOfType:(Class)clazz;
 
 @end

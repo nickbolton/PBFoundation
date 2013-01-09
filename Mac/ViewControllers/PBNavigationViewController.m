@@ -9,6 +9,9 @@
 #import "PBNavigationViewController.h"
 #import <QuartzCore/QuartzCore.h>
 
+NSString *kPBNavigationUpdateFrameNotification = @"kPBNavigationUpdateFrameNotification";
+NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContainerNotification";
+
 @interface PBNavigationViewController () {
     BOOL pushing_;
 }
@@ -27,24 +30,50 @@
     return self;
 }
 
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
 - (void)commonInit {
     self.viewControllerStack = [NSMutableArray array];
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+
+    [_navContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
+}
+
+- (void)setTitle:(NSString *)title {
+    _titleField.stringValue = title;
 }
 
 - (NSViewController *)currentViewController {
     return [_viewControllerStack lastObject];
 }
 
-- (BOOL)isViewControllerInNavigationStack:(NSViewController<TCNavigationViewProtocol> *)viewController {
+- (BOOL)isViewControllerInNavigationStack:(NSViewController<PBNavigationViewProtocol> *)viewController {
     return [_viewControllerStack containsObject:viewController];
 }
 
-- (void)pushViewController:(NSViewController<TCNavigationViewProtocol> *)nextViewController
+- (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)nextViewController
                    animate:(BOOL)animate {
+
+    nextViewController.navigationViewController = self;
+    [nextViewController.view setTranslatesAutoresizingMaskIntoConstraints:NO];
+
+    NSRect frame = nextViewController.view.frame;
+    frame.origin.y = 0;
+    frame.size.height = NSHeight(_navContainer.frame);
+    nextViewController.view.frame = frame;
+
+    NSString *title = [nextViewController title];
+
+    _titleField.stringValue = title;
 
     NSViewController *previousViewController = [_viewControllerStack lastObject];
 
@@ -54,9 +83,23 @@
     [_viewControllerStack addObject:nextViewController];
 
     if (_viewControllerStack.count == 1) {
-        [self.view addSubview:nextViewController.view];
-        [nextViewController performIfRespondsToSelector:@selector(viewDidActivate)
-                                             afterDelay:.01f];
+        
+        [_navContainer addSubview:nextViewController.view];
+
+        [PBAnimator
+         animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+         timingFunction:PB_EASE_INOUT
+         animation:^{
+
+             [[NSNotificationCenter defaultCenter]
+              postNotificationName:kPBNavigationUpdateFrameNotification
+              object:self
+              userInfo:nil];
+             
+         } completion:^{
+             [nextViewController performIfRespondsToSelector:@selector(viewDidActivate)];
+         }];
+        
     } else {
 
         NSView *currentView = previousViewController.view;
@@ -66,10 +109,10 @@
 
             pushing_ = YES;
 
-            NSRect newRect = NSMakeRect(self.view.frame.origin.x-currentView.frame.size.width,
-                                        self.view.frame.origin.y,
-                                        self.view.frame.size.width,
-                                        self.view.frame.size.height);
+            NSRect newRect = NSMakeRect(_navContainer.frame.origin.x-currentView.frame.size.width,
+                                        _navContainer.frame.origin.y,
+                                        _navContainer.frame.size.width,
+                                        _navContainer.frame.size.height);
 
             // make sure the current view is aligned on the left side
 
@@ -83,9 +126,9 @@
                                        newView.frame.size.width,
                                        newView.frame.size.height);
 
-            [self.view addSubview:newView];
+            [_navContainer addSubview:newView];
 
-            [self.view
+            [_navContainer
              animateToNewFrame:newRect
              duration:PB_WINDOW_ANIMATION_DURATION
              timingFunction:PB_EASE_INOUT
@@ -93,9 +136,9 @@
 
                  // readjust the container and current view;
 
-                 NSRect frame = self.view.frame;
+                 NSRect frame = _navContainer.frame;
                  frame.origin.x = 0;
-                 self.view.frame = frame;
+                 _navContainer.frame = frame;
 
                  frame = newView.frame;
                  frame.origin.x = 0;
@@ -105,8 +148,21 @@
 
                  [previousController.view removeFromSuperview];
                  //                             [previousController performIfRespondsToSelector:@selector(viewDidDeactivate)];
-                 [self.currentViewController performIfRespondsToSelector:@selector(viewDidActivate)
-                                                              afterDelay:.01f];
+
+                 [PBAnimator
+                  animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+                  timingFunction:PB_EASE_INOUT
+                  animation:^{
+
+                      [[NSNotificationCenter defaultCenter]
+                       postNotificationName:kPBNavigationUpdateFrameNotification
+                       object:self
+                       userInfo:nil];
+
+                  } completion:^{
+                      [self.currentViewController performIfRespondsToSelector:@selector(viewDidActivate)];
+                  }];
+                 
              }];
         } else {
 
@@ -114,10 +170,20 @@
             frame.origin.x = 0;
             newView.frame = frame;
 
-            [self.view replaceSubview:currentView with:newView];
-            //            [previousViewController performIfRespondsToSelector:@selector(viewDidDeactivate)];
-            [nextViewController performIfRespondsToSelector:@selector(viewDidActivate)
-                                                 afterDelay:.01f];
+            [_navContainer replaceSubview:currentView with:newView];
+            [PBAnimator
+             animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+             timingFunction:PB_EASE_INOUT
+             animation:^{
+
+                 [[NSNotificationCenter defaultCenter]
+                  postNotificationName:kPBNavigationUpdateFrameNotification
+                  object:self
+                  userInfo:nil];
+
+             } completion:^{
+                 [nextViewController performIfRespondsToSelector:@selector(viewDidActivate)];
+             }];
         }
     }
 }
@@ -139,10 +205,10 @@
             pushing_ = NO;
 
             // move the parent frame
-            self.view.frame = NSMakeRect(-newView.frame.size.width,
-                                         self.view.frame.origin.y,
-                                         self.view.frame.size.width,
-                                         self.view.frame.size.height);
+            _navContainer.frame = NSMakeRect(-newView.frame.size.width,
+                                         _navContainer.frame.origin.y,
+                                         _navContainer.frame.size.width,
+                                         _navContainer.frame.size.height);
 
             // place the current view
             currentView.frame = NSMakeRect(newView.frame.size.width,
@@ -156,34 +222,56 @@
                                        currentView.frame.size.width,
                                        currentView.frame.size.height);
 
-            [self.view addSubview:newView];
+            [_navContainer addSubview:newView];
 
             NSRect newRect = NSMakeRect(0,
-                                        self.view.frame.origin.y,
-                                        self.view.frame.size.width,
-                                        self.view.frame.size.height);
+                                        _navContainer.frame.origin.y,
+                                        _navContainer.frame.size.width,
+                                        _navContainer.frame.size.height);
 
-            [self.view
+            [_navContainer
              animateToNewFrame:newRect
              duration:PB_WINDOW_ANIMATION_DURATION
              timingFunction:PB_EASE_INOUT
              completionBlock:^{
                  NSViewController *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
                  [self.currentViewController.view removeFromSuperview];
-                 [self.currentViewController performIfRespondsToSelector:@selector(viewDidDeactivate)
-                                                              afterDelay:.01f];
-                 [nextViewController performIfRespondsToSelector:@selector(viewDidAppear)
-                                                      afterDelay:.01f];
-                 [_viewControllerStack removeLastObject];
+
+                 [PBAnimator
+                  animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+                  timingFunction:PB_EASE_INOUT
+                  animation:^{
+
+                      [[NSNotificationCenter defaultCenter]
+                       postNotificationName:kPBNavigationUpdateFrameNotification
+                       object:self
+                       userInfo:nil];
+
+                  } completion:^{
+                      [self.currentViewController performIfRespondsToSelector:@selector(viewDidDeactivate)];
+                      [nextViewController performIfRespondsToSelector:@selector(viewDidAppear)];
+                      [_viewControllerStack removeLastObject];
+                  }];
              }];
 
         } else {
-            [self.view replaceSubview:currentView with:newView];
-            [currentViewController performIfRespondsToSelector:@selector(viewDidDeactivate)
-                                                    afterDelay:.01f];
-            [nextViewController performIfRespondsToSelector:@selector(viewDidAppear)
-                                                 afterDelay:.01f];
-            [_viewControllerStack removeLastObject];
+            [_navContainer replaceSubview:currentView with:newView];
+
+            [PBAnimator
+             animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+             timingFunction:PB_EASE_INOUT
+             animation:^{
+
+                 [[NSNotificationCenter defaultCenter]
+                  postNotificationName:kPBNavigationUpdateFrameNotification
+                  object:self
+                  userInfo:nil];
+
+             } completion:^{
+                 [currentViewController performIfRespondsToSelector:@selector(viewDidDeactivate)];
+                 [nextViewController performIfRespondsToSelector:@selector(viewDidAppear)];
+                 [_viewControllerStack removeLastObject];
+             }];
         }
     }
 }

@@ -8,7 +8,17 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol TCNavigationViewProtocol <NSObject>
+extern NSString *kPBNavigationUpdateFrameNotification;
+extern NSString *kPBNavigationUpdateContainerNotification;
+
+@class PBNavigationViewController;
+
+@protocol PBNavigationViewProtocol <NSObject>
+
+@property (nonatomic, weak) PBNavigationViewController *navigationViewController;
+
+@required
+- (NSString *)title;
 
 @optional
 - (NSView *)toolBarView;
@@ -23,11 +33,15 @@
 
 @interface PBNavigationViewController : NSViewController
 
+@property (nonatomic, weak) IBOutlet NSView *containerView;
+@property (nonatomic, weak) IBOutlet NSView *navContainer;
+@property (nonatomic, weak) IBOutlet NSTextField *titleField;
+
 @property (nonatomic, readonly) NSViewController *currentViewController;
 
-- (void)pushViewController:(NSViewController<TCNavigationViewProtocol> *)viewController
+- (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)viewController
                    animate:(BOOL)animate;
 - (void)popViewController:(BOOL)animate;
-- (BOOL)isViewControllerInNavigationStack:(NSViewController<TCNavigationViewProtocol> *)viewController;
+- (BOOL)isViewControllerInNavigationStack:(NSViewController<PBNavigationViewProtocol> *)viewController;
 
 @end

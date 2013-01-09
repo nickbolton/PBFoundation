@@ -9,12 +9,11 @@
 #import <QuartzCore/QuartzCore.h>
 
 @interface PBAnimator ()
-- (void)runEndBlock:(void (^)(void))completionBlock;
 @end
 
 @implementation PBAnimator
 
-- (void)animateWithDuration:(NSTimeInterval)duration
++ (void)animateWithDuration:(NSTimeInterval)duration
              timingFunction:(CAMediaTimingFunction *)timingFunction
                   animation:(void (^)(void))animationBlock {
     [self animateWithDuration:duration
@@ -23,7 +22,7 @@
                    completion:nil];
 }
 
-- (void)animateWithDuration:(NSTimeInterval)duration
++ (void)animateWithDuration:(NSTimeInterval)duration
              timingFunction:(CAMediaTimingFunction *)timingFunction
                   animation:(void (^)(void))animationBlock
                  completion:(void (^)(void))completionBlock {
@@ -52,7 +51,7 @@
     }
 }
 
-- (void)runEndBlock:(void (^)(void))completionBlock {
++ (void)runEndBlock:(void (^)(void))completionBlock {
     completionBlock();
 }
 

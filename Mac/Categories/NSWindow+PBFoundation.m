@@ -15,18 +15,17 @@
             timingFunction:(CAMediaTimingFunction *)timingFunction
            completionBlock:(void (^)(void))completionBlock {
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    [animator animateWithDuration:duration
-                   timingFunction:timingFunction
-                        animation:^{
-                            [[self animator] setFrameOrigin:newOrigin];
-                        }
-                       completion:^{
-                           if (completionBlock != nil) {
-                               completionBlock();
-                           }
-                       }];
+    [PBAnimator
+     animateWithDuration:duration
+     timingFunction:timingFunction
+     animation:^{
+         [[self animator] setFrameOrigin:newOrigin];
+     }
+     completion:^{
+         if (completionBlock != nil) {
+             completionBlock();
+         }
+     }];
 }
 
 - (void)animateToNewFrame:(NSRect)newFrame
@@ -34,36 +33,34 @@
            timingFunction:(CAMediaTimingFunction *)timingFunction
           completionBlock:(void (^)(void))completionBlock {
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    [animator animateWithDuration:duration
-                   timingFunction:timingFunction
-                        animation:^{
-                            [[self animator] setFrame:newFrame display:YES];
-                        }
-                       completion:^{
-                           if (completionBlock != nil) {
-                               completionBlock();
-                           }
-                       }];
+    [PBAnimator
+     animateWithDuration:duration
+     timingFunction:timingFunction
+     animation:^{
+         [[self animator] setFrame:newFrame display:YES];
+     }
+     completion:^{
+         if (completionBlock != nil) {
+             completionBlock();
+         }
+     }];
 }
 
 - (void)animateFadeIn:(CGFloat)duration
        timingFunction:(CAMediaTimingFunction *)timingFunction
       completionBlock:(void (^)(void))completionBlock {
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    [animator animateWithDuration:duration
-                   timingFunction:timingFunction
-                        animation:^{
-                            [[self animator] setAlphaValue:1.0f];
-                        }
-                       completion:^{
-                           if (completionBlock != nil) {
-                               completionBlock();
-                           }
-                       }];
+    [PBAnimator
+     animateWithDuration:duration
+     timingFunction:timingFunction
+     animation:^{
+         [[self animator] setAlphaValue:1.0f];
+     }
+     completion:^{
+         if (completionBlock != nil) {
+             completionBlock();
+         }
+     }];
 
 }
 
@@ -71,10 +68,11 @@
         timingFunction:(CAMediaTimingFunction *)timingFunction
        completionBlock:(void (^)(void))completionBlock {
 
-    [self animateFadeOut:duration
-                orderOut:NO
-          timingFunction:timingFunction
-         completionBlock:completionBlock];
+    [self
+     animateFadeOut:duration
+     orderOut:NO
+     timingFunction:timingFunction
+     completionBlock:completionBlock];
 }
 
 - (void)animateFadeOut:(CGFloat)duration
@@ -82,21 +80,20 @@
         timingFunction:(CAMediaTimingFunction *)timingFunction
        completionBlock:(void (^)(void))completionBlock {
 
-    PBAnimator *animator = [[PBAnimator alloc] init];
-
-    [animator animateWithDuration:duration
-                   timingFunction:timingFunction
-                        animation:^{
-                            [[self animator] setAlphaValue:0.0f];
-                        }
-                       completion:^{
-                           if (orderOut == YES) {
-                               [self orderOut:nil];
-                           }
-                           if (completionBlock != nil) {
-                               completionBlock();
-                           }
-                       }];
+    [PBAnimator
+     animateWithDuration:duration
+     timingFunction:timingFunction
+     animation:^{
+         [[self animator] setAlphaValue:0.0f];
+     }
+     completion:^{
+         if (orderOut == YES) {
+             [self orderOut:nil];
+         }
+         if (completionBlock != nil) {
+             completionBlock();
+         }
+     }];
 }
 
 - (NSRect)centeredFrame {
