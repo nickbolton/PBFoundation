@@ -44,7 +44,6 @@
 
 - (void)sendEvent:(NSEvent *)event {
     if (_userInteractionEnabled) {
-        NSLog(@"%s", __PRETTY_FUNCTION__);
         [super sendEvent:event];
     }
 }
