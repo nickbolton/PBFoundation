@@ -11,7 +11,6 @@
 
 NSString *kPBNavigationUpdateFrameNotification = @"kPBNavigationUpdateFrameNotification";
 NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContainerNotification";
-NSString *kPBNavigationRedrawBackgroundNotification = @"kPBNavigationRedrawBackgroundNotification";
 NSString *kPBNavigationEnableUserInteractionNotification = @"kPBNavigationEnableUserInteractionNotification";
 NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisableUserInteractionNotification";
 
@@ -221,10 +220,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         }
     }
 
-    [[NSNotificationCenter defaultCenter]
-     postNotificationName:kPBNavigationRedrawBackgroundNotification
-     object:self
-     userInfo:nil];
 }
 
 - (void)popViewController:(BOOL)animate {
@@ -343,11 +338,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
              }];
         }
     }
-
-    [[NSNotificationCenter defaultCenter]
-     postNotificationName:kPBNavigationRedrawBackgroundNotification
-     object:self
-     userInfo:nil];
 }
 
 @end

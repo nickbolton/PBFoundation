@@ -10,7 +10,6 @@
 
 extern NSString *kPBNavigationUpdateFrameNotification;
 extern NSString *kPBNavigationUpdateContainerNotification;
-extern NSString *kPBNavigationRedrawBackgroundNotification;
 extern NSString *kPBNavigationEnableUserInteractionNotification;
 extern NSString *kPBNavigationDisableUserInteractionNotification;
 

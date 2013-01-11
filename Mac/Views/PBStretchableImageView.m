@@ -33,9 +33,12 @@
     _alpha = 1.0f;
 }
 
-- (void)drawRect:(NSRect)rect {
+- (void)setFrame:(NSRect)frameRect {
+    [super setFrame:frameRect];
 
-    NSDrawThreePartImage(rect,
+    NSImage *image = [[NSImage alloc] initWithSize:frameRect.size];
+    [image lockFocus];
+    NSDrawThreePartImage(self.bounds,
                          _topImage,
                          _middleImage,
                          _bottomImage,
@@ -43,6 +46,10 @@
                          NSCompositeSourceOver,
                          _alpha,
                          _flipped);
+
+    [image unlockFocus];
+
+    self.image = image;
 }
 
 @end
