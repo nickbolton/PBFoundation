@@ -11,12 +11,15 @@
 
 NSString *kPBNavigationUpdateFrameNotification = @"kPBNavigationUpdateFrameNotification";
 NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContainerNotification";
+NSString *kPBNavigationRedrawBackgroundNotification = @"kPBNavigationRedrawBackgroundNotification";
+NSString *kPBNavigationEnableUserInteractionNotification = @"kPBNavigationEnableUserInteractionNotification";
+NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisableUserInteractionNotification";
 
 @interface PBNavigationViewController () {
     BOOL pushing_;
 }
 
-@property (nonatomic, strong) NSMutableArray *viewControllerStack;
+@property (nonatomic, readwrite) NSMutableArray *viewControllerStack;
 
 @end
 
@@ -60,8 +63,19 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
     return [_viewControllerStack containsObject:viewController];
 }
 
+- (void)startPushNavigation:(BOOL)animate duration:(NSTimeInterval)duration {
+}
+
+- (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration {
+}
+
+- (void)navigationFinished {
+}
+
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)nextViewController
                    animate:(BOOL)animate {
+
+    NSTimeInterval duration = PB_WINDOW_ANIMATION_DURATION;
 
     nextViewController.navigationViewController = self;
     [nextViewController.view setTranslatesAutoresizingMaskIntoConstraints:NO];
@@ -71,23 +85,28 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
     frame.size.height = NSHeight(_navContainer.frame);
     nextViewController.view.frame = frame;
 
-    NSString *title = [nextViewController title];
+    _titleField.stringValue = [nextViewController title];
 
-    _titleField.stringValue = title;
+    NSViewController<PBNavigationViewProtocol> *previousViewController = [_viewControllerStack lastObject];
 
-    NSViewController *previousViewController = [_viewControllerStack lastObject];
+    if ([previousViewController respondsToSelector:@selector(viewWillDeactivate)]) {
+        [previousViewController viewWillDeactivate];
+    }
 
-    [previousViewController performIfRespondsToSelector:@selector(viewWillDeactivate)];
-    [nextViewController performIfRespondsToSelector:@selector(viewWillActivate)];
+    if ([nextViewController respondsToSelector:@selector(viewWillActivate)]) {
+        [nextViewController viewWillActivate];
+    }
 
     [_viewControllerStack addObject:nextViewController];
 
     if (_viewControllerStack.count == 1) {
-        
+
+        [self startPushNavigation:NO duration:0.0f];
+
         [_navContainer addSubview:nextViewController.view];
 
         [PBAnimator
-         animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+         animateWithDuration:duration
          timingFunction:PB_EASE_INOUT
          animation:^{
 
@@ -97,7 +116,12 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
               userInfo:nil];
              
          } completion:^{
-             [nextViewController performIfRespondsToSelector:@selector(viewDidActivate)];
+
+             if ([nextViewController respondsToSelector:@selector(viewDidActivate)]) {
+                 [nextViewController viewDidActivate];
+             }
+
+             [self navigationFinished];
          }];
         
     } else {
@@ -106,6 +130,8 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
         NSView *newView = nextViewController.view;
 
         if (animate) {
+
+            [self startPushNavigation:YES duration:duration];
 
             pushing_ = YES;
 
@@ -130,7 +156,7 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
 
             [_navContainer
              animateToNewFrame:newRect
-             duration:PB_WINDOW_ANIMATION_DURATION
+             duration:duration
              timingFunction:PB_EASE_INOUT
              completionBlock:^{
 
@@ -150,7 +176,7 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
                  //                             [previousController performIfRespondsToSelector:@selector(viewDidDeactivate)];
 
                  [PBAnimator
-                  animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+                  animateWithDuration:duration
                   timingFunction:PB_EASE_INOUT
                   animation:^{
 
@@ -160,11 +186,16 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
                        userInfo:nil];
 
                   } completion:^{
-                      [self.currentViewController performIfRespondsToSelector:@selector(viewDidActivate)];
+                      [self navigationFinished];
+                      if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
+                          [self.currentViewController viewDidActivate];
+                      }
                   }];
                  
              }];
         } else {
+
+            [self startPushNavigation:NO duration:0.0f];
 
             NSRect frame = newView.frame;
             frame.origin.x = 0;
@@ -172,7 +203,7 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
 
             [_navContainer replaceSubview:currentView with:newView];
             [PBAnimator
-             animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+             animateWithDuration:duration
              timingFunction:PB_EASE_INOUT
              animation:^{
 
@@ -182,25 +213,44 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
                   userInfo:nil];
 
              } completion:^{
-                 [nextViewController performIfRespondsToSelector:@selector(viewDidActivate)];
+                 [self navigationFinished];
+                 if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
+                     [self.currentViewController viewDidActivate];
+                 }
              }];
         }
     }
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBNavigationRedrawBackgroundNotification
+     object:self
+     userInfo:nil];
 }
 
 - (void)popViewController:(BOOL)animate {
     if (_viewControllerStack.count > 1) {
 
-        NSViewController *currentViewController = self.currentViewController;
-        NSViewController *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
+        NSTimeInterval duration = PB_WINDOW_ANIMATION_DURATION;
 
-        [currentViewController performIfRespondsToSelector:@selector(viewWillDeactivate)];
-        [nextViewController performIfRespondsToSelector:@selector(viewWillAppear)];
+        NSViewController<PBNavigationViewProtocol> *currentViewController = self.currentViewController;
+        NSViewController<PBNavigationViewProtocol> *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
+
+        if ([currentViewController respondsToSelector:@selector(viewWillDeactivate)]) {
+            [currentViewController viewWillDeactivate];
+        }
+
+        if ([nextViewController respondsToSelector:@selector(viewWillAppear)]) {
+            [nextViewController viewWillAppear];
+        }
 
         NSView *currentView = currentViewController.view;
         NSView *newView = nextViewController.view;
 
+        _titleField.stringValue = [nextViewController title];
+
         if (animate) {
+
+            [self startPopNavigation:YES duration:duration];
 
             pushing_ = NO;
 
@@ -231,14 +281,14 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
 
             [_navContainer
              animateToNewFrame:newRect
-             duration:PB_WINDOW_ANIMATION_DURATION
+             duration:duration
              timingFunction:PB_EASE_INOUT
              completionBlock:^{
-                 NSViewController *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
+                 NSViewController<PBNavigationViewProtocol> *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
                  [self.currentViewController.view removeFromSuperview];
 
                  [PBAnimator
-                  animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+                  animateWithDuration:duration
                   timingFunction:PB_EASE_INOUT
                   animation:^{
 
@@ -248,17 +298,28 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
                        userInfo:nil];
 
                   } completion:^{
-                      [self.currentViewController performIfRespondsToSelector:@selector(viewDidDeactivate)];
-                      [nextViewController performIfRespondsToSelector:@selector(viewDidAppear)];
+                      [self navigationFinished];
+
+                      if ([self.currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
+                          [self.currentViewController viewDidDeactivate];
+                      }
+
+                      if ([nextViewController respondsToSelector:@selector(viewDidAppear)]) {
+                          [nextViewController viewDidAppear];
+                      }
+
                       [_viewControllerStack removeLastObject];
                   }];
              }];
 
         } else {
+
+            [self startPopNavigation:NO duration:0.0f];
+            
             [_navContainer replaceSubview:currentView with:newView];
 
             [PBAnimator
-             animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+             animateWithDuration:duration
              timingFunction:PB_EASE_INOUT
              animation:^{
 
@@ -268,12 +329,25 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
                   userInfo:nil];
 
              } completion:^{
-                 [currentViewController performIfRespondsToSelector:@selector(viewDidDeactivate)];
-                 [nextViewController performIfRespondsToSelector:@selector(viewDidAppear)];
+                 [self navigationFinished];
+
+                 if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
+                     [currentViewController viewDidDeactivate];
+                 }
+
+                 if ([nextViewController respondsToSelector:@selector(viewDidAppear)]) {
+                     [nextViewController viewDidAppear];
+                 }
+
                  [_viewControllerStack removeLastObject];
              }];
         }
     }
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBNavigationRedrawBackgroundNotification
+     object:self
+     userInfo:nil];
 }
 
 @end

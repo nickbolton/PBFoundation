@@ -10,8 +10,43 @@
 
 @implementation PBMainWindow
 
+- (id)initWithCoder:(NSCoder *)decoder {
+    self = [super initWithCoder:decoder];
+    if (self != nil) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (id)initWithContentRect:(NSRect)contentRect styleMask:(NSUInteger)aStyle backing:(NSBackingStoreType)bufferingType defer:(BOOL)flag {
+    self = [super initWithContentRect:contentRect styleMask:aStyle backing:bufferingType defer:flag];
+    if (self != nil) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (id)initWithContentRect:(NSRect)contentRect styleMask:(NSUInteger)aStyle backing:(NSBackingStoreType)bufferingType defer:(BOOL)flag screen:(NSScreen *)screen {
+    self = [super initWithContentRect:contentRect styleMask:aStyle backing:bufferingType defer:flag screen:screen];
+    if (self != nil) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (void)commonInit {
+    self.userInteractionEnabled = YES;
+}
+
 - (BOOL)canBecomeMainWindow {
     return YES;
+}
+
+- (void)sendEvent:(NSEvent *)event {
+    if (_userInteractionEnabled) {
+        NSLog(@"%s", __PRETTY_FUNCTION__);
+        [super sendEvent:event];
+    }
 }
 
 @end

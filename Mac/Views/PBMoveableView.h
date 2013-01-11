@@ -13,6 +13,8 @@
 @protocol PBMoveableViewDelegate <NSObject>
 
 - (void)moveableViewMoved:(PBMoveableView *)view;
+- (void)moveableViewMouseDown:(PBMoveableView *)view;
+- (void)moveableViewMouseUp:(PBMoveableView *)view;
 
 @end
 

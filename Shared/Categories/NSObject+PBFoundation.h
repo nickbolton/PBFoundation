@@ -10,16 +10,4 @@
 
 @interface NSObject (PBFoundation)
 
-- (id)performIfRespondsToSelector:(SEL)aSelector;
-- (void)performIfRespondsToSelector:(SEL)aSelector
-                         afterDelay:(NSTimeInterval)delay;
-- (id)performIfRespondsToSelector:(SEL)aSelector
-                       withObject:(id)object;
-- (void)performIfRespondsToSelector:(SEL)aSelector
-                         withObject:(id)object
-                         afterDelay:(NSTimeInterval)delay;
-- (id)performIfRespondsToSelector:(SEL)aSelector
-                       withObject:(id)object1
-                       withObject:(id)object2;
-
 @end

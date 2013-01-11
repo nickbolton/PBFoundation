@@ -47,6 +47,14 @@
     [super mouseDown:event];
     _mouseDownWindowLocation = self.window.frame.origin;
     _mouseDownMouseLocation = [NSEvent mouseLocation];
+
+    [_delegate moveableViewMouseDown:self];
+}
+
+- (void)mouseUp:(NSEvent *)event {
+    [super mouseUp:event];
+
+    [_delegate moveableViewMouseUp:self];
 }
 
 - (void)mouseDragged:(NSEvent *)event {

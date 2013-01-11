@@ -10,6 +10,9 @@
 
 extern NSString *kPBNavigationUpdateFrameNotification;
 extern NSString *kPBNavigationUpdateContainerNotification;
+extern NSString *kPBNavigationRedrawBackgroundNotification;
+extern NSString *kPBNavigationEnableUserInteractionNotification;
+extern NSString *kPBNavigationDisableUserInteractionNotification;
 
 @class PBNavigationViewController;
 
@@ -29,6 +32,7 @@ extern NSString *kPBNavigationUpdateContainerNotification;
 - (void)viewDidDeactivate;
 - (void)viewWillAppear;
 - (void)viewWillDisappear;
+- (void)viewDidAppear;
 @end
 
 @interface PBNavigationViewController : NSViewController
@@ -36,12 +40,16 @@ extern NSString *kPBNavigationUpdateContainerNotification;
 @property (nonatomic, weak) IBOutlet NSView *containerView;
 @property (nonatomic, weak) IBOutlet NSView *navContainer;
 @property (nonatomic, weak) IBOutlet NSTextField *titleField;
+@property (nonatomic, readonly) NSMutableArray *viewControllerStack;
 
-@property (nonatomic, readonly) NSViewController *currentViewController;
+@property (nonatomic, readonly) NSViewController<PBNavigationViewProtocol> *currentViewController;
 
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)viewController
                    animate:(BOOL)animate;
 - (void)popViewController:(BOOL)animate;
 - (BOOL)isViewControllerInNavigationStack:(NSViewController<PBNavigationViewProtocol> *)viewController;
+- (void)startPushNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
+- (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
+- (void)navigationFinished;
 
 @end

@@ -10,4 +10,6 @@
 
 @interface PBMainWindow : NSWindow
 
+@property (nonatomic, getter = isUserInteractionEnabled) BOOL userInteractionEnabled;
+
 @end
