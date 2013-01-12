@@ -42,6 +42,10 @@
     return YES;
 }
 
+- (BOOL)canBecomeKeyWindow {
+    return YES;
+}
+
 - (void)sendEvent:(NSEvent *)event {
     if (_userInteractionEnabled) {
         [super sendEvent:event];

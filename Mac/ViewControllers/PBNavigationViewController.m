@@ -8,6 +8,7 @@
 
 #import "PBNavigationViewController.h"
 #import <QuartzCore/QuartzCore.h>
+#import <Carbon/Carbon.h>
 
 NSString *kPBNavigationUpdateFrameNotification = @"kPBNavigationUpdateFrameNotification";
 NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContainerNotification";
@@ -338,6 +339,23 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
              }];
         }
     }
+}
+
+#pragma mark - Key handling
+
+- (void)keyDown:(NSEvent *)event {
+
+    NSInteger allControlsMask = NSCommandKeyMask | NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSFunctionKeyMask;
+
+    if (([event modifierFlags] & allControlsMask) == 0) {
+
+        switch ([event keyCode]) {
+            case kVK_Escape:
+                [self popViewController:YES];
+                break;
+        }
+    }
+
 }
 
 @end
