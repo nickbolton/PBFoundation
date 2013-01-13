@@ -35,14 +35,6 @@
     _enabled = YES;
 }
 
-- (BOOL)acceptsFirstMouse:(NSEvent *)event {
-    return YES;
-}
-
-- (BOOL)acceptsFirstResponder {
-    return YES;
-}
-
 - (void)mouseDown:(NSEvent *)event {
     [super mouseDown:event];
     _mouseDownWindowLocation = self.window.frame.origin;
@@ -55,6 +47,10 @@
     [super mouseUp:event];
 
     [_delegate moveableViewMouseUp:self];
+
+    if ([self.window isKindOfClass:[PBMainWindow class]]) {
+        ((PBMainWindow *)self.window).forceMouseEventsToMoveableView = NO;
+    }
 }
 
 - (void)mouseDragged:(NSEvent *)event {

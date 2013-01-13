@@ -7,6 +7,7 @@
 //
 
 #import "PBMainWindow.h"
+#import "PBMoveableView.h"
 
 @implementation PBMainWindow
 
@@ -36,6 +37,11 @@
 
 - (void)commonInit {
     self.userInteractionEnabled = YES;
+    _forceMouseEventsToMoveableView = NO;
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent *)event {
+    return YES;
 }
 
 - (BOOL)canBecomeMainWindow {
@@ -46,9 +52,42 @@
     return YES;
 }
 
+- (BOOL)acceptsFirstResponder {
+    return YES;
+}
+
 - (void)sendEvent:(NSEvent *)event {
     if (_userInteractionEnabled) {
         [super sendEvent:event];
+
+        if (_forceMouseEventsToMoveableView && self.isMainWindow == YES) {
+
+            PBMoveableView *view = self.contentView;
+
+            if ([view isKindOfClass:[PBMoveableView class]]) {
+
+                switch (event.type) {
+                    case NSMouseMoved:
+                        [view mouseMoved:event];
+                        break;
+
+                    case NSLeftMouseDown:
+                        [view mouseDown:event];
+                        break;
+
+                    case NSLeftMouseUp:
+                        [view mouseDown:event];
+                        break;
+
+                    case NSLeftMouseDragged:
+                        [view mouseDragged:event];
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        }
     }
 }
 

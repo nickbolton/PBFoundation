@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "PPMainView.h"
 
 @class PBMoveableView;
 
@@ -18,7 +19,7 @@
 
 @end
 
-@interface PBMoveableView : NSView
+@interface PBMoveableView : PPMainView
 
 @property (nonatomic, weak) IBOutlet id <PBMoveableViewDelegate> delegate;
 

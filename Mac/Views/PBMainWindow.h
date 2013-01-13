@@ -11,5 +11,6 @@
 @interface PBMainWindow : NSWindow
 
 @property (nonatomic, getter = isUserInteractionEnabled) BOOL userInteractionEnabled;
+@property (nonatomic) BOOL forceMouseEventsToMoveableView;
 
 @end
