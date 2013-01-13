@@ -11,5 +11,8 @@
 @interface NSImage (PBFoundation)
 
 - (NSData *)pngData;
++ (NSImage *)imageWithPreviewOfFileAtPath:(NSString *)path
+                                   ofSize:(NSSize)size
+                                   asIcon:(BOOL)icon;
 
 @end
