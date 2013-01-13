@@ -9,6 +9,14 @@
 #ifndef MotionMouse_PBFoundation_h
 #define MotionMouse_PBFoundation_h
 
+# define PBDebugLog(...) if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"debugMode"] boolValue] == YES) { NSLog(@"[%@:%d (%p)]: %@", [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, self, [NSString stringWithFormat:__VA_ARGS__]); }
+# define PBLog(...) if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"debugMode"] boolValue] == YES) { NSLog(@"%@", [NSString stringWithFormat:__VA_ARGS__]); }
+
+// add -DTCDEBUG to Other C Flags for Debug
+
+#define PBLogOff(...) do { } while (0)
+#define PBLogOn(...) NSLog(__VA_ARGS__)
+
 #import "NSString+PBFoundation.h"
 #import "NSArray+PBFoundation.h"
 #import "NSObject+PBFoundation.h"

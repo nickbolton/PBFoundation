@@ -7,7 +7,6 @@
 //
 
 #import "NSAlert+PBFoundation.h"
-#import "PBCommon.h"
 
 @implementation NSAlert (PBFoundation)
 
