@@ -72,8 +72,8 @@
         newOrigin.x += currentLocation.x - _mouseDownMouseLocation.x;
         newOrigin.y += currentLocation.y - _mouseDownMouseLocation.y;
 
-        CGFloat minY = NSMinY(screenFrame);
-        CGFloat maxY = NSMaxY(screenFrame);
+        CGFloat minY = _screenInsets.bottom;
+        CGFloat maxY = NSMaxY(screenFrame) - _screenInsets.top;
 
         // Don't let window get dragged up under the menu bar
         if ((newOrigin.y+windowFrame.size.height) > maxY) {
