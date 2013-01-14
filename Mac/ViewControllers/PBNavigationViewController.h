@@ -17,7 +17,13 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 
 @protocol PBNavigationViewProtocol <NSObject>
 
+@required
 @property (nonatomic, weak) PBNavigationViewController *navigationViewController;
+
+@optional
+- (BOOL)needsEditableTitleField;
+- (void)titleChanged:(NSString *)title;
+- (NSString *)placeholderTitleText;
 
 @required
 - (NSString *)title;
@@ -39,6 +45,7 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 @property (nonatomic, weak) IBOutlet NSView *containerView;
 @property (nonatomic, weak) IBOutlet NSView *navContainer;
 @property (nonatomic, weak) IBOutlet NSTextField *titleField;
+@property (nonatomic, weak) IBOutlet NSTextField *editableTitleField;
 @property (nonatomic, readonly) NSMutableArray *viewControllerStack;
 
 @property (nonatomic, readonly) NSViewController<PBNavigationViewProtocol> *currentViewController;
