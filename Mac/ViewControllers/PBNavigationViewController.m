@@ -110,14 +110,13 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     frame.size.height = NSHeight(_navContainer.frame);
     nextViewController.view.frame = frame;
 
-    self.editingTitleViewController = nextViewController;
-
     _titleField.stringValue = [nextViewController title];
     _editableTitleField.stringValue = _titleField.stringValue;
     _editingTitle = NO;
 
     if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
         _editingTitle = [nextViewController needsEditableTitleField];
+        self.editingTitleViewController = nextViewController;
     }
 
     _titleField.hidden = _editingTitle;
@@ -303,8 +302,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
             [nextViewController viewWillAppear];
         }
 
-        self.editingTitleViewController = nextViewController;
-
         NSView *currentView = currentViewController.view;
         NSView *newView = nextViewController.view;
 
@@ -314,6 +311,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
         if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
             _editingTitle = [nextViewController needsEditableTitleField];
+            self.editingTitleViewController = nextViewController;
         }
 
         if ([nextViewController respondsToSelector:@selector(placeholderTitleText)]) {
