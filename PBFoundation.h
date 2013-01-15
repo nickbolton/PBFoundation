@@ -38,9 +38,10 @@
 #import "NSImage+PBFoundation.h"
 #import "NSTask+PBFoundation.h"
 #import "NSWindow+PBFoundation.h"
-#import "PBAnimator.h"
 #import "NSView+PBFoundation.h"
+#import "NSUserNotification+PBFoundation.h"
 #import "PBMainWindow.h"
+#import "PBAnimator.h"
 
 #endif
 
