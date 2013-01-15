@@ -24,6 +24,7 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 - (BOOL)needsEditableTitleField;
 - (void)titleChanged:(NSString *)title;
 - (NSString *)placeholderTitleText;
+- (BOOL)shouldLeaveViewController;
 
 @required
 - (NSString *)title;
@@ -47,6 +48,7 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 @property (nonatomic, weak) IBOutlet NSTextField *titleField;
 @property (nonatomic, weak) IBOutlet NSTextField *editableTitleField;
 @property (nonatomic, readonly) NSMutableArray *viewControllerStack;
+@property (nonatomic, strong) NSColor *invalidTitleNameColor;
 
 @property (nonatomic, readonly) NSViewController<PBNavigationViewProtocol> *currentViewController;
 

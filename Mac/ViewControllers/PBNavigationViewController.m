@@ -21,6 +21,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
 @property (nonatomic, readwrite) NSMutableArray *viewControllerStack;
 @property (nonatomic, strong) NSViewController <PBNavigationViewProtocol> *editingTitleViewController;
+@property (nonatomic, strong) NSColor *originalEditingBackgroundColor;
 
 @end
 
@@ -44,6 +45,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
 - (void)commonInit {
     self.viewControllerStack = [NSMutableArray array];
+    self.invalidTitleNameColor = [NSColor redColor];
 }
 
 - (void)awakeFromNib {
@@ -53,6 +55,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
     _editableTitleField.delegate = self;
     _editableTitleField;
+
+    self.originalEditingBackgroundColor = _editableTitleField.backgroundColor;
 }
 
 - (void)setTitle:(NSString *)title {
@@ -79,7 +83,19 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)nextViewController
                    animate:(BOOL)animate {
 
-    if (_editingTitle && _editableTitleField.stringValue.length == 0) {
+    BOOL shouldLeaveCurrentViewController = YES;
+    BOOL invalidTitle = _editingTitle && _editableTitleField.stringValue.length == 0;
+
+    if ([self.currentViewController respondsToSelector:@selector(shouldLeaveViewController)]) {
+        shouldLeaveCurrentViewController =
+        [self.currentViewController shouldLeaveViewController];
+    }
+
+    if (shouldLeaveCurrentViewController == NO || invalidTitle) {
+        if (invalidTitle) {
+            _editableTitleField.backgroundColor = _invalidTitleNameColor;
+            [_editableTitleField setNeedsDisplay:YES];
+        }
         NSBeep();
         return;
     }
@@ -98,7 +114,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
     _titleField.stringValue = [nextViewController title];
     _editableTitleField.stringValue = _titleField.stringValue;
-
     _editingTitle = NO;
 
     if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
@@ -252,6 +267,23 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
     if (_viewControllerStack.count > 1) {
 
+        BOOL shouldLeaveCurrentViewController = YES;
+        BOOL invalidTitle = _editingTitle && _editableTitleField.stringValue.length == 0;
+
+        if ([self.currentViewController respondsToSelector:@selector(shouldLeaveViewController)]) {
+            shouldLeaveCurrentViewController =
+            [self.currentViewController shouldLeaveViewController];
+        }
+
+        if (shouldLeaveCurrentViewController == NO || invalidTitle) {
+            if (invalidTitle) {
+                _editableTitleField.backgroundColor = _invalidTitleNameColor;
+                [_editableTitleField setNeedsLayout:YES];
+            }
+            NSBeep();
+            return;
+        }
+
         NSTimeInterval duration = PB_WINDOW_ANIMATION_DURATION;
 
         NSViewController<PBNavigationViewProtocol> *currentViewController = self.currentViewController;
@@ -278,6 +310,11 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
         _titleField.stringValue = [nextViewController title];
         _editableTitleField.stringValue = _titleField.stringValue;
+        _editingTitle = NO;
+
+        if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
+            _editingTitle = [nextViewController needsEditableTitleField];
+        }
 
         if ([nextViewController respondsToSelector:@selector(placeholderTitleText)]) {
             ((NSTextFieldCell *)_editableTitleField.cell).placeholderString =
@@ -394,7 +431,15 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 #pragma mark - NSTextFieldDelegate Conformance
 
 - (void)controlTextDidChange:(NSNotification *)notification {
-    
+
+    if (_editingTitle && _editableTitleField.stringValue.length == 0) {
+        _editableTitleField.backgroundColor = _invalidTitleNameColor;
+        ((NSTextFieldCell *)_editableTitleField.cell).backgroundColor = _invalidTitleNameColor;
+    } else {
+        _editableTitleField.backgroundColor = _originalEditingBackgroundColor;
+        ((NSTextFieldCell *)_editableTitleField.cell).backgroundColor = _originalEditingBackgroundColor;
+    }
+    [_editableTitleField setNeedsDisplay:YES];
 }
 
 - (BOOL)control:(NSControl *)control isValidObject:(id)object {
