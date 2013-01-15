@@ -20,6 +20,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 }
 
 @property (nonatomic, readwrite) NSMutableArray *viewControllerStack;
+@property (nonatomic, strong) NSViewController <PBNavigationViewProtocol> *editingTitleViewController;
 
 @end
 
@@ -92,6 +93,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     frame.origin.y = 0;
     frame.size.height = NSHeight(_navContainer.frame);
     nextViewController.view.frame = frame;
+
+    self.editingTitleViewController = nextViewController;
 
     _titleField.stringValue = [nextViewController title];
     _editableTitleField.stringValue = _titleField.stringValue;
@@ -254,6 +257,12 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         NSViewController<PBNavigationViewProtocol> *currentViewController = self.currentViewController;
         NSViewController<PBNavigationViewProtocol> *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
 
+        if ([self.editingTitleViewController needsEditableTitleField]) {
+            if ([self.editingTitleViewController respondsToSelector:@selector(titleChanged:)]) {
+                [self.editingTitleViewController titleChanged:_editableTitleField.stringValue];
+            }
+        }
+
         if ([currentViewController respondsToSelector:@selector(viewWillDeactivate)]) {
             [currentViewController viewWillDeactivate];
         }
@@ -261,6 +270,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         if ([nextViewController respondsToSelector:@selector(viewWillAppear)]) {
             [nextViewController viewWillAppear];
         }
+
+        self.editingTitleViewController = nextViewController;
 
         NSView *currentView = currentViewController.view;
         NSView *newView = nextViewController.view;
@@ -343,6 +354,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                       }
 
                       [_viewControllerStack removeLastObject];
+
                   }];
              }];
 
@@ -394,8 +406,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     }
 
     if (valid) {
-        if ([self.currentViewController respondsToSelector:@selector(titleChanged:)]) {
-            [self.currentViewController titleChanged:object];
+        if ([self.editingTitleViewController respondsToSelector:@selector(titleChanged:)]) {
+            [self.editingTitleViewController titleChanged:object];
         }
     }
 
