@@ -113,6 +113,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     _titleField.stringValue = [nextViewController title];
     _editableTitleField.stringValue = _titleField.stringValue;
     _editingTitle = NO;
+    self.editingTitleViewController = nil;
 
     if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
         _editingTitle = [nextViewController needsEditableTitleField];
@@ -308,6 +309,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         _titleField.stringValue = [nextViewController title];
         _editableTitleField.stringValue = _titleField.stringValue;
         _editingTitle = NO;
+        self.editingTitleViewController = nil;
 
         if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
             _editingTitle = [nextViewController needsEditableTitleField];
