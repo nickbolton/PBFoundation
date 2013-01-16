@@ -1,13 +1,13 @@
 //
 //  PBFoundation.h
-//  MotionMouse
+//  PBFoundation
 //
 //  Created by Nick Bolton on 1/1/13.
 //  Copyright (c) 2013 Pixelbleed. All rights reserved.
 //
 
-#ifndef MotionMouse_PBFoundation_h
-#define MotionMouse_PBFoundation_h
+#ifndef PBFoundation_PBFoundation_h
+#define PBFoundation_PBFoundation_h
 
 # define PBDebugLog(...) if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"debugMode"] boolValue] == YES) { NSLog(@"[%@:%d (%p)]: %@", [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, self, [NSString stringWithFormat:__VA_ARGS__]); }
 # define PBLog(...) if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"debugMode"] boolValue] == YES) { NSLog(@"%@", [NSString stringWithFormat:__VA_ARGS__]); }
