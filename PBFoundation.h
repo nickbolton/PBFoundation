@@ -40,6 +40,7 @@
 #import "NSWindow+PBFoundation.h"
 #import "NSView+PBFoundation.h"
 #import "NSUserNotification+PBFoundation.h"
+#import "NSEvent+PBFoundation.h"
 #import "PBMainWindow.h"
 #import "PBAnimator.h"
 

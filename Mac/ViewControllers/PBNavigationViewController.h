@@ -59,5 +59,6 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 - (void)startPushNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
 - (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
 - (void)navigationFinished;
+- (void)updateTitle;
 
 @end

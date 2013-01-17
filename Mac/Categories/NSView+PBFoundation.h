@@ -60,4 +60,6 @@ completionBlock:(void (^)(void))completionBlock;
 - (void)findViews:(NSMutableArray **)views ofType:(Class)clazz;
 - (id)findFirstParentOfType:(Class)clazz;
 
+- (NSPoint)locationOfMouse;
+
 @end

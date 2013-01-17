@@ -353,4 +353,10 @@ completionBlock:(void (^)(void))completionBlock {
     return newLayer;
 }
 
+- (NSPoint)locationOfMouse {
+    NSPoint globalLocation = [NSEvent mouseLocation];
+    NSPoint windowLocation = [self.window convertScreenToBase:globalLocation];
+    return [self convertPoint:windowLocation fromView:nil];
+}
+
 @end

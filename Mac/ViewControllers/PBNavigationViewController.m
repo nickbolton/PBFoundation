@@ -63,6 +63,10 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     _titleField.stringValue = title;
 }
 
+- (void)updateTitle {
+    _titleField.stringValue = [NSString safeString:[self.currentViewController title]];
+}
+
 - (NSViewController *)currentViewController {
     return [_viewControllerStack lastObject];
 }

@@ -1,6 +1,6 @@
 //
 //  NSUserNotification+PBFoundation.m
-//  PaperPlanes
+//  PBFoundation
 //
 //  Created by Nick Bolton on 1/14/13.
 //  Copyright (c) 2013 Pixelbleed. All rights reserved.
