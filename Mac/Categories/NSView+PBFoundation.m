@@ -320,6 +320,18 @@ completionBlock:(void (^)(void))completionBlock {
     }
 }
 
+- (void)findFirstView:(NSView **)view ofType:(Class)clazz {
+
+    NSAssert(view != nil, @"view parent reference is nil");
+    *view = nil;
+    
+    NSMutableArray *views = [NSMutableArray array];
+    [self findViews:&views ofType:clazz];
+    if (views.count > 0) {
+        *view = [views objectAtIndex:0];
+    }
+}
+
 - (void)findViews:(NSMutableArray **)views ofType:(Class)clazz {
 
     if (*views == NULL) return;

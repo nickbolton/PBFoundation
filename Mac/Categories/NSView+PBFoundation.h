@@ -58,6 +58,7 @@ completionBlock:(void (^)(void))completionBlock;
 
 - (void)dumpViewHierarchy:(NSUInteger)indentLevel;
 - (void)findViews:(NSMutableArray **)views ofType:(Class)clazz;
+- (void)findFirstView:(NSView **)view ofType:(Class)clazz;
 - (id)findFirstParentOfType:(Class)clazz;
 
 - (NSPoint)locationOfMouse;
