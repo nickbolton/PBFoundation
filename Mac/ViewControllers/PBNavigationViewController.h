@@ -14,6 +14,7 @@ extern NSString *kPBNavigationEnableUserInteractionNotification;
 extern NSString *kPBNavigationDisableUserInteractionNotification;
 
 @class PBNavigationViewController;
+@class PBMiddleAlignedTextFieldCell;
 
 @protocol PBNavigationViewProtocol <NSObject>
 
@@ -47,8 +48,8 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 @property (nonatomic, weak) IBOutlet NSView *navContainer;
 @property (nonatomic, weak) IBOutlet NSTextField *titleField;
 @property (nonatomic, weak) IBOutlet NSTextField *editableTitleField;
+@property (nonatomic, weak) IBOutlet PBMiddleAlignedTextFieldCell *editableTitleFieldCell;
 @property (nonatomic, readonly) NSMutableArray *viewControllerStack;
-@property (nonatomic, strong) NSColor *invalidTitleNameColor;
 
 @property (nonatomic, readonly) NSViewController<PBNavigationViewProtocol> *currentViewController;
 

@@ -41,6 +41,7 @@
 #import "NSView+PBFoundation.h"
 #import "NSUserNotification+PBFoundation.h"
 #import "NSEvent+PBFoundation.h"
+#import "NSTextField+PBFoundation.h"
 #import "PBMainWindow.h"
 #import "PBAnimator.h"
 
