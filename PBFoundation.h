@@ -34,8 +34,10 @@
 #define PB_EASE_OUT ([CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut])
 #define PB_EASE_INOUT ([CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut])
 
+#import "NSColor+PBFoundation.h"
 #import "NSAlert+PBFoundation.h"
 #import "NSImage+PBFoundation.h"
+#import "NSAppleScript+PBFoundation.h"
 #import "NSTask+PBFoundation.h"
 #import "NSWindow+PBFoundation.h"
 #import "NSView+PBFoundation.h"
