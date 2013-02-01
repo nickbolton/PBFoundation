@@ -11,5 +11,6 @@
 @interface NSEvent (PBFoundation)
 
 + (BOOL)isCurrentModifiersExactly:(NSUInteger)modifiers;
+- (BOOL)isModifiersExactly:(NSUInteger)modifiers;
 
 @end

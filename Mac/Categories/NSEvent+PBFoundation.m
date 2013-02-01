@@ -15,4 +15,11 @@
     (NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSFunctionKeyMask);
     return (allModifiers & [NSEvent modifierFlags]) == modifiers;
 }
+
+- (BOOL)isModifiersExactly:(NSUInteger)modifiers {
+    NSUInteger allModifiers =
+    (NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSFunctionKeyMask);
+    return (allModifiers & [self modifierFlags]) == modifiers;
+}
+
 @end
