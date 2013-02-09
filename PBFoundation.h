@@ -20,6 +20,7 @@
 #import "NSString+PBFoundation.h"
 #import "NSArray+PBFoundation.h"
 #import "NSObject+PBFoundation.h"
+#import "NSLayoutConstraint+PBFoundation.h"
 
 #if TARGET_OS_IPHONE
 #import "PBActionDelegate.h"
@@ -38,9 +39,12 @@
 #import "NSAlert+PBFoundation.h"
 #import "NSImage+PBFoundation.h"
 #import "NSAppleScript+PBFoundation.h"
+#import "NSAttributedString+PBFoundation.h"
 #import "NSTask+PBFoundation.h"
 #import "NSWindow+PBFoundation.h"
 #import "NSView+PBFoundation.h"
+#import "NSButton+PBFoundation.h"
+#import "NSFileManager+PBFoundation.h"
 #import "NSUserNotification+PBFoundation.h"
 #import "NSEvent+PBFoundation.h"
 #import "NSTextField+PBFoundation.h"

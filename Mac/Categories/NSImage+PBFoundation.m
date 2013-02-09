@@ -69,4 +69,26 @@
     return nil;
 }
 
++ (NSImage *)stretchedImageWithParts:(NSArray *)imageParts
+                                size:(NSSize)size
+                            vertical:(BOOL)vertical
+                               alpha:(CGFloat)alpha {
+
+    NSAssert(imageParts.count == 3, @"Three image parts needed");
+    
+    NSImage *image = [[NSImage alloc] initWithSize:size];
+    [image lockFocus];
+    NSDrawThreePartImage(NSMakeRect(0, 0, size.width, size.height),
+                         [imageParts objectAtIndex:0],
+                         [imageParts objectAtIndex:1],
+                         [imageParts objectAtIndex:2],
+                         vertical,
+                         NSCompositeSourceOver,
+                         alpha,
+                         NO);
+
+    [image unlockFocus];
+    return image;
+}
+
 @end

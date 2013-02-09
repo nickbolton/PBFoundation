@@ -21,14 +21,17 @@
     }
 }
 
-+ (void)runScriptWithName:(NSString *)scriptName {
++ (void)runScriptWithName:(NSString *)scriptFile {
+
+    NSString *extension = [scriptFile pathExtension];
+    NSString *scriptName = [scriptFile stringByDeletingPathExtension];
 
     NSString *scriptPath =
     [[NSBundle mainBundle]
-     pathForResource:scriptName ofType:@"scpt"];
+     pathForResource:scriptName ofType:extension];
 
     if (scriptPath == nil) {
-        NSLog(@"No script exists with name: %@", scriptName);
+        NSLog(@"No script exists with name: %@", scriptFile);
         return;
     }
     
@@ -41,7 +44,7 @@
      error:&error];
 
     if (error != nil) {
-        NSLog(@"Failed loading script file: %@ - %@", scriptName, scriptPath);
+        NSLog(@"Failed loading script file: %@ - %@", scriptFile, scriptPath);
         return;
     }
 

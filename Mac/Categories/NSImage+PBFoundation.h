@@ -15,4 +15,9 @@
                                    ofSize:(NSSize)size
                                    asIcon:(BOOL)icon;
 
++ (NSImage *)stretchedImageWithParts:(NSArray *)imageParts
+                                size:(NSSize)size
+                            vertical:(BOOL)vertical
+                               alpha:(CGFloat)alpha;
+
 @end

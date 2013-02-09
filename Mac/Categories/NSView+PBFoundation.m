@@ -371,4 +371,11 @@ completionBlock:(void (^)(void))completionBlock {
     return [self convertPoint:windowLocation fromView:nil];
 }
 
+- (NSImage *)pngSnapshot {
+    NSBitmapImageRep *imageRep =
+    [self bitmapImageRepForCachingDisplayInRect:self.bounds];
+    [self cacheDisplayInRect:self.bounds toBitmapImageRep:imageRep];
+    return [[NSImage alloc] initWithData:imageRep.TIFFRepresentation];
+}
+
 @end

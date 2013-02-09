@@ -63,4 +63,6 @@ completionBlock:(void (^)(void))completionBlock;
 
 - (NSPoint)locationOfMouse;
 
+- (NSImage *)pngSnapshot;
+
 @end
