@@ -10,7 +10,12 @@
 
 @interface NSAppleScript (PBFoundation)
 
-+ (void)runScript:(NSString *)scriptText;
-+ (void)runScriptWithName:(NSString *)scriptName;
++ (NSAppleEventDescriptor *)runScript:(NSString*)scriptText;
++ (NSAppleEventDescriptor *)runScript:(NSString*)scriptText error:(NSDictionary **)error;
++ (NSAppleEventDescriptor *)runScriptWithFile:(NSString *)scriptFile;
++ (NSAppleEventDescriptor *)runScriptWithFile:(NSString *)scriptFile
+                            tokenReplacements:(NSDictionary *)tokenReplacements;
++ (NSString *)runScriptWithStringResult:(NSString *)scriptFile;
++ (NSNumber *)runScriptWithNumberResult:(NSString *)scriptFile;
 
 @end
