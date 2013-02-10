@@ -33,7 +33,7 @@
         self.leftMargin = 10.0f;
         self.rightMargin = 10.0f;
         self.minSize = NSMakeSize(300.0f, 300.0f);
-        self.maxSize = NSMakeSize(600.0f, 600.0f);
+        self.maxSize = NSMakeSize(MAXFLOAT, MAXFLOAT);
         self.rowDividerLineColor = nil;
         self.rowDividerLineHeight = 1.0f;
 

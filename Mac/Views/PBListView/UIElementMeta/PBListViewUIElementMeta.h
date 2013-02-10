@@ -12,6 +12,8 @@
 @class PBListViewUIElementMeta;
 
 typedef void(^PBUIConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
+typedef void(^PBUIActionHandler)(id entity);
+typedef id(^PBUIValueTransformer)(id value);
 
 @interface PBListViewUIElementMeta : NSObject
 
@@ -22,8 +24,8 @@ typedef void(^PBUIConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
 @property (nonatomic, strong) NSImage *image;
 @property (nonatomic, strong) NSImage *alternateImage;
 @property (nonatomic, strong) NSImage *hoverImage;
-@property (nonatomic, weak) id target;
-@property (nonatomic) SEL action;
+@property (nonatomic, copy) PBUIValueTransformer valueTransformer;
+@property (nonatomic, copy) PBUIActionHandler actionHandler;
 @property (nonatomic, readonly) PBListViewUIElementBinder *binder;
 @property (nonatomic, readonly) PBUIConfigurationHandler configurationHandler;
 
@@ -31,5 +33,7 @@ typedef void(^PBUIConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
                                                  keyPath:(NSString *)keyPath
                                               binderType:(Class)binderType
                                            configuration:(PBUIConfigurationHandler)configuration;
+
+- (void)invokeAction:(id)sender;
 
 @end

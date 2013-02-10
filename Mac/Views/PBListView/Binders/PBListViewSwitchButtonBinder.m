@@ -1,31 +1,19 @@
 //
-//  PBListViewButtonBinder.m
+//  PBListViewSwitchButtonBinder.m
 //  PBListView
 //
 //  Created by Nick Bolton on 2/9/13.
 //  Copyright (c) 2013 Pixelbleed. All rights reserved.
 //
 
-#import "PBListViewButtonBinder.h"
-#import "PBShadowButtonCell.h"
-#import "PBListViewConfig.h"
+#import "PBListViewSwitchButtonBinder.h"
 #import "PBListViewUIElementMeta.h"
 
-@implementation PBListViewButtonBinder
+@implementation PBListViewSwitchButtonBinder
 
 - (id)buildUIElement {
-    NSButton *button = [[NSButton alloc] initWithFrame:NSZeroRect];
-
-    button.cell = [[PBShadowButtonCell alloc] init];
-    ((PBShadowButtonCell *)button.cell).textShadowColor = [[PBListViewConfig sharedInstance] defaultTextShadowColorForType:PBListViewTextColorDark];
-    ((PBShadowButtonCell *)button.cell).textShadowOffset = NSMakeSize(0.0f, -1.0f);
-
-    button.buttonType = NSMomentaryChangeButton;
-    button.bezelStyle = 0;
-    button.translatesAutoresizingMaskIntoConstraints = NO;
-    button.bordered = NO;
-    button.title = @"";
-
+    NSButton *button = [super buildUIElement];
+    button.buttonType = NSSwitchButton;
     return button;
 }
 
@@ -42,7 +30,7 @@
     NSAssert([meta isKindOfClass:[PBListViewUIElementMeta class]],
              @"meta is not of type PBListViewUIElementMeta");
 
-    NSString *text = @"";
+    NSNumber *switchValue = @NO;
 
     if (meta.keyPath != nil) {
         id value = [entity valueForKeyPath:meta.keyPath];
@@ -52,13 +40,15 @@
                 value = meta.valueTransformer(value);
             }
 
-            if ([value isKindOfClass:[NSString class]]) {
-                text = value;
-            }
+            NSAssert([value isKindOfClass:[NSNumber class]],
+                     @"value of %@ at keyPath '%@' is not an NSNumber",
+                     NSStringFromClass([entity class]), meta.keyPath);
+
+            switchValue = value;
         }
     }
-
-    button.title = text;
+    
+    button.state = switchValue.boolValue ? NSOnState : NSOffState;
 }
 
 @end

@@ -54,4 +54,18 @@
     return self;
 }
 
+- (void)invokeAction:(id)sender {
+    if (_actionHandler != nil) {
+
+        id entity = nil;
+        NSTableCellView *cellView =
+        [(NSView *)sender findFirstParentOfType:[NSTableCellView class]];
+
+        if (cellView != nil) {
+            entity = cellView.objectValue;
+        }
+        _actionHandler(entity);
+    }
+}
+
 @end

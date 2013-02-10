@@ -25,10 +25,11 @@
 
 - (void)bindEntity:(id)entity
           withView:(NSView *)view
+             atRow:(NSInteger)row
          usingMeta:(PBListViewUIElementMeta *)meta {
 }
 
-- (id)buildUIElementWithMeta:(PBListViewUIElementMeta *)meta {
+- (id)buildUIElement {
     return nil;
 }
 
@@ -45,7 +46,28 @@
              @"views count not equal to metaList count %ld >= %ld", views.count, metaList.count);
 
     NSView *view = views[index];
+    NSView *prevView = index > 0 ? views[index-1] : nil;
     PBListViewUIElementMeta *meta = metaList[index];
+
+    if (meta.configurationHandler != nil) {
+        meta.configurationHandler(view, meta);
+    }
+
+    if (meta.image != nil && [view respondsToSelector:@selector(setImage:)]) {
+        [(NSButton *)view setImage:meta.image];
+    }
+
+    if (meta.alternateImage != nil && [view respondsToSelector:@selector(setAlternateImage:)]) {
+        [(NSButton *)view setAlternateImage:meta.alternateImage];
+    }
+
+    if (meta.actionHandler != nil && [view respondsToSelector:@selector(setTarget:)]) {
+        [(NSButton *)view setTarget:meta];
+    }
+
+    if (meta.actionHandler != nil && [view respondsToSelector:@selector(setAction:)]) {
+        [(NSButton *)view setAction:@selector(invokeAction:)];
+    }
 
     CGFloat leftMargin =
     [[PBListViewConfig sharedInstance] leftMargin];
@@ -55,10 +77,6 @@
     NSString *visualFormat;
     NSArray *hConstraints;
 
-    if (meta.configurationHandler != nil) {
-        meta.configurationHandler(view, meta);
-    }
-
     CGFloat leftPadding = leftMargin;
 
     for (NSInteger i = 0; i < index; i++) {
@@ -66,8 +84,16 @@
         leftPadding += prevMeta.size.width;
     }
 
-    visualFormat =
-    [NSString stringWithFormat:@"H:|-(%f)-[v]-(>=%f)-|", leftPadding, rightMargin];
+    if (index == 0) {
+        visualFormat =
+        [NSString stringWithFormat:@"H:|-(%f)-[v]-(>=%f)-|", leftPadding, rightMargin];
+    } if (index == (views.count - 1)) {
+        visualFormat =
+        [NSString stringWithFormat:@"H:|-(<=%f)-[v]-(%f)-|", leftPadding, rightMargin];
+    } else {
+        visualFormat =
+        [NSString stringWithFormat:@"H:|-(<=%f)-[v]-(>=%f)-|", leftPadding, rightMargin];
+    }
 
     hConstraints =
     [NSLayoutConstraint
@@ -78,7 +104,26 @@
 
     [view.superview addConstraints:hConstraints];
 
-//    [NSLayoutConstraint addWidthConstraint:meta.width toView:view];
+    if (prevView != nil) {
+
+        NSLayoutConstraint *constraint =
+        [NSLayoutConstraint
+         constraintWithItem:view
+         attribute:NSLayoutAttributeLeft
+         relatedBy:NSLayoutRelationGreaterThanOrEqual
+         toItem:prevView
+         attribute:NSLayoutAttributeRight
+         multiplier:1.0f
+         constant:0.0f];
+
+        [view.superview addConstraint:constraint];
+    }
+
+    if (index == 0) {
+        [NSLayoutConstraint addWidthConstraint:meta.size.width toView:view];
+    } else {
+        [NSLayoutConstraint addMaxWidthConstraint:meta.size.width toView:view];
+    }
 
     [NSLayoutConstraint addHeightConstraint:meta.size.height toView:view];
 

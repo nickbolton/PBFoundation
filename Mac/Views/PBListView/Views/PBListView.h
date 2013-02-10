@@ -12,6 +12,7 @@
 #import "PBListViewUIElementBinder.h"
 #import "PBListViewTextFieldBinder.h"
 #import "PBListViewButtonBinder.h"
+#import "PBListViewSwitchButtonBinder.h"
 
 @class PBListViewUIElementMeta;
 

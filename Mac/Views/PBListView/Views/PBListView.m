@@ -78,10 +78,18 @@
     NSSize minSize = [[PBListViewConfig sharedInstance] minSize];
     NSSize maxSize = [[PBListViewConfig sharedInstance] maxSize];
 
-    [NSLayoutConstraint
-     addMinWidthConstraint:minSize.width maxWidthConstraint:maxSize.width toView:self];
-    [NSLayoutConstraint
-     addMinHeightConstraint:minSize.height maxHeightConstraint:maxSize.height toView:self];
+    NSScrollView *scrollView = [self findFirstParentOfType:[NSScrollView class]];
+
+    if (scrollView != nil) {
+        [NSLayoutConstraint
+         addMinWidthConstraint:minSize.width
+         maxWidthConstraint:maxSize.width
+         toView:scrollView];
+        [NSLayoutConstraint
+         addMinHeightConstraint:minSize.height
+         maxHeightConstraint:maxSize.height
+         toView:scrollView];
+    }
 }
 
 - (void)visualizeConstraints {
@@ -230,8 +238,7 @@
 }
 
 - (NSTableCellView *)buildCellViewForEntity:(id)entity
-                                      atRow:(NSInteger)row
-                          withTotalEntities:(NSInteger)count {
+                                      atRow:(NSInteger)row {
 
     NSRect frame = NSMakeRect(0.0f, 0.0f, NSWidth(self.frame), self.rowHeight);
     NSTableCellView *cellView = [[NSTableCellView alloc] initWithFrame:frame];
@@ -247,7 +254,7 @@
 
     for (PBListViewUIElementMeta *meta in metaList) {
 
-        NSView *view = [meta.binder buildUIElementWithMeta:meta];
+        NSView *view = [meta.binder buildUIElement];
         view.translatesAutoresizingMaskIntoConstraints = NO;
         [cellView addSubview:view];
 
@@ -264,6 +271,16 @@
     }];
 
     return cellView;
+}
+
+#pragma mark - Key Handling
+
+- (void)keyDown:(NSEvent *)event {
+    [super keyDown:event];
+}
+
+- (void)keyUp:(NSEvent *)event {
+    [super keyUp:event];
 }
 
 #pragma mark - NSTableViewDataSource/Delegate Conformance
@@ -302,16 +319,17 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             cellView =
             [self
              buildCellViewForEntity:entity
-             atRow:row
-             withTotalEntities:self.sourceArray.count];
+             atRow:row];
             cellView.identifier = reuseKey;
         }
+
+        cellView.objectValue = entity;
 
         NSInteger uiElementIndex = 0;
         for (PBListViewUIElementMeta *meta in [self registeredUIElementsForEntity:[entity class]]) {
             NSView *uiElement =
             [cellView.subviews objectAtIndex:uiElementIndex];
-            [meta.binder bindEntity:entity withView:uiElement usingMeta:meta];
+            [meta.binder bindEntity:entity withView:uiElement atRow:row usingMeta:meta];
             uiElementIndex++;
         }
     }

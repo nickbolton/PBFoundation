@@ -14,7 +14,7 @@
 
 @implementation PBListViewTextFieldBinder
 
-- (id)buildUIElementWithMeta:(PBListViewUIElementMeta *)meta {
+- (id)buildUIElement {
     NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
     PBShadowTextFieldCell *cell = [[PBShadowTextFieldCell alloc] init];
     cell.yoffset = -2.0f;
@@ -38,7 +38,10 @@
 
 - (void)bindEntity:(id)entity
           withView:(NSTextField *)textField
+             atRow:(NSInteger)row
          usingMeta:(PBListViewUIElementMeta *)meta {
+
+    [super bindEntity:entity withView:textField atRow:row usingMeta:meta];
 
     NSAssert([textField isKindOfClass:[NSTextField class]],
              @"view is not of type NSTextField");
@@ -50,6 +53,10 @@
     if (meta.keyPath != nil) {
         id value = [entity valueForKeyPath:meta.keyPath];
         if (value != nil) {
+
+            if (meta.valueTransformer != nil) {
+                value = meta.valueTransformer(value);
+            }
 
             NSAssert([value isKindOfClass:[NSString class]],
                      @"value of %@ at keyPath '%@' is not an NSString",

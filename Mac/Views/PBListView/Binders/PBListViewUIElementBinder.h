@@ -17,6 +17,7 @@
 
 - (void)bindEntity:(id)entity
           withView:(NSView *)view
+             atRow:(NSInteger)row
          usingMeta:(PBListViewUIElementMeta *)meta;
 
 - (void)configureView:(PBListView *)listView
@@ -24,6 +25,6 @@
              metaList:(NSArray *)metaList
               atIndex:(NSInteger)index;
 
-- (id)buildUIElementWithMeta:(PBListViewUIElementMeta *)meta;
+- (id)buildUIElement;
 
 @end
