@@ -12,22 +12,52 @@
 @class PBListViewUIElementMeta;
 
 typedef void(^PBUIConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
-typedef void(^PBUIActionHandler)(id entity);
+typedef void(^PBUIActionHandler)(id sender, id entity);
 typedef id(^PBUIValueTransformer)(id value);
 
 @interface PBListViewUIElementMeta : NSObject
 
 @property (nonatomic, readonly) NSString *keyPath;
 @property (nonatomic, readonly) Class entityType;
-@property (nonatomic, readwrite) CGFloat leftPadding;
-@property (nonatomic, readwrite) NSSize size;
-@property (nonatomic, strong) NSImage *image;
-@property (nonatomic, strong) NSImage *alternateImage;
-@property (nonatomic, strong) NSImage *hoverImage;
-@property (nonatomic, copy) PBUIValueTransformer valueTransformer;
-@property (nonatomic, copy) PBUIActionHandler actionHandler;
+@property (nonatomic, readonly) NSInteger depth;
 @property (nonatomic, readonly) PBListViewUIElementBinder *binder;
 @property (nonatomic, readonly) PBUIConfigurationHandler configurationHandler;
+@property (nonatomic, readonly) BOOL hiddenWhenMouseNotInRow;
+
+@property (nonatomic, readwrite) CGFloat leftPadding;
+@property (nonatomic, readwrite) NSSize size;
+@property (nonatomic, strong) NSFont *textFont;
+@property (nonatomic, strong) NSColor *textColor;
+@property (nonatomic, strong) NSColor *textShadowColor;
+@property (nonatomic) NSSize shadowOffset;
+@property (nonatomic) BOOL fixedPosition;
+@property (nonatomic) BOOL rightJustified;
+@property (nonatomic) BOOL hoverAlphaEnabled;
+@property (nonatomic) CGFloat hoverOffAlpha;
+@property (nonatomic, strong) NSImage *image;
+@property (nonatomic, strong) NSImage *alternateImage;
+@property (nonatomic, strong) NSImage *disabledImage;
+@property (nonatomic, copy) PBUIValueTransformer valueTransformer;
+@property (nonatomic, copy) PBUIActionHandler actionHandler;
+
++ (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
+                                                 keyPath:(NSString *)keyPath
+                                                   depth:(NSInteger)depth
+                                              binderType:(Class)binderType
+                                 hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
+                                           configuration:(PBUIConfigurationHandler)configuration;
+
++ (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
+                                                 keyPath:(NSString *)keyPath
+                                              binderType:(Class)binderType
+                                 hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
+                                           configuration:(PBUIConfigurationHandler)configuration;
+
++ (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
+                                                 keyPath:(NSString *)keyPath
+                                                   depth:(NSInteger)depth
+                                              binderType:(Class)binderType
+                                           configuration:(PBUIConfigurationHandler)configuration;
 
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath

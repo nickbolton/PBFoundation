@@ -29,8 +29,14 @@
          usingMeta:(PBListViewUIElementMeta *)meta {
 }
 
-- (id)buildUIElement {
+- (id)buildUIElement:(PBListView *)listView {
     return nil;
+}
+
+- (void)postClientConfiguration:(PBListView *)listView
+                           meta:(PBListViewUIElementMeta *)meta
+                           view:(NSView *)view
+                          index:(NSInteger)index {
 }
 
 - (void)configureView:(PBListView *)listView
@@ -53,13 +59,7 @@
         meta.configurationHandler(view, meta);
     }
 
-    if (meta.image != nil && [view respondsToSelector:@selector(setImage:)]) {
-        [(NSButton *)view setImage:meta.image];
-    }
-
-    if (meta.alternateImage != nil && [view respondsToSelector:@selector(setAlternateImage:)]) {
-        [(NSButton *)view setAlternateImage:meta.alternateImage];
-    }
+    [self postClientConfiguration:listView meta:meta view:view index:index];
 
     if (meta.actionHandler != nil && [view respondsToSelector:@selector(setTarget:)]) {
         [(NSButton *)view setTarget:meta];
@@ -69,31 +69,56 @@
         [(NSButton *)view setAction:@selector(invokeAction:)];
     }
 
-    CGFloat leftMargin =
-    [[PBListViewConfig sharedInstance] leftMargin];
-    CGFloat rightMargin =
-    [[PBListViewConfig sharedInstance] rightMargin];
+    CGFloat leftMargin = [listView.listViewConfig leftMargin];
+    CGFloat rightMargin = [listView.listViewConfig rightMargin];
 
     NSString *visualFormat;
     NSArray *hConstraints;
 
-    CGFloat leftPadding = leftMargin;
+    CGFloat fixedPosition = leftMargin + meta.leftPadding;
 
-    for (NSInteger i = 0; i < index; i++) {
-        PBListViewUIElementMeta *prevMeta = metaList[i];
-        leftPadding += prevMeta.size.width;
+    if (meta.fixedPosition) {
+        for (NSInteger i = 0; i < index; i++) {
+
+            PBListViewUIElementMeta *prevMeta = metaList[i];
+            fixedPosition += prevMeta.size.width;
+        }
     }
 
-    if (index == 0) {
+    if (meta.rightJustified) {
         visualFormat =
-        [NSString stringWithFormat:@"H:|-(%f)-[v]-(>=%f)-|", leftPadding, rightMargin];
-    } if (index == (views.count - 1)) {
-        visualFormat =
-        [NSString stringWithFormat:@"H:|-(<=%f)-[v]-(%f)-|", leftPadding, rightMargin];
+        [NSString stringWithFormat:@"H:|-(>=%f)-[v]-(%f)-|", leftMargin, rightMargin];
     } else {
-        visualFormat =
-        [NSString stringWithFormat:@"H:|-(<=%f)-[v]-(>=%f)-|", leftPadding, rightMargin];
+
+        if (index == 0) {
+            visualFormat =
+            [NSString stringWithFormat:@"H:|-(%f)-[v]-(>=%f)-|", leftMargin, rightMargin];
+        } else {
+            if (meta.fixedPosition) {
+                visualFormat =
+                [NSString stringWithFormat:@"H:|-(%f)-[v]-(>=%f)-|", fixedPosition, rightMargin];
+            } else {
+                visualFormat =
+                [NSString stringWithFormat:@"H:[v]-(>=%f)-|", rightMargin];
+
+                NSLayoutConstraint *constraint =
+                [NSLayoutConstraint
+                 constraintWithItem:view
+                 attribute:NSLayoutAttributeLeft
+                 relatedBy:NSLayoutRelationEqual
+                 toItem:prevView
+                 attribute:NSLayoutAttributeRight
+                 multiplier:1.0f
+                 constant:meta.leftPadding];
+                
+                [view.superview addConstraint:constraint];
+
+            }
+        }
     }
+
+    NSLog(@"leftPadding: %f", meta.leftPadding);
+    NSLog(@"visualFormat: %@", visualFormat);
 
     hConstraints =
     [NSLayoutConstraint
@@ -103,21 +128,6 @@
      views:@{@"v" : view}];
 
     [view.superview addConstraints:hConstraints];
-
-    if (prevView != nil) {
-
-        NSLayoutConstraint *constraint =
-        [NSLayoutConstraint
-         constraintWithItem:view
-         attribute:NSLayoutAttributeLeft
-         relatedBy:NSLayoutRelationGreaterThanOrEqual
-         toItem:prevView
-         attribute:NSLayoutAttributeRight
-         multiplier:1.0f
-         constant:0.0f];
-
-        [view.superview addConstraint:constraint];
-    }
 
     if (index == 0) {
         [NSLayoutConstraint addWidthConstraint:meta.size.width toView:view];

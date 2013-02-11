@@ -35,7 +35,7 @@
 #else
 + (void)addMaxWidthConstraint:(CGFloat)maxWidth toView:(NSView *)view {
 #endif
-    if (maxWidth < 0) {
+    if (maxWidth == 0) {
         NSLog(@"ZZZ");
     }
     NSLayoutConstraint *constraint =

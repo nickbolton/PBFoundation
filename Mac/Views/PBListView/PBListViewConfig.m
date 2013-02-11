@@ -7,17 +7,15 @@
 //
 
 #import "PBListViewConfig.h"
+#import "PBListViewUIElementMeta.h"
 
 @interface PBListViewConfig()
 
+@property (nonatomic, strong) NSMutableDictionary *metaListRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowHeightRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowBackgroundImageRegistry;
-@property (nonatomic, strong) NSMutableDictionary *fontRegistry;
-@property (nonatomic, strong) NSMutableDictionary *textColorRegistry;
-@property (nonatomic, strong) NSMutableDictionary *textShadowColorRegistry;
 
 @end
-
 
 @implementation PBListViewConfig
 
@@ -25,123 +23,132 @@
     self = [super init];
 
     if (self != nil) {
+        self.metaListRegistry = [NSMutableDictionary dictionary];
         self.rowHeightRegistry = [NSMutableDictionary dictionary];
         self.rowBackgroundImageRegistry = [NSMutableDictionary dictionary];
-        self.fontRegistry = [NSMutableDictionary dictionary];
-        self.textColorRegistry = [NSMutableDictionary dictionary];
-        self.textShadowColorRegistry = [NSMutableDictionary dictionary];
         self.leftMargin = 10.0f;
         self.rightMargin = 10.0f;
         self.minSize = NSMakeSize(300.0f, 300.0f);
         self.maxSize = NSMakeSize(MAXFLOAT, MAXFLOAT);
         self.rowDividerLineColor = nil;
         self.rowDividerLineHeight = 1.0f;
+        self.selectedBackgroundColor = [NSColor colorWithRGBHex:0xD7E4F1];
+        self.selectedBorderColor = [NSColor colorWithRGBHex:0x3775BC alpha:1.0f];
+        self.selectedBorderRadius = 10.0f;
 
-        [self
-         registerDefaultFont:[NSFont fontWithName:@"HelveticaNeue" size:10.0f]
-         forType:PBListViewFontSmall];
-        [self
-         registerDefaultFont:[NSFont fontWithName:@"HelveticaNeue-Bold" size:10.0f]
-         forType:PBListViewFontSmallBold];
-        [self
-         registerDefaultFont:[NSFont fontWithName:@"HelveticaNeue" size:13.0f]
-         forType:PBListViewFontMedium];
-        [self
-         registerDefaultFont:[NSFont fontWithName:@"HelveticaNeue-Bold" size:13.0f]
-         forType:PBListViewFontMediumBold];
-        [self
-         registerDefaultFont:[NSFont fontWithName:@"HelveticaNeue" size:16.0f]
-         forType:PBListViewFontLarge];
-        [self
-         registerDefaultFont:[NSFont fontWithName:@"HelveticaNeue-Bold" size:16.0f]
-         forType:PBListViewFontLargeBold];
-        [self
-         registerDefaultFont:[NSFont fontWithName:@"HelveticaNeue" size:20.0f]
-         forType:PBListViewFontExtraLarge];
-        [self
-         registerDefaultFont:[NSFont fontWithName:@"HelveticaNeue-Bold" size:20.0f]
-         forType:PBListViewFontExtraLargeBold];
-        [self
-         registerDefaultTextColor:[NSColor whiteColor]
-         shadowColor:[NSColor blackColor]
-         forType:PBListViewTextColorLight];
-        [self
-         registerDefaultTextColor:[NSColor blackColor]
-         shadowColor:[NSColor whiteColor]
-         forType:PBListViewTextColorDark];
     }
 
     return self;
 }
 
-- (void)registerDefaultFont:(NSFont *)font forType:(PBListViewFont)fontType {
-    if (font != nil) {
-        [_fontRegistry setObject:font forKey:@(fontType)];
+#pragma mark - Meta registering
+
+// this returns an array of depths, each of which is an array of elements
+- (NSMutableArray *)metaListDepthsForEntityType:(Class)entityType {
+
+    NSString *key = NSStringFromClass(entityType);
+
+    NSMutableArray *registeredElements =
+    [_metaListRegistry objectForKey:key];
+
+    if (registeredElements == nil) {
+        registeredElements = [NSMutableArray array];
+        [_metaListRegistry setObject:registeredElements forKey:key];
     }
+
+    return registeredElements;
 }
 
-- (NSFont *)defaultFontForType:(PBListViewFont)fontType {
-    return [_fontRegistry objectForKey:@(fontType)];
-}
+- (NSArray *)metaListForEntityType:(Class)entityType
+                           atDepth:(NSUInteger)depth {
+    NSMutableArray *depths =
+    [self metaListDepthsForEntityType:entityType];
 
-- (void)registerDefaultTextColor:(NSColor *)color
-                     shadowColor:(NSColor *)shadowColor
-                         forType:(PBListViewTextColor)colorType {
-    if (color != nil) {
-        [_textColorRegistry setObject:color forKey:@(colorType)];
+    while (depths.count <= depth) {
+        [depths addObject:[NSMutableArray array]];
     }
-    if (shadowColor != nil) {
-        [_textShadowColorRegistry setObject:shadowColor forKey:@(colorType)];
+
+    return depths[depth];
+}
+
+- (void)registerUIElementMeta:(PBListViewUIElementMeta *)meta {
+
+    if (meta != nil) {
+        NSAssert(meta.entityType != nil, @"Meta is missing entityType");
+
+        NSMutableArray *metaList =
+        (NSMutableArray *)[self metaListForEntityType:meta.entityType atDepth:meta.depth];
+        [metaList addObject:meta];
     }
-}
-
-- (NSColor *)defaultTextColorForType:(PBListViewTextColor)colorType {
-    return [_textColorRegistry objectForKey:@(colorType)];
-}
-
-- (NSColor *)defaultTextShadowColorForType:(PBListViewTextColor)colorType {
-    return [_textShadowColorRegistry objectForKey:@(colorType)];
 }
 
 - (void)registerBackgroundImage:(NSImage *)image
                   forEntityType:(Class)entityType
                      atPosition:(PBListViewPositionType)positionType {
+    [self
+     registerBackgroundImage:image
+     forEntityType:entityType
+     atDepth:0
+     atPosition:positionType];
+}
+
+- (void)registerBackgroundImage:(NSImage *)image
+                  forEntityType:(Class)entityType
+                        atDepth:(NSUInteger)depth
+                     atPosition:(PBListViewPositionType)positionType {
 
     NSAssert(positionType < PBListViewPositionTypeCount,
              @"positionType is out of range %ld > %ld", positionType, PBListViewPositionTypeCount);
     
-    NSString *key = NSStringFromClass(entityType);
     NSMutableArray *backgroundImages =
-    [_rowBackgroundImageRegistry objectForKey:key];
+    [self
+     backgroundImagesForEntityType:entityType
+     atDepth:depth];
 
-    if (backgroundImages == nil) {
-        backgroundImages = [NSMutableArray arrayWithCapacity:PBListViewPositionTypeCount];
+    if (backgroundImages.count == 0) {
 
         for (NSInteger i = 0; i < PBListViewPositionTypeCount; i++) {
             [backgroundImages addObject:image];
         }
 
-        [_rowBackgroundImageRegistry setObject:backgroundImages forKey:key];
     } else {
         [backgroundImages replaceObjectAtIndex:positionType withObject:image];
     }
 }
 
 - (NSImage *)backgroundImageForEntityType:(Class)entityType
+                                  atDepth:(NSUInteger)depth
                                atPosition:(PBListViewPositionType)positionType {
 
     NSAssert(positionType < PBListViewPositionTypeCount,
              @"positionType is out of range %ld > %ld", positionType, PBListViewPositionTypeCount);
 
-    NSString *key = NSStringFromClass(entityType);
-    NSArray *backgroundImages =
-    [_rowBackgroundImageRegistry objectForKey:key];
-
-    if (backgroundImages != nil) {
+    NSMutableArray *backgroundImages =
+    [self backgroundImagesForEntityType:entityType atDepth:depth];
+    
+    if (positionType < backgroundImages.count) {
         return backgroundImages[positionType];
     }
     
     return nil;
+}
+
+- (NSMutableArray *)backgroundImagesForEntityType:(Class)entityType
+                                          atDepth:(NSUInteger)depth {
+    NSString *key = NSStringFromClass(entityType);
+    NSMutableArray *depths =
+    [_rowBackgroundImageRegistry objectForKey:key];
+
+    if (depths == nil) {
+        depths = [NSMutableArray array];
+        [_rowBackgroundImageRegistry setObject:depths forKey:key];
+    }
+
+    while (depths.count <= depth) {
+        [depths addObject:[NSMutableArray array]];
+    }
+
+    return depths[depth];
 }
 
 - (void)registerRowHeight:(CGFloat)rowHeight forEntityType:(Class)entityType {
@@ -152,25 +159,6 @@
 - (CGFloat)rowHeightForEntityType:(Class)entityType {
     NSString *key = NSStringFromClass(entityType);
     return [[_rowHeightRegistry objectForKey:key] floatValue];
-}
-
-#pragma mark - Singleton Methods
-
-static dispatch_once_t predicate_;
-static PBListViewConfig *sharedInstance_ = nil;
-
-+ (id)sharedInstance {
-    
-    dispatch_once(&predicate_, ^{
-        sharedInstance_ = [PBListViewConfig alloc];
-        sharedInstance_ = [sharedInstance_ init];
-    });
-    
-    return sharedInstance_;
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-    return self;
 }
 
 @end

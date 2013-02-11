@@ -25,6 +25,6 @@
              metaList:(NSArray *)metaList
               atIndex:(NSInteger)index;
 
-- (id)buildUIElement;
+- (id)buildUIElement:(PBListView *)listView;
 
 @end

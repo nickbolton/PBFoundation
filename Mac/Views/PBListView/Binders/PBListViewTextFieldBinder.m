@@ -14,27 +14,37 @@
 
 @implementation PBListViewTextFieldBinder
 
-- (id)buildUIElement {
+- (id)buildUIElement:(PBListView *)listView {
     NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
     PBShadowTextFieldCell *cell = [[PBShadowTextFieldCell alloc] init];
     cell.yoffset = -2.0f;
     textField.cell = cell;
 
-    textField.font = [[PBListViewConfig sharedInstance] defaultFontForType:PBListViewFontMedium];
-    textField.textColor = [[PBListViewConfig sharedInstance] defaultTextColorForType:PBListViewTextColorDark];
-    cell.textShadowColor = [[PBListViewConfig sharedInstance] defaultTextShadowColorForType:PBListViewTextColorDark];
-    cell.textShadowOffset = NSMakeSize(0.0f, -1.0f);
     textField.alignment = NSLeftTextAlignment;
     textField.bezeled = NO;
     textField.editable = NO;
     textField.selectable = NO;
     textField.drawsBackground = NO;
-    textField.backgroundColor = [NSColor redColor];
-    textField.drawsBackground = YES;
+//    [textField DEBUG_colorizeSelfAndSubviews];
     ((NSTextFieldCell *)textField.cell).lineBreakMode = NSLineBreakByTruncatingTail;
 
     return textField;
 }
+
+- (void)postClientConfiguration:(PBListView *)listView
+                           meta:(PBListViewUIElementMeta *)meta
+                           view:(NSTextField *)textField
+                          index:(NSInteger)index {
+    NSAssert([textField isKindOfClass:[NSTextField class]], @"view is not a NSTextField");
+
+    PBShadowTextFieldCell *cell = textField.cell;
+
+    textField.font = meta.textFont;
+    textField.textColor = meta.textColor;
+    cell.textShadowColor = meta.textShadowColor;
+    cell.textShadowOffset = meta.shadowOffset;
+}
+
 
 - (void)bindEntity:(id)entity
           withView:(NSTextField *)textField

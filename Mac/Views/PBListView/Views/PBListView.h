@@ -13,6 +13,15 @@
 #import "PBListViewTextFieldBinder.h"
 #import "PBListViewButtonBinder.h"
 #import "PBListViewSwitchButtonBinder.h"
+#import "PBListViewMenuButtonBinder.h"
+#import "PBListViewImageBinder.h"
+#import "PBButton.h"
+
+@protocol PBListViewEntity <NSObject>
+
+- (NSUInteger)listViewEntityDepth;
+
+@end
 
 @class PBListViewUIElementMeta;
 
@@ -20,8 +29,8 @@
 
 @property (nonatomic, strong) Class parentEntityType;
 @property (nonatomic, strong) NSArray *staticEntities;
-
-- (void)registerUIElementMeta:(PBListViewUIElementMeta *)meta;
+@property (nonatomic, readonly) PBListViewConfig *listViewConfig;
+@property (nonatomic) CGFloat cornerRadius;
 
 - (void)visualizeConstraints;
 

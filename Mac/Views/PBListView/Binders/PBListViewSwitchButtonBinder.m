@@ -11,8 +11,8 @@
 
 @implementation PBListViewSwitchButtonBinder
 
-- (id)buildUIElement {
-    NSButton *button = [super buildUIElement];
+- (id)buildUIElement:(PBListView *)listView {
+    NSButton *button = [super buildUIElement:listView];
     button.buttonType = NSSwitchButton;
     return button;
 }

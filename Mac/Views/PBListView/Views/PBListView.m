@@ -10,15 +10,19 @@
 #import "PBListViewUIElementMeta.h"
 #import "PBListViewUIElementBinder.h"
 #import "PBListViewConfig.h"
+#import "PBTableRowView.h"
+#import "PBShadowTextFieldCell.h"
 
-@interface PBListView() <NSTableViewDataSource, NSTableViewDelegate>
+@interface PBListView() <NSTableViewDataSource, NSTableViewDelegate, PBTableRowDelegate> {
+
+    BOOL _sizesSet;
+}
 
 @property (nonatomic, strong) NSTreeController *treeController;
 @property (nonatomic, readonly) NSArray *sourceArray;
-@property (nonatomic, strong) NSMutableDictionary *uiElementRegistry;
-
-@property (nonatomic, strong) NSTableRowView *firstRowView;
-@property (nonatomic, strong) NSTableCellView *firstCellView;
+@property (nonatomic, readwrite) PBListViewConfig *listViewConfig;
+@property (nonatomic, strong) NSIndexSet *previousSelection;
+@property (nonatomic, strong) NSTrackingArea *trackingArea;
 
 @end
 
@@ -41,7 +45,8 @@
 }
 
 - (void)commonInit {
-    self.uiElementRegistry = [NSMutableDictionary dictionary];
+    self.previousSelection = [NSMutableIndexSet indexSet];
+    self.listViewConfig = [[PBListViewConfig alloc] init];
 }
 
 - (void)awakeFromNib {
@@ -62,7 +67,7 @@
     self.gridStyleMask = NSTableViewGridNone;
     self.headerView = nil;
     self.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-
+    
     [self.tableColumns
      enumerateObjectsWithOptions:NSEnumerationReverse
      usingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -75,21 +80,32 @@
          }
      }];
 
-    NSSize minSize = [[PBListViewConfig sharedInstance] minSize];
-    NSSize maxSize = [[PBListViewConfig sharedInstance] maxSize];
-
     NSScrollView *scrollView = [self findFirstParentOfType:[NSScrollView class]];
+    scrollView.drawsBackground = NO;
+    scrollView.borderType = NSNoBorder;
+}
 
-    if (scrollView != nil) {
-        [NSLayoutConstraint
-         addMinWidthConstraint:minSize.width
-         maxWidthConstraint:maxSize.width
-         toView:scrollView];
-        [NSLayoutConstraint
-         addMinHeightConstraint:minSize.height
-         maxHeightConstraint:maxSize.height
-         toView:scrollView];
+- (void)reloadData {
+    if (_sizesSet == NO) {
+        NSSize minSize = _listViewConfig.minSize;
+        NSSize maxSize = _listViewConfig.maxSize;
+
+        NSScrollView *scrollView = [self findFirstParentOfType:[NSScrollView class]];
+        
+        if (scrollView != nil) {
+            [NSLayoutConstraint
+             addMinWidthConstraint:minSize.width
+             maxWidthConstraint:maxSize.width
+             toView:scrollView];
+            [NSLayoutConstraint
+             addMinHeightConstraint:minSize.height
+             maxHeightConstraint:maxSize.height
+             toView:scrollView];
+        }
+        _sizesSet = YES;
     }
+
+    [super reloadData];
 }
 
 - (void)visualizeConstraints {
@@ -127,40 +143,13 @@
             position = PBListViewPositionTypeLast;
         }
 
-        image = [[PBListViewConfig sharedInstance]
+        image = [_listViewConfig
                  backgroundImageForEntityType:[entity class]
+                 atDepth:[entity listViewEntityDepth]
                  atPosition:position];
     }
 
     return image;
-}
-
-#pragma mark - UI Element registering
-
-- (NSMutableArray *)registeredUIElementsForEntity:(Class)entityType {
-
-    NSString *key = NSStringFromClass(entityType);
-    
-    NSMutableArray *registeredElements =
-    [_uiElementRegistry objectForKey:key];
-
-    if (registeredElements == nil) {
-        registeredElements = [NSMutableArray array];
-        [_uiElementRegistry setObject:registeredElements forKey:key];
-    }
-
-    return registeredElements;
-}
-
-- (void)registerUIElementMeta:(PBListViewUIElementMeta *)meta {
-
-    if (meta != nil) {
-        NSAssert(meta.entityType != nil, @"Meta is missing entityType");
-
-        NSMutableArray *registeredElements =
-        [self registeredUIElementsForEntity:meta.entityType];
-        [registeredElements addObject:meta];
-    }
 }
 
 #pragma mark - Entity getting
@@ -172,12 +161,17 @@
     return (NSArray *)_treeController.arrangedObjects;
 }
 
-- (id)entityAtRow:(NSInteger)row {
+- (id <PBListViewEntity>)entityAtRow:(NSInteger)row {
 
     NSArray *sourceArray = self.sourceArray;
 
-    if (row < sourceArray.count) {
-        return [sourceArray objectAtIndex:row];
+    if (row >= 0 && row < sourceArray.count) {
+        id <PBListViewEntity> entity = [sourceArray objectAtIndex:row];
+
+        NSAssert([entity conformsToProtocol:@protocol(PBListViewEntity)],
+                 @"List view entities must conform to PBListViewEntity");
+
+        return entity;
     }
 
     return nil;
@@ -190,34 +184,15 @@
                         withTotalEntities:(NSInteger)count {
 
     NSRect frame = NSMakeRect(0.0f, 0.0f, NSWidth(self.frame), self.rowHeight);
-    NSTableRowView *rowView = [[NSTableRowView alloc] initWithFrame:frame];
+    PBTableRowView *rowView = [[PBTableRowView alloc] initWithFrame:frame];
     rowView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    rowView.delegate = self;
 
-    NSImage *backgroundImage =
-    [self backgroundImageForRow:row];
-
-    if (backgroundImage != nil) {
-        NSRect backgroundImageFrame = frame;
-        backgroundImageFrame.size.height = backgroundImage.size.height;
-        NSImageView *imageView =
-        [[NSImageView alloc] initWithFrame:backgroundImageFrame];
-        imageView.translatesAutoresizingMaskIntoConstraints = NO;
-        imageView.image = backgroundImage;
-        imageView.imageScaling = NSImageScaleAxesIndependently;
-        imageView.imageAlignment = NSImageAlignCenter;
-
-        [rowView addSubview:imageView];
-
-        [NSLayoutConstraint expandToSuperview:imageView];
-    }
-
-    NSColor *dividerLineColor =
-    [[PBListViewConfig sharedInstance] rowDividerLineColor];
+    NSColor *dividerLineColor = _listViewConfig.rowDividerLineColor;
     
     if (row > 0 && dividerLineColor != nil) {
 
-        CGFloat lineHeight = 
-        [[PBListViewConfig sharedInstance] rowDividerLineHeight];
+        CGFloat lineHeight = _listViewConfig.rowDividerLineHeight;
 
         NSRect topLineFrame = frame;
         topLineFrame.size.height = lineHeight;
@@ -237,7 +212,7 @@
     return rowView;
 }
 
-- (NSTableCellView *)buildCellViewForEntity:(id)entity
+- (NSTableCellView *)buildCellViewForEntity:(id <PBListViewEntity>)entity
                                       atRow:(NSInteger)row {
 
     NSRect frame = NSMakeRect(0.0f, 0.0f, NSWidth(self.frame), self.rowHeight);
@@ -249,16 +224,43 @@
         [view removeFromSuperview];
     }
 
-    NSArray *metaList = [self registeredUIElementsForEntity:[entity class]];
+    NSArray *metaList =
+    [_listViewConfig
+     metaListForEntityType:[entity class]
+     atDepth:[entity listViewEntityDepth]];
+    
     NSMutableArray *views = [NSMutableArray arrayWithCapacity:metaList.count];
 
+    NSInteger index = 0;
     for (PBListViewUIElementMeta *meta in metaList) {
 
-        NSView *view = [meta.binder buildUIElement];
+        // only the last most element can be right-justified
+        if (index < (metaList.count - 1)) {
+            meta.rightJustified = NO;
+        }
+
+        NSView *view = [meta.binder buildUIElement:self];
         view.translatesAutoresizingMaskIntoConstraints = NO;
         [cellView addSubview:view];
 
         [views addObject:view];
+        index++;
+    }
+
+    if (views.count == 0) {
+        NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+        PBShadowTextFieldCell *cell = [[PBShadowTextFieldCell alloc] init];
+        cell.yoffset = -2.0f;
+        textField.cell = cell;
+
+        textField.alignment = NSCenterTextAlignment;
+        textField.bezeled = NO;
+        textField.editable = NO;
+        textField.selectable = NO;
+        textField.drawsBackground = NO;
+        textField.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        textField.stringValue = NSLocalizedString(@"No UI Elements Configured", nil);
+        [cellView addSubview:textField];
     }
 
     [views enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -304,6 +306,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (entity != nil) {
 
+        NSArray *metaList =
+        [_listViewConfig
+         metaListForEntityType:[entity class]
+         atDepth:[entity listViewEntityDepth]];
+
         NSString *reuseKey =
         [NSString stringWithFormat:@"%@-%ld/%ld",
          NSStringFromClass([entity class]),
@@ -326,25 +333,35 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         cellView.objectValue = entity;
 
         NSInteger uiElementIndex = 0;
-        for (PBListViewUIElementMeta *meta in [self registeredUIElementsForEntity:[entity class]]) {
+
+        BOOL startMouseEnteredEvents = NO;
+
+        PBTableRowView *rowView = [self rowViewAtRow:row makeIfNecessary:NO];
+
+        for (PBListViewUIElementMeta *meta in metaList) {
             NSView *uiElement =
             [cellView.subviews objectAtIndex:uiElementIndex];
             [meta.binder bindEntity:entity withView:uiElement atRow:row usingMeta:meta];
+
+            uiElement.hidden = meta.hiddenWhenMouseNotInRow;
+
+            startMouseEnteredEvents |= meta.hiddenWhenMouseNotInRow;
+
             uiElementIndex++;
+        }
+
+        if (startMouseEnteredEvents && [rowView mouseEnteredEventsStarted] == NO) {
+            [rowView startMouseEnteredEvents];
         }
     }
 
-    if (self.firstCellView == nil) {
-        self.firstCellView = cellView;
-    }
-    
     return cellView;
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView
                 rowViewForRow:(NSInteger)row {
 
-    NSTableRowView *rowView = nil;
+    PBTableRowView *rowView = nil;
     id entity = [self entityAtRow:row];
 
     if (entity != nil) {
@@ -362,15 +379,38 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
         if (rowView == nil) {
             rowView =
-            [self
-             buildRowViewForEntity:entity
-             atRow:row
-             withTotalEntities:self.sourceArray.count];
+            (id)[self
+                 buildRowViewForEntity:entity
+                 atRow:row
+                 withTotalEntities:self.sourceArray.count];
         }
-    }
 
-    if (self.firstRowView == nil) {
-        self.firstRowView = rowView;
+        NSImage *backgroundImage =
+        [self backgroundImageForRow:row];
+
+        if (backgroundImage != nil) {
+
+            if (rowView.backgroundImageView == nil) {
+                NSImageView *imageView =
+                [[NSImageView alloc] initWithFrame:rowView.bounds];
+                imageView.translatesAutoresizingMaskIntoConstraints = NO;
+                imageView.imageScaling = NSImageScaleAxesIndependently;
+                imageView.imageAlignment = NSImageAlignCenter;
+
+                [rowView addSubview:imageView];
+
+                [NSLayoutConstraint expandToSuperview:imageView];
+                rowView.backgroundImageView = imageView;
+            }
+            
+            rowView.backgroundImageView.image = backgroundImage;
+        }
+
+        rowView.selectedBackgroundColor = _listViewConfig.selectedBackgroundColor;
+        rowView.selectedBorderColor = _listViewConfig.selectedBorderColor;
+        rowView.selectedBorderRadius = _listViewConfig.selectedBorderRadius;
+
+        [rowView stopMouseEnteredEvents];        
     }
 
     return rowView;
@@ -390,9 +430,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         if (backgroundImage != nil) {
             rowHeight = backgroundImage.size.height;
         } else {
-            rowHeight =
-            [[PBListViewConfig sharedInstance]
-             rowHeightForEntityType:[entity class]];
+            rowHeight = [_listViewConfig rowHeightForEntityType:[entity class]];
         }
     }
 
@@ -402,5 +440,108 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     return rowHeight;
 }
+
+#pragma mark - Selection
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+
+    NSMutableSet *affectedRows = [NSMutableSet set];
+
+    [_previousSelection enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        [affectedRows addObject:@(idx)];
+    }];
+
+    [self.selectedRowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        [affectedRows addObject:@(idx)];
+    }];
+
+    for (NSNumber *row in affectedRows) {
+        NSTableRowView *rowView = [self rowViewAtRow:row.integerValue makeIfNecessary:NO];
+        [rowView setNeedsDisplay:YES];
+    }
+
+    self.previousSelection = [self.selectedRowIndexes copy];
+}
+
+#pragma mark - PBTableRowDelegate Conformance
+
+- (void)rowViewSetHoverState:(PBTableRowView *)rowView {
+    [self setStateForUIElementsForRowView:rowView hidden:NO];
+}
+
+- (void)rowViewClearHoverState:(PBTableRowView *)rowView {
+    [self setStateForUIElementsForRowView:rowView hidden:YES];
+}
+
+- (void)setStateForUIElementsForRowView:(PBTableRowView *)rowView
+                                 hidden:(BOOL)hidden {
+
+    NSInteger row = [self rowForView:rowView];
+
+    id entity = [self entityAtRow:row];
+
+    if (entity != nil) {
+
+        NSArray *metaList =
+        [_listViewConfig
+         metaListForEntityType:[entity class]
+         atDepth:[entity listViewEntityDepth]];
+
+        NSInteger uiElementIndex = 0;
+
+        NSTableCellView *cellView = [rowView viewAtColumn:0];
+
+        for (PBListViewUIElementMeta *meta in metaList) {
+            NSView *uiElement =
+            [cellView.subviews objectAtIndex:uiElementIndex];
+
+            if (meta.hiddenWhenMouseNotInRow) {
+                uiElement.hidden = hidden;
+            }
+            uiElementIndex++;
+
+            if (hidden) {
+                if ([uiElement respondsToSelector:@selector(stopTracking)]) {
+                    [uiElement performSelector:@selector(stopTracking)];
+                }
+            } else {
+                if ([uiElement respondsToSelector:@selector(startTracking)]) {
+                    [uiElement performSelector:@selector(startTracking)];
+                }
+            }
+        }
+    }
+
+}
+
+#pragma mark - User Interaction
+
+//- (void)mouseDown:(NSEvent *)event {
+//
+//    [super mouseDown:event];
+//
+//    NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
+//    NSInteger row = [self rowAtPoint:location];
+//
+//    if (row < 0) return;
+//
+//    NSTableRowView *rowView = [self rowViewAtRow:row makeIfNecessary:NO];
+//
+//    if (rowView == nil) return;
+//
+//    if (_trackingArea != nil) {
+//        [self removeTrackingArea:_trackingArea];
+//    }
+//
+//    self.trackingArea =
+//    [[NSTrackingArea alloc]
+//     initWithRect:rowView.frame
+//     options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways | NSTrackingInVisibleRect | NSTrackingEnabledDuringMouseDrag
+//     owner:self
+//     userInfo:nil];
+//    [self addTrackingArea:_trackingArea];
+//
+//}
+
 
 @end

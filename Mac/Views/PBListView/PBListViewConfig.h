@@ -22,25 +22,9 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
     PBListViewUIElementTypeImage,
 };
 
-typedef NS_ENUM(NSInteger, PBListViewFont) {
-    PBListViewFontSmall = 0,
-    PBListViewFontSmallBold,
-    PBListViewFontMedium,
-    PBListViewFontMediumBold,
-    PBListViewFontLarge,
-    PBListViewFontLargeBold,
-    PBListViewFontExtraLarge,
-    PBListViewFontExtraLargeBold,
-};
-
-typedef NS_ENUM(NSInteger, PBListViewTextColor) {
-    PBListViewTextColorLight = 0,
-    PBListViewTextColorDark,
-};
+@class PBListViewUIElementMeta;
 
 @interface PBListViewConfig : NSObject
-
-+ (PBListViewConfig *)sharedInstance;
 
 @property (nonatomic) CGFloat leftMargin;
 @property (nonatomic) CGFloat rightMargin;
@@ -49,20 +33,25 @@ typedef NS_ENUM(NSInteger, PBListViewTextColor) {
 @property (nonatomic, strong) NSColor *rowDividerLineColor;
 @property (nonatomic) CGFloat rowDividerLineHeight;
 
+@property (nonatomic, strong) NSColor *selectedBackgroundColor;
+@property (nonatomic, strong) NSColor *selectedBorderColor;
+@property (nonatomic) CGFloat selectedBorderRadius;
+
+- (void)registerUIElementMeta:(PBListViewUIElementMeta *)meta;
+- (NSArray *)metaListForEntityType:(Class)entityType
+                           atDepth:(NSUInteger)depth;
+
 - (void)registerBackgroundImage:(NSImage *)image
                   forEntityType:(Class)entityType
                      atPosition:(PBListViewPositionType)positionType;
+- (void)registerBackgroundImage:(NSImage *)image
+                  forEntityType:(Class)entityType
+                        atDepth:(NSUInteger)depth
+                     atPosition:(PBListViewPositionType)positionType;
+
 - (NSImage *)backgroundImageForEntityType:(Class)entityType
+                                  atDepth:(NSUInteger)depth
                                atPosition:(PBListViewPositionType)positionType;
-
-- (void)registerDefaultFont:(NSFont *)font forType:(PBListViewFont)fontType;
-- (NSFont *)defaultFontForType:(PBListViewFont)fontType;
-
-- (void)registerDefaultTextColor:(NSColor *)color
-                     shadowColor:(NSColor *)shadowColor
-                         forType:(PBListViewTextColor)colorType;
-- (NSColor *)defaultTextColorForType:(PBListViewTextColor)colorType;
-- (NSColor *)defaultTextShadowColorForType:(PBListViewTextColor)colorType;
 
 - (void)registerRowHeight:(CGFloat)rowHeight forEntityType:(Class)entityType;
 - (CGFloat)rowHeightForEntityType:(Class)entityType;
