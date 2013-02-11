@@ -12,6 +12,7 @@
 #import "PBListViewConfig.h"
 #import "PBTableRowView.h"
 #import "PBShadowTextFieldCell.h"
+#import "PBEmptyConfiguration.h"
 
 @interface PBListView() <NSTableViewDataSource, NSTableViewDelegate, PBTableRowDelegate> {
 
@@ -23,7 +24,6 @@
 @property (nonatomic, readwrite) PBListViewConfig *listViewConfig;
 @property (nonatomic, strong) NSIndexSet *previousSelection;
 @property (nonatomic, strong) NSTrackingArea *trackingArea;
-
 @end
 
 @implementation PBListView
@@ -47,6 +47,11 @@
 - (void)commonInit {
     self.previousSelection = [NSMutableIndexSet indexSet];
     self.listViewConfig = [[PBListViewConfig alloc] init];
+
+    [_listViewConfig
+     registerRowHeight:50.0f
+     forEntityType:[PBEmptyConfiguration class]];
+
 }
 
 - (void)awakeFromNib {
@@ -83,6 +88,7 @@
     NSScrollView *scrollView = [self findFirstParentOfType:[NSScrollView class]];
     scrollView.drawsBackground = NO;
     scrollView.borderType = NSNoBorder;
+
 }
 
 - (void)reloadData {
@@ -179,6 +185,29 @@
 
 #pragma mark - Cell/Row builders
 
+- (NSArray *)noUIElementsConfiguredMetaList:(Class)entityType depth:(NSUInteger)depth row:(NSInteger)row {
+
+    CGFloat width = NSWidth(self.frame);
+    CGFloat rowHeight =
+    [self tableView:self heightOfRow:row];
+
+    [_listViewConfig
+     registerUIElementMeta:
+     [PBListViewUIElementMeta
+      uiElementMetaWithEntityType:[PBEmptyConfiguration class]
+      keyPath:@"title"
+      depth:depth
+      binderType:[PBListViewTextFieldBinder class]
+      configuration:^(NSTextField *textField, PBListViewUIElementMeta *meta) {
+
+          meta.size = NSMakeSize(width, rowHeight);
+          textField.textColor = [NSColor redColor];
+          textField.alignment = NSCenterTextAlignment;
+      }]];
+
+    return [_listViewConfig metaListForEntityType:[PBEmptyConfiguration class] atDepth:depth];
+}
+
 - (NSTableRowView *)buildRowViewForEntity:(id)entity
                                     atRow:(NSInteger)row
                         withTotalEntities:(NSInteger)count {
@@ -212,9 +241,7 @@
     return rowView;
 }
 
-- (NSTableCellView *)buildCellViewForEntity:(id <PBListViewEntity>)entity
-                                      atRow:(NSInteger)row {
-
+- (NSTableCellView *)buildCellView {
     NSRect frame = NSMakeRect(0.0f, 0.0f, NSWidth(self.frame), self.rowHeight);
     NSTableCellView *cellView = [[NSTableCellView alloc] initWithFrame:frame];
     cellView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
@@ -223,6 +250,13 @@
     for (NSView *view in subviews) {
         [view removeFromSuperview];
     }
+    return cellView;
+}
+
+- (NSTableCellView *)buildCellViewForEntity:(id <PBListViewEntity>)entity
+                                      atRow:(NSInteger)row {
+
+    NSTableCellView *cellView = [self buildCellView];
 
     NSArray *metaList =
     [_listViewConfig
@@ -247,21 +281,6 @@
         index++;
     }
 
-    if (views.count == 0) {
-        NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
-        PBShadowTextFieldCell *cell = [[PBShadowTextFieldCell alloc] init];
-        cell.yoffset = -2.0f;
-        textField.cell = cell;
-
-        textField.alignment = NSCenterTextAlignment;
-        textField.bezeled = NO;
-        textField.editable = NO;
-        textField.selectable = NO;
-        textField.drawsBackground = NO;
-        textField.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-        textField.stringValue = NSLocalizedString(@"No UI Elements Configured", nil);
-        [cellView addSubview:textField];
-    }
 
     [views enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
         PBListViewUIElementMeta *meta = metaList[idx];
@@ -304,18 +323,53 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSTableCellView *cellView = nil;
     id entity = [self entityAtRow:row];
 
+    if (row == 1) {
+        NSLog(@"ZZZ");
+    }
     if (entity != nil) {
+
+        PBTableRowView *rowView = [self rowViewAtRow:row makeIfNecessary:NO];
+
+        Class entityType = [entity class];
+        NSUInteger entityDepth = [entity listViewEntityDepth];
 
         NSArray *metaList =
         [_listViewConfig
-         metaListForEntityType:[entity class]
-         atDepth:[entity listViewEntityDepth]];
+         metaListForEntityType:entityType
+         atDepth:entityDepth];
+
+        if (metaList.count == 0) {
+
+            NSString *emptyTitle =
+            [NSString stringWithFormat:
+             NSLocalizedString(@"UI element not defined for entity '%@' at depth %ld", nil),
+             NSStringFromClass(entityType), entityDepth];
+
+            entity =
+            [PBEmptyConfiguration
+             emptyConfigurationWithTitle:emptyTitle
+             depth:entityDepth];
+            entityType = [entity class];
+
+            metaList =
+            [_listViewConfig
+             metaListForEntityType:[PBEmptyConfiguration class]
+             atDepth:entityDepth];
+
+            rowView.backgroundColor = [NSColor whiteColor];
+        }
+
+        if (metaList.count == 0) {
+            metaList =
+            [self
+             noUIElementsConfiguredMetaList:entityType
+             depth:entityDepth
+             row:row];
+        }
 
         NSString *reuseKey =
-        [NSString stringWithFormat:@"%@-%ld/%ld",
-         NSStringFromClass([entity class]),
-         (long)row,
-         (unsigned long)self.sourceArray.count];
+        [NSString stringWithFormat:@"%@-%lu",
+         NSStringFromClass(entityType), entityDepth];
 
         cellView =
         [tableView
@@ -335,8 +389,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         NSInteger uiElementIndex = 0;
 
         BOOL startMouseEnteredEvents = NO;
-
-        PBTableRowView *rowView = [self rowViewAtRow:row makeIfNecessary:NO];
 
         for (PBListViewUIElementMeta *meta in metaList) {
             NSView *uiElement =
@@ -364,13 +416,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     PBTableRowView *rowView = nil;
     id entity = [self entityAtRow:row];
 
+    if (row == 1) {
+        NSLog(@"ZZZ");
+    }
     if (entity != nil) {
 
         NSString *reuseKey =
-        [NSString stringWithFormat:@"ROW%@-%ld/%ld",
+        [NSString stringWithFormat:@"ROW%@-%ld",
          NSStringFromClass([entity class]),
-         (long)row,
-         (unsigned long)self.sourceArray.count];
+         [entity listViewEntityDepth]];
 
         rowView =
         [tableView
