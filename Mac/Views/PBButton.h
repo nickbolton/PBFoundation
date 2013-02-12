@@ -12,10 +12,13 @@
 
 @property (nonatomic, strong) NSImage *disabledImage;
 @property (nonatomic, strong) NSImage *alternateDisabledImage;
+@property (nonatomic, strong) NSImage *onImage;
+@property (nonatomic, strong) NSImage *pressedOnImage;
 
 @property (nonatomic) CGFloat offAlphaValue;
 @property (nonatomic) CGFloat onAlphaValue;
 @property (nonatomic) BOOL hoverAlphaEnabled;
+@property (nonatomic, getter = isOn) BOOL on;
 
 - (void)startTracking;
 - (void)stopTracking;

@@ -39,7 +39,7 @@
 
     meta.size = meta.image.size;
     button.image = meta.image;
-    button.alternateImage = meta.alternateImage;
+    button.alternateImage = meta.pressedImage;
 
     button.hoverAlphaEnabled = meta.hoverAlphaEnabled;
     button.offAlphaValue = meta.hoverOffAlpha;

@@ -17,11 +17,14 @@
 - (id)buildUIElement:(PBListView *)listView {
     PBButton *button = [[PBButton alloc] initWithFrame:NSZeroRect];
 
-    button.cell = [[PBShadowButtonCell alloc] init];
-
-    ((PBShadowButtonCell *)button.cell).textShadowOffset = NSMakeSize(0.0f, -1.0f);
-
     button.buttonType = NSMomentaryChangeButton;
+
+    PBShadowButtonCell *cell = [[PBShadowButtonCell alloc] init];
+    cell.textShadowOffset = NSMakeSize(0.0f, -1.0f);
+    cell.highlightsBy = NSCellHasOverlappingImage;
+
+    button.cell = cell;
+
     button.bezelStyle = 0;
     button.translatesAutoresizingMaskIntoConstraints = NO;
     button.bordered = NO;
@@ -29,7 +32,7 @@
     button.alternateTitle = nil;
     button.allowsMixedState = NO;
     button.imagePosition = NSImageLeft;
-    
+
     return button;
 }
 
@@ -41,8 +44,9 @@
 
     meta.size = meta.image.size;
     button.image = meta.image;
-    button.alternateImage = meta.alternateImage;
+    button.onImage = meta.onImage;
     button.disabledImage = meta.disabledImage;
+    button.alternateImage = meta.pressedImage;
 
     button.hoverAlphaEnabled = meta.hoverAlphaEnabled;
     button.offAlphaValue = meta.hoverOffAlpha;

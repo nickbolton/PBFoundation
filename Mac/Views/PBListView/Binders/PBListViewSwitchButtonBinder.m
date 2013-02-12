@@ -8,17 +8,18 @@
 
 #import "PBListViewSwitchButtonBinder.h"
 #import "PBListViewUIElementMeta.h"
+#import "PBButton.h"
 
 @implementation PBListViewSwitchButtonBinder
 
 - (id)buildUIElement:(PBListView *)listView {
     NSButton *button = [super buildUIElement:listView];
-    button.buttonType = NSSwitchButton;
+    button.buttonType = NSMomentaryChangeButton;
     return button;
 }
 
 - (void)bindEntity:(id)entity
-          withView:(NSButton *)button
+          withView:(PBButton *)button
              atRow:(NSInteger)row
          usingMeta:(PBListViewUIElementMeta *)meta {
 
@@ -47,8 +48,21 @@
             switchValue = value;
         }
     }
-    
-    button.state = switchValue.boolValue ? NSOnState : NSOffState;
+
+    BOOL prevState = button.isOn;
+
+    button.on = switchValue.boolValue;
+
+    if (prevState != button.isOn) {
+        NSImage *tmp = button.image;
+        button.image = button.onImage;
+        button.onImage = tmp;
+
+        tmp = button.alternateImage;
+        button.alternateImage = button.pressedOnImage;
+        button.pressedOnImage = tmp;
+    }
+
 }
 
 @end

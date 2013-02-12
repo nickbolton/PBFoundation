@@ -323,9 +323,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSTableCellView *cellView = nil;
     id entity = [self entityAtRow:row];
 
-    if (row == 1) {
-        NSLog(@"ZZZ");
-    }
     if (entity != nil) {
 
         PBTableRowView *rowView = [self rowViewAtRow:row makeIfNecessary:NO];
@@ -338,6 +335,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
          metaListForEntityType:entityType
          atDepth:entityDepth];
 
+#if DEBUG
         if (metaList.count == 0) {
 
             NSString *emptyTitle =
@@ -366,7 +364,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
              depth:entityDepth
              row:row];
         }
-
+#endif
         NSString *reuseKey =
         [NSString stringWithFormat:@"%@-%lu",
          NSStringFromClass(entityType), entityDepth];
@@ -416,9 +414,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     PBTableRowView *rowView = nil;
     id entity = [self entityAtRow:row];
 
-    if (row == 1) {
-        NSLog(@"ZZZ");
-    }
     if (entity != nil) {
 
         NSString *reuseKey =
