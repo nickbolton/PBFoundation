@@ -12,7 +12,9 @@
 #import "PBListViewConfig.h"
 #import "PBTableRowView.h"
 #import "PBShadowTextFieldCell.h"
+#import "PBListViewCommand.h"
 #import "PBEmptyConfiguration.h"
+#import <Carbon/Carbon.h>
 
 @interface PBListView() <NSTableViewDataSource, NSTableViewDelegate, PBTableRowDelegate> {
 
@@ -24,6 +26,7 @@
 @property (nonatomic, readwrite) PBListViewConfig *listViewConfig;
 @property (nonatomic, strong) NSIndexSet *previousSelection;
 @property (nonatomic, strong) NSTrackingArea *trackingArea;
+
 @end
 
 @implementation PBListView
@@ -52,6 +55,13 @@
      registerRowHeight:50.0f
      forEntityType:[PBEmptyConfiguration class]];
 
+    _userReloadKeyCode = kVK_ANSI_R;
+    _userReloadKeyModifiers = NSCommandKeyMask;
+
+    _userDeleteKeyCode = kVK_Delete;
+    _userDeleteKeyModifiers = NSCommandKeyMask;
+
+    _userSelectKeyCode = kVK_Space;
 }
 
 - (void)awakeFromNib {
@@ -258,10 +268,12 @@
 
     NSTableCellView *cellView = [self buildCellView];
 
+    NSUInteger entityDepth = [entity listViewEntityDepth];
+    
     NSArray *metaList =
     [_listViewConfig
      metaListForEntityType:[entity class]
-     atDepth:[entity listViewEntityDepth]];
+     atDepth:entityDepth];
     
     NSMutableArray *views = [NSMutableArray arrayWithCapacity:metaList.count];
 
@@ -289,19 +301,16 @@
          views:views
          metaList:metaList
          atIndex:idx];
+
+        if (meta.commands.count > 0) {
+            [_listViewConfig
+             registerCommands:meta.commands
+             forEntityType:[entity class]
+             atDepth:entityDepth];
+        }
     }];
 
     return cellView;
-}
-
-#pragma mark - Key Handling
-
-- (void)keyDown:(NSEvent *)event {
-    [super keyDown:event];
-}
-
-- (void)keyUp:(NSEvent *)event {
-    [super keyUp:event];
 }
 
 #pragma mark - NSTableViewDataSource/Delegate Conformance
@@ -564,6 +573,62 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 }
 
 #pragma mark - User Interaction
+
+- (void)keyDown:(NSEvent *)event {
+
+    if (_userReloadKeyCode != 0 && [event isModifiersExactly:_userReloadKeyModifiers] && event.keyCode == _userReloadKeyCode) {
+        if ([self.actionDelegate respondsToSelector:@selector(userInitiatedReload:)]) {
+            [(id)self.actionDelegate userInitiatedReload:self];
+        }
+    } else if (_userDeleteKeyCode != 0 && [event isModifiersExactly:_userDeleteKeyModifiers] && event.keyCode == _userDeleteKeyCode) {
+        if ([self.actionDelegate respondsToSelector:@selector(userInitiatedDelete:)]) {
+            [(id)self.actionDelegate userInitiatedDelete:self];
+        }
+    } else if (_userSelectKeyCode != 0 && [event isModifiersExactly:_userSelectKeyModifiers] && event.keyCode == _userSelectKeyCode) {
+        if (self.selectedRowIndexes.count == 1 && [self.actionDelegate respondsToSelector:@selector(userInitiatedSelect:)]) {
+            [(id)self.actionDelegate userInitiatedSelect:self];
+        }
+    } else {
+
+        __block NSMutableArray *commands = nil;
+        NSMutableArray *entities = [NSMutableArray array];
+        __block NSUInteger depth = 0;
+
+        [self.selectedRowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+
+            id <PBListViewEntity> entity = [self entityAtRow:idx];
+            id <PBListViewEntity> lastEntity = entities.lastObject;
+
+            depth = [entity listViewEntityDepth];
+            NSUInteger lastEntityDepth = [lastEntity listViewEntityDepth];
+
+            if (entities.count == 0 || ([entity isKindOfClass:[entities.lastObject class]] && lastEntityDepth == depth)) {
+                [entities addObject:entity];
+            } else {
+                [entities removeAllObjects];
+                *stop = YES;
+            }
+        }];
+
+        if (entities.count > 0) {
+
+            id <PBListViewEntity> anyEntity = entities.lastObject;
+
+            NSArray *commands =
+            [_listViewConfig
+             commandsForEntityType:[anyEntity class]
+             atDepth:depth];
+
+            for (PBListViewCommand *command in commands) {
+                if (command.keyCode != 0 && [event isModifiersExactly:command.modifierMask] && event.keyCode == command.keyCode) {
+                    command.actionHandler(entities);
+                }
+            }
+        }
+
+        [super keyDown:event];
+    }
+}
 
 //- (void)mouseDown:(NSEvent *)event {
 //

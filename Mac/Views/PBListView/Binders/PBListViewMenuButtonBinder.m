@@ -7,47 +7,53 @@
 //
 
 #import "PBListViewMenuButtonBinder.h"
-#import "PBShadowPopUpButtonCell.h"
 #import "PBListViewUIElementMeta.h"
-#import "PBPopUpButton.h"
+#import "PBMenu.h"
 
 @implementation PBListViewMenuButtonBinder
 
-- (id)buildUIElement:(PBListView *)listView {
-    PBPopUpButton *button = [[PBPopUpButton alloc] initWithFrame:NSZeroRect];
+- (void)configureView:(PBListView *)listView
+                views:(NSArray *)views
+             metaList:(NSArray *)metaList
+              atIndex:(NSInteger)index {
 
-    button.cell = [[PBShadowPopUpButtonCell alloc] init];
+    [super configureView:listView views:views metaList:metaList atIndex:index];
 
-    button.buttonType = NSMomentaryChangeButton;
-    button.bezelStyle = 0;
-    button.translatesAutoresizingMaskIntoConstraints = NO;
-    button.bordered = NO;
-    button.title = nil;
-    button.alternateTitle = nil;
-    button.allowsMixedState = NO;
-    button.imagePosition = NSImageLeft;
+    NSButton *button = views[index];
+    PBListViewUIElementMeta *meta = metaList[index];
 
-    return button;
-}
+    if (meta.menu != nil) {
+        meta.actionHandler = ^(NSButton *button, id entity, PBListViewUIElementMeta *meta) {
 
-- (void)postClientConfiguration:(PBListView *)listView
-                           meta:(PBListViewUIElementMeta *)meta
-                           view:(PBPopUpButton *)button
-                          index:(NSInteger)index {
+            NSWindow *window = button.window;
+            NSEvent *event = window.currentEvent;
 
-    NSAssert([button isKindOfClass:[PBPopUpButton class]], @"view is not a PBPopUpButton");
+            NSPoint otherPoint =
+            [[[[NSApp delegate] window] contentView]
+             convertPoint:button.frame.origin
+             fromView:button.superview];
 
-    meta.size = meta.image.size;
-    button.image = meta.image;
-    button.alternateImage = meta.pressedImage;
+            otherPoint.y -= 1;
 
-    button.hoverAlphaEnabled = meta.hoverAlphaEnabled;
-    button.offAlphaValue = meta.hoverOffAlpha;
+            event = [NSEvent mouseEventWithType:event.type
+                                       location:otherPoint
+                                  modifierFlags:event.modifierFlags
+                                      timestamp:event.timestamp
+                                   windowNumber:event.windowNumber
+                                        context:event.context
+                                    eventNumber:event.eventNumber
+                                     clickCount:event.clickCount
+                                       pressure:event.pressure];
 
-    PBShadowPopUpButtonCell *cell = button.cell;
-    
-    cell.textShadowColor = meta.textShadowColor;
-    cell.textShadowOffset = meta.shadowOffset;
+            meta.menu.attachedView = button;
+            [NSMenu popUpContextMenu:meta.menu withEvent:event forView:button];
+            
+        };
+
+        button.target = meta;
+        button.action = @selector(invokeAction:);
+    }
+
 }
 
 @end

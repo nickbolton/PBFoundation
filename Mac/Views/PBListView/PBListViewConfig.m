@@ -14,6 +14,7 @@
 @property (nonatomic, strong) NSMutableDictionary *metaListRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowHeightRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowBackgroundImageRegistry;
+@property (nonatomic, strong) NSMutableDictionary *entityCommands;
 
 @end
 
@@ -26,6 +27,7 @@
         self.metaListRegistry = [NSMutableDictionary dictionary];
         self.rowHeightRegistry = [NSMutableDictionary dictionary];
         self.rowBackgroundImageRegistry = [NSMutableDictionary dictionary];
+        self.entityCommands = [NSMutableDictionary dictionary];
         self.leftMargin = 10.0f;
         self.rightMargin = 10.0f;
         self.minSize = NSMakeSize(300.0f, 300.0f);
@@ -35,13 +37,26 @@
         self.selectedBackgroundColor = [NSColor colorWithRGBHex:0xD7E4F1];
         self.selectedBorderColor = [NSColor colorWithRGBHex:0x3775BC alpha:1.0f];
         self.selectedBorderRadius = 10.0f;
-
     }
 
     return self;
 }
 
 #pragma mark - Meta registering
+
+- (void)registerCommands:(NSArray *)commands
+           forEntityType:(Class)entityType
+                 atDepth:(NSUInteger)depth {
+    NSString *key = [NSString stringWithFormat:@"%@-%lu",
+                     NSStringFromClass(entityType), depth];
+    [_entityCommands setObject:commands forKey:key];
+}
+
+- (NSArray *)commandsForEntityType:(Class)entityType atDepth:(NSUInteger)depth {
+    NSString *key = [NSString stringWithFormat:@"%@-%lu",
+                     NSStringFromClass(entityType), depth];
+    return [_entityCommands objectForKey:key];
+}
 
 // this returns an array of depths, each of which is an array of elements
 - (NSMutableArray *)metaListDepthsForEntityType:(Class)entityType {

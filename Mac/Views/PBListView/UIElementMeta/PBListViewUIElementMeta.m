@@ -8,6 +8,8 @@
 
 #import "PBListViewUIElementMeta.h"
 #import "PBListViewUIElementBinder.h"
+#import "PBListViewCommand.h"
+#import "PBMenu.h"
 
 @interface PBListViewUIElementMeta()
 
@@ -17,6 +19,7 @@
 @property (nonatomic, readwrite) PBListViewUIElementBinder *binder;
 @property (nonatomic, readwrite) PBUIConfigurationHandler configurationHandler;
 @property (nonatomic, readwrite) BOOL hiddenWhenMouseNotInRow;
+@property (nonatomic, readwrite) NSMutableArray *commands;
 
 @end
 
@@ -115,18 +118,78 @@
     return self;
 }
 
+#pragma mark - Getters and Setters
+
+- (void)setMenu:(PBMenu *)menu {
+    NSAssert([menu isKindOfClass:[PBMenu class]], @"menu is not a PBMenu");
+    _menu = menu;
+}
+
+- (id)findEntity:(NSView* )view {
+
+    id entity = nil;
+    NSTableCellView *cellView =
+    [view findFirstParentOfType:[NSTableCellView class]];
+
+    if (cellView != nil) {
+        entity = cellView.objectValue;
+    }
+
+    NSAssert(entity != nil, @"No entity for action");
+
+    return entity;
+}
+
 - (void)invokeAction:(id)sender {
     if (_actionHandler != nil) {
 
-        id entity = nil;
-        NSTableCellView *cellView =
-        [(NSView *)sender findFirstParentOfType:[NSTableCellView class]];
-
-        if (cellView != nil) {
-            entity = cellView.objectValue;
-        }
-        _actionHandler(sender, entity);
+        id entity = [self findEntity:sender];
+        _actionHandler(sender, entity, self);
     }
+}
+
+- (void)invokeCommand:(id)sender {
+
+    NSMenuItem *menuItem = sender;
+    PBListViewCommand *command = menuItem.representedObject;
+    PBMenu *menu = (id)menuItem.menu;
+
+    NSAssert([menu isKindOfClass:[PBMenu class]], @"menu is not a PBMenu");
+
+    id entity = [self findEntity:((PBMenu *)menuItem.menu).attachedView];
+
+    command.actionHandler(@[entity]);
+}
+
+- (void)addEntityCommand:(PBListViewCommand *)command {
+
+    if (_autoBuildContextualMenu) {
+        if (_menu == nil) {
+            self.menu = [[PBMenu alloc] initWithTitle:@""];
+        }
+
+        NSInteger menuItemCount = _menu.itemArray.count;
+
+        if (menuItemCount > 0 && [_menuSeparatorIndexes containsIndex:menuItemCount]) {
+            [_menu addItem:[NSMenuItem separatorItem]];
+        }
+        
+        NSMenuItem *menuItem =
+        [[NSMenuItem alloc]
+         initWithTitle:command.title
+         action:@selector(invokeCommand:)
+         keyEquivalent:command.keyEquivalent];
+        menuItem.target = self;
+        menuItem.keyEquivalentModifierMask = command.modifierMask;
+        menuItem.representedObject = command;
+        [_menu addItem:menuItem];
+    }
+
+    if (_commands == nil) {
+        self.commands = [NSMutableArray array];
+    }
+
+    [(NSMutableArray *)_commands addObject:command];
 }
 
 @end

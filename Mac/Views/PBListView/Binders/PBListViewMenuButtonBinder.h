@@ -7,7 +7,8 @@
 //
 
 #import "PBListViewUIElementBinder.h"
+#import "PBListViewButtonBinder.h"
 
-@interface PBListViewMenuButtonBinder : PBListViewUIElementBinder
+@interface PBListViewMenuButtonBinder : PBListViewButtonBinder
 
 @end

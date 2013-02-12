@@ -32,7 +32,6 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 @property (nonatomic) NSSize maxSize;
 @property (nonatomic, strong) NSColor *rowDividerLineColor;
 @property (nonatomic) CGFloat rowDividerLineHeight;
-
 @property (nonatomic, strong) NSColor *selectedBackgroundColor;
 @property (nonatomic, strong) NSColor *selectedBorderColor;
 @property (nonatomic) CGFloat selectedBorderRadius;
@@ -55,5 +54,11 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 
 - (void)registerRowHeight:(CGFloat)rowHeight forEntityType:(Class)entityType;
 - (CGFloat)rowHeightForEntityType:(Class)entityType;
+
+- (void)registerCommands:(NSArray *)commands
+           forEntityType:(Class)entityType
+                 atDepth:(NSUInteger)depth;
+- (NSArray *)commandsForEntityType:(Class)entityType
+                           atDepth:(NSUInteger)depth;
 
 @end

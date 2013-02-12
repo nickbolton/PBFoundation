@@ -10,9 +10,11 @@
 
 @class PBListViewUIElementBinder;
 @class PBListViewUIElementMeta;
+@class PBListViewCommand;
+@class PBMenu;
 
 typedef void(^PBUIConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
-typedef void(^PBUIActionHandler)(id sender, id entity);
+typedef void(^PBUIActionHandler)(id sender, id entity, PBListViewUIElementMeta *meta);
 typedef id(^PBUIValueTransformer)(id value);
 
 @interface PBListViewUIElementMeta : NSObject
@@ -23,6 +25,7 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic, readonly) PBListViewUIElementBinder *binder;
 @property (nonatomic, readonly) PBUIConfigurationHandler configurationHandler;
 @property (nonatomic, readonly) BOOL hiddenWhenMouseNotInRow;
+@property (nonatomic, readonly) NSArray *commands;
 
 @property (nonatomic, readwrite) CGFloat leftPadding;
 @property (nonatomic, readwrite) NSSize size;
@@ -38,6 +41,11 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic, strong) NSImage *pressedImage;
 @property (nonatomic, strong) NSImage *onImage;
 @property (nonatomic, strong) NSImage *disabledImage;
+@property (nonatomic, strong) PBMenu *menu;
+@property (nonatomic, strong) NSIndexSet *menuSeparatorIndexes;
+
+@property (nonatomic) BOOL autoBuildContextualMenu;
+
 @property (nonatomic, copy) PBUIValueTransformer valueTransformer;
 @property (nonatomic, copy) PBUIActionHandler actionHandler;
 
@@ -66,5 +74,7 @@ typedef id(^PBUIValueTransformer)(id value);
                                            configuration:(PBUIConfigurationHandler)configuration;
 
 - (void)invokeAction:(id)sender;
+
+- (void)addEntityCommand:(PBListViewCommand *)command;
 
 @end

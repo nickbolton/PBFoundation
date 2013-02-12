@@ -49,6 +49,11 @@
     }
 }
 
+- (void)setImage:(NSImage *)image {
+    super.image = image;
+    ((NSPopUpButtonCell *)self.cell).image = image;
+}
+
 - (void)stopTracking {
     if (_hoverAlphaEnabled) {
         [self.superview removeTrackingRect:_trackingTag];
