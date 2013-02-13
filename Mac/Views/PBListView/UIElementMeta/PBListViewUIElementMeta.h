@@ -41,6 +41,7 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic, strong) NSImage *pressedImage;
 @property (nonatomic, strong) NSImage *onImage;
 @property (nonatomic, strong) NSImage *disabledImage;
+
 @property (nonatomic, strong) PBMenu *menu;
 @property (nonatomic, strong) NSIndexSet *menuSeparatorIndexes;
 

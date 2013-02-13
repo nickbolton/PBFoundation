@@ -23,6 +23,7 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 };
 
 @class PBListViewUIElementMeta;
+@class PBMenu;
 
 @interface PBListViewConfig : NSObject
 
@@ -35,6 +36,7 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 @property (nonatomic, strong) NSColor *selectedBackgroundColor;
 @property (nonatomic, strong) NSColor *selectedBorderColor;
 @property (nonatomic) CGFloat selectedBorderRadius;
+@property (nonatomic) BOOL autoBuildContextualMenu;
 
 - (void)registerUIElementMeta:(PBListViewUIElementMeta *)meta;
 - (NSArray *)metaListForEntityType:(Class)entityType
@@ -55,6 +57,17 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 - (void)registerRowHeight:(CGFloat)rowHeight forEntityType:(Class)entityType;
 - (CGFloat)rowHeightForEntityType:(Class)entityType;
 
+- (PBMenu *)contextMenuForEntityType:(Class)entityType atDepth:(NSUInteger)depth;
+- (void)registerContextMenu:(PBMenu *)menu
+              forEntityType:(Class)entityType
+                    atDepth:(NSUInteger)depth;
+- (void)registerContextMenuSeparatorPositions:(NSIndexSet *)indexSet
+                            forEntityType:(Class)entityType;
+- (void)registerContextMenuSeparatorPositions:(NSIndexSet *)indexSet
+           forEntityType:(Class)entityType
+                 atDepth:(NSUInteger)depth;
+- (void)registerCommands:(NSArray *)commands
+           forEntityType:(Class)entityType;
 - (void)registerCommands:(NSArray *)commands
            forEntityType:(Class)entityType
                  atDepth:(NSUInteger)depth;

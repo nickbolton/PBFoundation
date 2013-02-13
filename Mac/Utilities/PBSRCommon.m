@@ -70,7 +70,7 @@ NSString * PBSRStringForCarbonModifierFlags( NSUInteger flags )
 //---------------------------------------------------------- 
 NSString * PBSRStringForCarbonModifierFlagsAndKeyCode( NSUInteger flags, NSInteger keyCode )
 {
-    return [NSString stringWithFormat: @"%@%@", 
+    return [NSString stringWithFormat: @"%@%@",
         PBSRStringForCarbonModifierFlags( flags ),
         PBSRStringForKeyCode( keyCode )];
 }
@@ -401,7 +401,7 @@ static NSMutableDictionary *PBSRSharedImageCache = nil;
 	[cross lineToPoint:MakeRelativePoint(10.0f,10.0f)];
 	[cross moveToPoint:MakeRelativePoint(10.0f,4.0f)];
 	[cross lineToPoint:MakeRelativePoint(4.0f,10.0f)];
-		
+
 	[cross stroke];
 	[cross release];
 }

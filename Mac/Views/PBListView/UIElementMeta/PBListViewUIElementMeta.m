@@ -114,6 +114,7 @@
         self.shadowOffset = NSMakeSize(0.0f, -1.0f);
         self.hoverOffAlpha = .6f;
         self.size = NSMakeSize(100.0f, 17.0f);
+        self.autoBuildContextualMenu = YES;
     }
     return self;
 }
@@ -125,7 +126,7 @@
     _menu = menu;
 }
 
-- (id)findEntity:(NSView* )view {
+- (id)findEntity:(NSView *)view {
 
     id entity = nil;
     NSTableCellView *cellView =

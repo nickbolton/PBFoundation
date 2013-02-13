@@ -14,6 +14,7 @@
 #import "PBShadowTextFieldCell.h"
 #import "PBListViewCommand.h"
 #import "PBEmptyConfiguration.h"
+#import "PBMenu.h"
 #import <Carbon/Carbon.h>
 
 @interface PBListView() <NSTableViewDataSource, NSTableViewDelegate, PBTableRowDelegate> {
@@ -301,13 +302,6 @@
          views:views
          metaList:metaList
          atIndex:idx];
-
-        if (meta.commands.count > 0) {
-            [_listViewConfig
-             registerCommands:meta.commands
-             forEntityType:[entity class]
-             atDepth:entityDepth];
-        }
     }];
 
     return cellView;
@@ -590,7 +584,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
     } else {
 
-        __block NSMutableArray *commands = nil;
         NSMutableArray *entities = [NSMutableArray array];
         __block NSUInteger depth = 0;
 
@@ -628,6 +621,84 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
         [super keyDown:event];
     }
+}
+
+- (void)invokeCommand:(id)sender {
+
+    NSMenuItem *menuItem = sender;
+    PBListViewCommand *command = menuItem.representedObject;
+    PBMenu *menu = (id)menuItem.menu;
+
+    NSAssert([menu isKindOfClass:[PBMenu class]], @"menu is not a PBMenu");
+
+    NSTableRowView *rowView = (id)((PBMenu *)menuItem.menu).attachedView;
+
+    NSInteger row = [self rowForView:rowView];
+
+    id entity = [self entityAtRow:row];
+
+    if (entity != nil) {
+        command.actionHandler(@[entity]);
+    } else {
+        NSLog(@"No entity found");
+    }
+}
+
+- (void)rightMouseUp:(NSEvent *)event {
+
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+
+    NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
+
+    NSInteger row = [self rowAtPoint:location];
+
+    id entity = [self entityAtRow:row];
+
+    if (entity != nil) {
+
+        PBMenu *menu =
+        [_listViewConfig
+         contextMenuForEntityType:[entity class]
+         atDepth:[entity listViewEntityDepth]];
+
+        NSView *sourceView = [self rowViewAtRow:row makeIfNecessary:NO];
+
+        if (menu != nil) {
+            NSWindow *window = sourceView.window;
+            NSEvent *event = window.currentEvent;
+
+            event = [NSEvent mouseEventWithType:event.type
+                                       location:[event locationInWindow]
+                                  modifierFlags:event.modifierFlags
+                                      timestamp:event.timestamp
+                                   windowNumber:event.windowNumber
+                                        context:event.context
+                                    eventNumber:event.eventNumber
+                                     clickCount:event.clickCount
+                                       pressure:event.pressure];
+
+            menu.attachedView = sourceView;
+
+            [menu.itemArray enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+                NSMenuItem *menuItem = obj;
+                menuItem.target = self;
+                menuItem.action = @selector(invokeCommand:);
+            }];
+
+            [NSMenu popUpContextMenu:menu withEvent:event forView:sourceView];
+
+            return;
+        }
+    }
+
+    [super rightMouseUp:event];
+}
+
+- (void)mouseDown:(NSEvent *)event {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+
+    NSLog(@"first responder: %@", self.window.firstResponder);
+    [super mouseDown:event];
 }
 
 //- (void)mouseDown:(NSEvent *)event {

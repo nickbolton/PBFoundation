@@ -8,6 +8,8 @@
 
 #import "PBListViewConfig.h"
 #import "PBListViewUIElementMeta.h"
+#import "PBMenu.h"
+#import "PBListViewCommand.h"
 
 @interface PBListViewConfig()
 
@@ -15,6 +17,8 @@
 @property (nonatomic, strong) NSMutableDictionary *rowHeightRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *entityCommands;
+@property (nonatomic, strong) NSMutableDictionary *contextMenuSeparators;
+@property (nonatomic, strong) NSMutableDictionary *contextMenus;
 
 @end
 
@@ -28,6 +32,8 @@
         self.rowHeightRegistry = [NSMutableDictionary dictionary];
         self.rowBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.entityCommands = [NSMutableDictionary dictionary];
+        self.contextMenuSeparators = [NSMutableDictionary dictionary];
+        self.contextMenus = [NSMutableDictionary dictionary];
         self.leftMargin = 10.0f;
         self.rightMargin = 10.0f;
         self.minSize = NSMakeSize(300.0f, 300.0f);
@@ -37,6 +43,7 @@
         self.selectedBackgroundColor = [NSColor colorWithRGBHex:0xD7E4F1];
         self.selectedBorderColor = [NSColor colorWithRGBHex:0x3775BC alpha:1.0f];
         self.selectedBorderRadius = 10.0f;
+        self.autoBuildContextualMenu = YES;
     }
 
     return self;
@@ -44,12 +51,82 @@
 
 #pragma mark - Meta registering
 
+- (void)registerContextMenuSeparatorPositions:(NSIndexSet *)indexSet
+                                forEntityType:(Class)entityType {
+    [self
+     registerContextMenuSeparatorPositions:indexSet
+     forEntityType:entityType
+     atDepth:0];
+}
+
+- (void)registerContextMenuSeparatorPositions:(NSIndexSet *)indexSet
+                                forEntityType:(Class)entityType
+                                      atDepth:(NSUInteger)depth {
+
+    NSString *key =
+    [NSString stringWithFormat:@"%@-%lu",
+     NSStringFromClass(entityType), depth];
+
+    [_contextMenuSeparators setObject:indexSet forKey:key];
+}
+
+- (void)registerCommands:(NSArray *)commands
+           forEntityType:(Class)entityType {
+    [self registerCommands:commands forEntityType:entityType atDepth:0];
+}
+
 - (void)registerCommands:(NSArray *)commands
            forEntityType:(Class)entityType
                  atDepth:(NSUInteger)depth {
     NSString *key = [NSString stringWithFormat:@"%@-%lu",
                      NSStringFromClass(entityType), depth];
     [_entityCommands setObject:commands forKey:key];
+
+    if (_autoBuildContextualMenu) {
+
+        PBMenu *menu = [[PBMenu alloc] initWithTitle:@""];
+
+        NSIndexSet *separatorIndexSet = [_contextMenuSeparators objectForKey:key];
+
+        for (PBListViewCommand *command in commands) {
+
+            NSInteger menuItemCount = menu.itemArray.count;
+
+            if (menuItemCount > 0 && [separatorIndexSet containsIndex:menuItemCount]) {
+                [menu addItem:[NSMenuItem separatorItem]];
+            }
+
+            NSMenuItem *menuItem =
+            [[NSMenuItem alloc]
+             initWithTitle:command.title
+             action:NULL
+             keyEquivalent:command.keyEquivalent];
+            menuItem.keyEquivalentModifierMask = command.modifierMask;
+            menuItem.representedObject = command;
+            [menu addItem:menuItem];
+        }
+
+        [self registerContextMenu:menu forEntityType:entityType atDepth:depth];
+    }
+}
+
+- (void)registerContextMenu:(PBMenu *)menu
+              forEntityType:(Class)entityType
+                    atDepth:(NSUInteger)depth {
+
+    if (menu != nil) {
+        NSString *key =
+        [NSString stringWithFormat:@"%@-%lu",
+         NSStringFromClass(entityType), depth];
+        [_contextMenus setObject:menu forKey:key];
+    }
+}
+
+- (PBMenu *)contextMenuForEntityType:(Class)entityType atDepth:(NSUInteger)depth {
+    NSString *key =
+    [NSString stringWithFormat:@"%@-%lu",
+     NSStringFromClass(entityType), depth];
+    return [_contextMenus objectForKey:key];
 }
 
 - (NSArray *)commandsForEntityType:(Class)entityType atDepth:(NSUInteger)depth {
