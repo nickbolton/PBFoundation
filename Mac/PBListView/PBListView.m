@@ -644,8 +644,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)rightMouseUp:(NSEvent *)event {
 
-    NSLog(@"%s", __PRETTY_FUNCTION__);
-
     NSPoint location = [self convertPoint:[event locationInWindow] fromView:nil];
 
     NSInteger row = [self rowAtPoint:location];
@@ -690,13 +688,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     }
 
     [super rightMouseUp:event];
-}
-
-- (void)mouseDown:(NSEvent *)event {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
-
-    NSLog(@"first responder: %@", self.window.firstResponder);
-    [super mouseDown:event];
 }
 
 //- (void)mouseDown:(NSEvent *)event {
