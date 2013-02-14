@@ -140,7 +140,9 @@
     _staticEntities = staticEntities;
 }
 
-- (NSImage *)backgroundImageForRow:(NSInteger)row {
+- (NSImage *)backgroundImageForRow:(NSInteger)row
+                          selected:(BOOL)selected
+                          hovering:(BOOL)hovering {
 
     NSImage *image = nil;
     id entity = [self entityAtRow:row];
@@ -163,7 +165,9 @@
         image = [_listViewConfig
                  backgroundImageForEntityType:[entity class]
                  atDepth:[entity listViewEntityDepth]
-                 atPosition:position];
+                 atPosition:position
+                 selected:selected
+                 hovering:hovering];
     }
 
     return image;
@@ -192,6 +196,13 @@
     }
 
     return nil;
+}
+
+- (NSArray *)metaListForEntityType:(Class)entityType atDepth:(NSUInteger)entityDepth {
+    return
+    [_listViewConfig
+     metaListForEntityType:entityType
+     atDepth:entityDepth];
 }
 
 #pragma mark - Cell/Row builders
@@ -332,9 +343,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         NSUInteger entityDepth = [entity listViewEntityDepth];
 
         NSArray *metaList =
-        [_listViewConfig
-         metaListForEntityType:entityType
-         atDepth:entityDepth];
+        [self metaListForEntityType:entityType atDepth:entityDepth];
 
 #if DEBUG
         if (metaList.count == 0) {
@@ -366,6 +375,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
              row:row];
         }
 #endif
+        
         NSString *reuseKey =
         [NSString stringWithFormat:@"%@-%lu",
          NSStringFromClass(entityType), entityDepth];
@@ -436,7 +446,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
 
         NSImage *backgroundImage =
-        [self backgroundImageForRow:row];
+        [self backgroundImageForRow:row selected:NO hovering:NO];
 
         if (backgroundImage != nil) {
 
@@ -454,6 +464,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             }
             
             rowView.backgroundImageView.image = backgroundImage;
+
+            rowView.backgroundImage = backgroundImage;
+            rowView.selectedBackgroundImage =
+            [self backgroundImageForRow:row selected:YES hovering:NO];
+            rowView.hoveredBackgroundImage =
+            [self backgroundImageForRow:row selected:NO hovering:YES];
+            rowView.selectedHoveredBackgroundImage =
+            [self backgroundImageForRow:row selected:YES hovering:YES];
         }
 
         rowView.selectedBackgroundColor = _listViewConfig.selectedBackgroundColor;
@@ -475,7 +493,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     if (entity != nil) {
 
         NSImage *backgroundImage =
-        [self backgroundImageForRow:row];
+        [_listViewConfig
+         backgroundImageForEntityType:[entity class]
+         atDepth:[entity listViewEntityDepth]
+         atPosition:PBListViewPositionTypeFirst
+         selected:NO
+         hovering:NO];
 
         if (backgroundImage != nil) {
             rowHeight = backgroundImage.size.height;

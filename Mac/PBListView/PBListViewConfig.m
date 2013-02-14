@@ -15,7 +15,10 @@
 
 @property (nonatomic, strong) NSMutableDictionary *metaListRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowHeightRegistry;
-@property (nonatomic, strong) NSMutableDictionary *rowBackgroundImageRegistry;
+@property (nonatomic, strong) NSMutableDictionary *rowDefaultBackgroundImageRegistry;
+@property (nonatomic, strong) NSMutableDictionary *rowSelectedBackgroundImageRegistry;
+@property (nonatomic, strong) NSMutableDictionary *rowDefaultHoveringBackgroundImageRegistry;
+@property (nonatomic, strong) NSMutableDictionary *rowSelectedHoveringBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *entityCommands;
 @property (nonatomic, strong) NSMutableDictionary *contextMenuSeparators;
 @property (nonatomic, strong) NSMutableDictionary *contextMenus;
@@ -30,7 +33,10 @@
     if (self != nil) {
         self.metaListRegistry = [NSMutableDictionary dictionary];
         self.rowHeightRegistry = [NSMutableDictionary dictionary];
-        self.rowBackgroundImageRegistry = [NSMutableDictionary dictionary];
+        self.rowDefaultBackgroundImageRegistry = [NSMutableDictionary dictionary];
+        self.rowSelectedBackgroundImageRegistry = [NSMutableDictionary dictionary];
+        self.rowDefaultHoveringBackgroundImageRegistry = [NSMutableDictionary dictionary];
+        self.rowSelectedHoveringBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.entityCommands = [NSMutableDictionary dictionary];
         self.contextMenuSeparators = [NSMutableDictionary dictionary];
         self.contextMenus = [NSMutableDictionary dictionary];
@@ -174,49 +180,109 @@
     }
 }
 
-- (void)registerBackgroundImage:(NSImage *)image
-                  forEntityType:(Class)entityType
+- (void)registerDefaultBackgroundImage:(NSImage *)defaultBackgroundImage
+               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
+        defaultHoveringBackgroundImage:(NSImage *)defaultHoveringBackgroundImage
+       selectedHoveringBackgroundImage:(NSImage *)selectedHoveringBackgroundImage
+                         forEntityType:(Class)entityType
                      atPosition:(PBListViewPositionType)positionType {
     [self
-     registerBackgroundImage:image
+     registerDefaultBackgroundImage:defaultBackgroundImage
+     selectedBackgroundImage:selectedBackgroundImage
+     defaultHoveringBackgroundImage:defaultHoveringBackgroundImage
+     selectedHoveringBackgroundImage:selectedHoveringBackgroundImage
      forEntityType:entityType
      atDepth:0
      atPosition:positionType];
 }
 
-- (void)registerBackgroundImage:(NSImage *)image
+- (void)registerDefaultBackgroundImage:(NSImage *)defaultBackgroundImage
+               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
+        defaultHoveringBackgroundImage:(NSImage *)defaultHoveringBackgroundImage
+       selectedHoveringBackgroundImage:(NSImage *)selectedHoveringBackgroundImage
+                         forEntityType:(Class)entityType
+                               atDepth:(NSUInteger)depth
+                            atPosition:(PBListViewPositionType)positionType {
+
+    [self
+     registerBackgroundImage:defaultBackgroundImage
+     forEntityType:entityType
+     atDepth:depth
+     atPosition:positionType
+     selected:NO
+     hovering:NO];
+
+    [self
+     registerBackgroundImage:selectedBackgroundImage
+     forEntityType:entityType
+     atDepth:depth
+     atPosition:positionType
+     selected:YES
+     hovering:NO];
+
+    [self
+     registerBackgroundImage:defaultHoveringBackgroundImage
+     forEntityType:entityType
+     atDepth:depth
+     atPosition:positionType
+     selected:NO
+     hovering:YES];
+
+    [self
+     registerBackgroundImage:selectedHoveringBackgroundImage
+     forEntityType:entityType
+     atDepth:depth
+     atPosition:positionType
+     selected:YES
+     hovering:YES];
+
+}
+
+- (void)registerBackgroundImage:(NSImage *)backgroundImage
                   forEntityType:(Class)entityType
                         atDepth:(NSUInteger)depth
-                     atPosition:(PBListViewPositionType)positionType {
+                     atPosition:(PBListViewPositionType)positionType
+                       selected:(BOOL)selected
+                       hovering:(BOOL)hovering {
 
     NSAssert(positionType < PBListViewPositionTypeCount,
              @"positionType is out of range %ld > %ld", positionType, PBListViewPositionTypeCount);
-    
-    NSMutableArray *backgroundImages =
-    [self
-     backgroundImagesForEntityType:entityType
-     atDepth:depth];
 
-    if (backgroundImages.count == 0) {
+    if (backgroundImage != nil) {
+        NSMutableArray *backgroundImages =
+        [self
+         backgroundImagesForEntityType:entityType
+         atDepth:depth
+         selected:selected
+         hovering:hovering];
 
-        for (NSInteger i = 0; i < PBListViewPositionTypeCount; i++) {
-            [backgroundImages addObject:image];
+        if (backgroundImages.count == 0) {
+
+            for (NSInteger i = 0; i < PBListViewPositionTypeCount; i++) {
+                [backgroundImages addObject:backgroundImage];
+            }
+
+        } else {
+            [backgroundImages replaceObjectAtIndex:positionType withObject:backgroundImage];
         }
-
-    } else {
-        [backgroundImages replaceObjectAtIndex:positionType withObject:image];
     }
 }
 
 - (NSImage *)backgroundImageForEntityType:(Class)entityType
                                   atDepth:(NSUInteger)depth
-                               atPosition:(PBListViewPositionType)positionType {
+                               atPosition:(PBListViewPositionType)positionType
+                                 selected:(BOOL)selected
+                                 hovering:(BOOL)hovering {
 
     NSAssert(positionType < PBListViewPositionTypeCount,
              @"positionType is out of range %ld > %ld", positionType, PBListViewPositionTypeCount);
 
     NSMutableArray *backgroundImages =
-    [self backgroundImagesForEntityType:entityType atDepth:depth];
+    [self
+     backgroundImagesForEntityType:entityType
+     atDepth:depth
+     selected:selected
+     hovering:hovering];
     
     if (positionType < backgroundImages.count) {
         return backgroundImages[positionType];
@@ -226,14 +292,31 @@
 }
 
 - (NSMutableArray *)backgroundImagesForEntityType:(Class)entityType
-                                          atDepth:(NSUInteger)depth {
+                                          atDepth:(NSUInteger)depth
+                                         selected:(BOOL)selected
+                                         hovering:(BOOL)hovering {
+
+    NSMutableDictionary *backgroundImageRegistry;
+
+    if (selected) {
+        if (hovering) {
+            backgroundImageRegistry = _rowSelectedHoveringBackgroundImageRegistry;
+        } else {
+            backgroundImageRegistry = _rowSelectedBackgroundImageRegistry;
+        }
+    } else if (hovering) {
+        backgroundImageRegistry = _rowDefaultHoveringBackgroundImageRegistry;
+    } else {
+        backgroundImageRegistry = _rowDefaultBackgroundImageRegistry;
+    }
+
     NSString *key = NSStringFromClass(entityType);
     NSMutableArray *depths =
-    [_rowBackgroundImageRegistry objectForKey:key];
+    [backgroundImageRegistry objectForKey:key];
 
     if (depths == nil) {
         depths = [NSMutableArray array];
-        [_rowBackgroundImageRegistry setObject:depths forKey:key];
+        [backgroundImageRegistry setObject:depths forKey:key];
     }
 
     while (depths.count <= depth) {

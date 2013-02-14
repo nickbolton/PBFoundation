@@ -42,17 +42,31 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 - (NSArray *)metaListForEntityType:(Class)entityType
                            atDepth:(NSUInteger)depth;
 
-- (void)registerBackgroundImage:(NSImage *)image
+- (void)registerDefaultBackgroundImage:(NSImage *)defaultBackgroundImage
+               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
+        defaultHoveringBackgroundImage:(NSImage *)defaultHoveringBackgroundImage
+       selectedHoveringBackgroundImage:(NSImage *)selectedHoveringBackgroundImage
                   forEntityType:(Class)entityType
                      atPosition:(PBListViewPositionType)positionType;
-- (void)registerBackgroundImage:(NSImage *)image
-                  forEntityType:(Class)entityType
+- (void)registerDefaultBackgroundImage:(NSImage *)defaultBackgroundImage
+               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
+        defaultHoveringBackgroundImage:(NSImage *)defaultHoveringBackgroundImage
+       selectedHoveringBackgroundImage:(NSImage *)selectedHoveringBackgroundImage
+                         forEntityType:(Class)entityType
                         atDepth:(NSUInteger)depth
                      atPosition:(PBListViewPositionType)positionType;
+- (void)registerBackgroundImage:(NSImage *)backgroundImage
+                  forEntityType:(Class)entityType
+                        atDepth:(NSUInteger)depth
+                     atPosition:(PBListViewPositionType)positionType
+                       selected:(BOOL)selected
+                       hovering:(BOOL)hovering;
 
 - (NSImage *)backgroundImageForEntityType:(Class)entityType
                                   atDepth:(NSUInteger)depth
-                               atPosition:(PBListViewPositionType)positionType;
+                               atPosition:(PBListViewPositionType)positionType
+                                 selected:(BOOL)selected
+                                 hovering:(BOOL)hovering;
 
 - (void)registerRowHeight:(CGFloat)rowHeight forEntityType:(Class)entityType;
 - (CGFloat)rowHeightForEntityType:(Class)entityType;

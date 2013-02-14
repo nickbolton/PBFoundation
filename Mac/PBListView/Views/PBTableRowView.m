@@ -11,7 +11,8 @@
 
 @interface PBTableRowView() {
 
-    NSTrackingRectTag trackingTag_;
+    NSTrackingRectTag _trackingTag;
+    BOOL _hovering;
 }
 
 @end
@@ -19,7 +20,7 @@
 @implementation PBTableRowView
 
 - (BOOL)mouseEnteredEventsStarted {
-    return trackingTag_ != 0;
+    return _trackingTag != 0;
 }
 
 - (void)startMouseEnteredEvents {
@@ -31,7 +32,7 @@
 //               NSWidth(self.bounds),
 //               NSHeight(self.bounds) - (2 * buffer));
 
-    trackingTag_ =
+    _trackingTag =
     [self
      addTrackingRect:self.bounds
      owner:self
@@ -42,20 +43,44 @@
 }
 
 - (void)stopMouseEnteredEvents {
-    [self removeTrackingRect:trackingTag_];
-    trackingTag_ = 0;
+    [self removeTrackingRect:_trackingTag];
+    _trackingTag = 0;
 }
 
 - (void)mouseEntered:(NSEvent*)event {
     [_delegate rowViewSetHoverState:self];
+    _hovering = YES;
+    [self updateBackgroundImage];
 }
 
 - (void)mouseExited:(NSEvent *)event {
     [_delegate rowViewClearHoverState:self];
+    _hovering = NO;
+    [self updateBackgroundImage];
 }
 
 - (void)setSelected:(BOOL)selected {
     [super setSelected:selected];
+    [self updateBackgroundImage];
+}
+
+- (void)updateBackgroundImage {
+
+    if (self.isSelected) {
+        if (_hovering &&_selectedHoveredBackgroundImage != nil) {
+            _backgroundImageView.image = _selectedHoveredBackgroundImage;
+        } else if (_selectedBackgroundImage != nil) {
+            _backgroundImageView.image = _selectedBackgroundImage;
+        } else {
+            _backgroundImageView.image = _backgroundImage;
+        }
+    } else {
+        if (_hovering && _hoveredBackgroundImage != nil) {
+            _backgroundImageView.image = _hoveredBackgroundImage;
+        } else {
+            _backgroundImageView.image = _backgroundImage;
+        }
+    }
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
