@@ -35,31 +35,22 @@
 
 - (void)postClientConfiguration:(PBListView *)listView
                            meta:(PBListViewUIElementMeta *)meta
-                           view:(NSView *)view
-                          index:(NSInteger)index {
+                           view:(NSView *)view {
 }
 
 - (void)configureView:(PBListView *)listView
-                views:(NSArray *)views
-             metaList:(NSArray *)metaList
-              atIndex:(NSInteger)index {
+                 view:(NSView *)view
+                 meta:(PBListViewUIElementMeta *)meta
+        relativeViews:(NSMutableArray *)relativeViews
+     relativeMetaList:(NSMutableArray *)relativeMetaList {
 
-    NSAssert(index < views.count,
-             @"index out of views range %ld >= %ld", index, views.count);
-    NSAssert(index < metaList.count,
-             @"index out of metaList range %ld >= %ld", index, metaList.count);
-    NSAssert(views.count == metaList.count,
-             @"views count not equal to metaList count %ld >= %ld", views.count, metaList.count);
-
-    NSView *view = views[index];
-    NSView *prevView = index > 0 ? views[index-1] : nil;
-    PBListViewUIElementMeta *meta = metaList[index];
+    NSView *prevView = relativeViews.lastObject;
 
     if (meta.configurationHandler != nil) {
         meta.configurationHandler(view, meta);
     }
 
-    [self postClientConfiguration:listView meta:meta view:view index:index];
+    [self postClientConfiguration:listView meta:meta view:view];
 
     if (meta.actionHandler != nil && [view respondsToSelector:@selector(setTarget:)]) {
         [(NSButton *)view setTarget:meta];
@@ -69,28 +60,31 @@
         [(NSButton *)view setAction:@selector(invokeAction:)];
     }
 
-    CGFloat leftMargin = [listView.listViewConfig leftMargin];
-    CGFloat rightMargin = [listView.listViewConfig rightMargin];
+    if (meta.anchorPosition != PBListViewAnchorPositionNone) {
 
-    NSString *visualFormat;
-    NSArray *hConstraints;
-
-    CGFloat fixedPosition = leftMargin + meta.leftPadding;
-
-    if (meta.fixedPosition) {
-        for (NSInteger i = 0; i < index; i++) {
-
-            PBListViewUIElementMeta *prevMeta = metaList[i];
-            fixedPosition += prevMeta.size.width;
-        }
-    }
-
-    if (meta.rightJustified) {
-        visualFormat =
-        [NSString stringWithFormat:@"H:|-(>=%f)-[v]-(%f)-|", leftMargin, rightMargin];
+        [self
+         layoutAnchoredElement:view
+         meta:meta
+         listViewConfig:listView.listViewConfig];
+        
     } else {
 
-        if (index == 0) {
+
+        CGFloat leftMargin = [listView.listViewConfig leftMargin];
+        CGFloat rightMargin = [listView.listViewConfig rightMargin];
+
+        NSString *visualFormat;
+        NSArray *hConstraints;
+
+        CGFloat fixedPosition = leftMargin + meta.leftPadding;
+
+        if (meta.fixedPosition) {
+            for (PBListViewUIElementMeta *prevMeta in relativeMetaList) {
+                fixedPosition += prevMeta.size.width;
+            }
+        }
+
+        if (relativeViews.count == 0) {
             visualFormat =
             [NSString stringWithFormat:@"H:|-(%f)-[v]-(>=%f)-|", leftMargin, rightMargin];
         } else {
@@ -110,34 +104,163 @@
                  attribute:NSLayoutAttributeRight
                  multiplier:1.0f
                  constant:meta.leftPadding];
-                
+
                 [view.superview addConstraint:constraint];
 
             }
         }
+
+        hConstraints =
+        [NSLayoutConstraint
+         constraintsWithVisualFormat:visualFormat
+         options:NSLayoutFormatAlignAllCenterX
+         metrics:nil
+         views:@{@"v" : view}];
+
+        [view.superview addConstraints:hConstraints];
+
+        if (relativeViews.count == 0) {
+            [NSLayoutConstraint
+             addWidthConstraint:MIN(meta.size.width, NSWidth(view.superview.frame)-leftMargin-rightMargin)
+             toView:view];
+        } else {
+            [NSLayoutConstraint addMaxWidthConstraint:meta.size.width toView:view];
+        }
+        
+        [NSLayoutConstraint addHeightConstraint:meta.size.height toView:view];
+        
+        [NSLayoutConstraint verticallyCenterView:view];
+        
+        [relativeViews addObject:view];
+        [relativeMetaList addObject:meta];
     }
+}
 
-    NSLog(@"leftPadding: %f", meta.leftPadding);
-    NSLog(@"visualFormat: %@", visualFormat);
+- (void)layoutAnchoredElement:(NSView *)view
+                         meta:(PBListViewUIElementMeta *)meta
+               listViewConfig:(PBListViewConfig *)listViewConfig {
 
-    hConstraints =
-    [NSLayoutConstraint
-     constraintsWithVisualFormat:visualFormat
-     options:NSLayoutFormatAlignAllCenterX
-     metrics:nil
-     views:@{@"v" : view}];
+    CGFloat leftMargin = [listViewConfig leftMargin];
+    CGFloat rightMargin = [listViewConfig rightMargin];
 
-    [view.superview addConstraints:hConstraints];
-
-    if (index == 0) {
-        [NSLayoutConstraint addWidthConstraint:meta.size.width toView:view];
-    } else {
-        [NSLayoutConstraint addMaxWidthConstraint:meta.size.width toView:view];
-    }
-
+    [NSLayoutConstraint addWidthConstraint:meta.size.width toView:view];
     [NSLayoutConstraint addHeightConstraint:meta.size.height toView:view];
 
-    [NSLayoutConstraint verticallyCenterView:view];
+    switch (meta.anchorPosition) {
+
+        case PBListViewAnchorPositionCenter:
+
+            [NSLayoutConstraint horizontallyCenterView:view];
+            [NSLayoutConstraint verticallyCenterView:view];
+
+#if DEBUG
+            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.left + meta.anchorInsets.right > 0) {
+                NSLog(@"Warming: anchorInsets will be ignored for CENTER anchor position");
+            }
+#endif
+            break;
+            
+        case PBListViewAnchorPositionTop:
+
+            [NSLayoutConstraint horizontallyCenterView:view];
+            [NSLayoutConstraint alignToTop:view withPadding:meta.anchorInsets.top];
+
+#if DEBUG
+            if (meta.anchorInsets.bottom + meta.anchorInsets.left + meta.anchorInsets.right > 0) {
+                NSLog(@"Warming: anchorInsets other than top will be ignored for TOP anchor position");
+            }
+#endif
+            break;
+            
+        case PBListViewAnchorPositionBottom:
+
+            [NSLayoutConstraint horizontallyCenterView:view];
+            [NSLayoutConstraint alignToBottom:view withPadding:-meta.anchorInsets.bottom];
+
+#if DEBUG
+            if (meta.anchorInsets.top + meta.anchorInsets.left + meta.anchorInsets.right > 0) {
+                NSLog(@"Warming: anchorInsets other than bottom will be ignored for BOTTOM anchor position");
+            }
+#endif
+            break;
+            
+        case PBListViewAnchorPositionLeft:
+
+            [NSLayoutConstraint verticallyCenterView:view];
+            [NSLayoutConstraint alignToLeft:view withPadding:meta.anchorInsets.left + leftMargin];
+
+#if DEBUG
+            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.right > 0) {
+                NSLog(@"Warming: anchorInsets other than left will be ignored for LEFT anchor position");
+            }
+#endif
+            break;
+            
+        case PBListViewAnchorPositionRight:
+
+            [NSLayoutConstraint verticallyCenterView:view];
+            [NSLayoutConstraint alignToRight:view withPadding:-meta.anchorInsets.right - rightMargin];
+
+#if DEBUG
+            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.left > 0) {
+                NSLog(@"Warming: anchorInsets other than right will be ignored for RIGHT anchor position");
+            }
+#endif
+            break;
+            
+        case PBListViewAnchorPositionTopLeft:
+
+            [NSLayoutConstraint alignToTop:view withPadding:meta.anchorInsets.top];
+            [NSLayoutConstraint alignToLeft:view withPadding:meta.anchorInsets.left + leftMargin];
+
+#if DEBUG
+            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.right > 0) {
+                NSLog(@"Warming: anchorInsets other than left will be ignored for TOPLEFT anchor position");
+            }
+#endif
+            break;
+            
+        case PBListViewAnchorPositionTopRight:
+
+            [NSLayoutConstraint alignToTop:view withPadding:meta.anchorInsets.top];
+            [NSLayoutConstraint alignToRight:view withPadding:-meta.anchorInsets.right - rightMargin];
+
+#if DEBUG
+            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.left > 0) {
+                NSLog(@"Warming: anchorInsets other than right will be ignored for TOPRIGHT anchor position");
+            }
+#endif
+            break;
+            
+        case PBListViewAnchorPositionBottomLeft:
+
+            [NSLayoutConstraint alignToBottom:view withPadding:-meta.anchorInsets.bottom];
+            [NSLayoutConstraint alignToLeft:view withPadding:meta.anchorInsets.left + leftMargin];
+
+#if DEBUG
+            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.right > 0) {
+                NSLog(@"Warming: anchorInsets other than left will be ignored for BOTTOMLEFT anchor position");
+            }
+#endif
+            break;
+            
+        case PBListViewAnchorPositionBottomRight:
+
+            [NSLayoutConstraint alignToBottom:view withPadding:-meta.anchorInsets.bottom];
+            [NSLayoutConstraint alignToRight:view withPadding:-meta.anchorInsets.right - rightMargin];
+
+#if DEBUG
+            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.left > 0) {
+                NSLog(@"Warming: anchorInsets other than right will be ignored for BOTTOMRIGHT anchor position");
+            }
+#endif
+            break;
+
+        case PBListViewAnchorPositionNone:
+            // never get here
+            break;
+    }
+
 }
 
 @end

@@ -38,8 +38,8 @@
 
 - (void)postClientConfiguration:(PBListView *)listView
                            meta:(PBListViewUIElementMeta *)meta
-                           view:(PBButton *)button
-                          index:(NSInteger)index {
+                           view:(PBButton *)button {
+
     NSAssert([button isKindOfClass:[PBButton class]], @"view is not a PBButton");
 
     meta.size = meta.image.size;

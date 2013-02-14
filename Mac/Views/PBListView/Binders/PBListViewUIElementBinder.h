@@ -21,9 +21,10 @@
          usingMeta:(PBListViewUIElementMeta *)meta;
 
 - (void)configureView:(PBListView *)listView
-                views:(NSArray *)views
-             metaList:(NSArray *)metaList
-              atIndex:(NSInteger)index;
+                 view:(NSView *)view
+                 meta:(PBListViewUIElementMeta *)meta
+        relativeViews:(NSMutableArray *)relativeViews
+     relativeMetaList:(NSMutableArray *)relativeMetaList;
 
 - (id)buildUIElement:(PBListView *)listView;
 

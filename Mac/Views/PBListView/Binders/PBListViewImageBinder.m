@@ -22,8 +22,8 @@
 
 - (void)postClientConfiguration:(PBListView *)listView
                            meta:(PBListViewUIElementMeta *)meta
-                           view:(NSImageView *)imageView
-                          index:(NSInteger)index {
+                           view:(NSImageView *)imageView {
+    
     NSAssert([imageView isKindOfClass:[NSImageView class]], @"view is not a NSImageView");
 
     imageView.image = meta.image;

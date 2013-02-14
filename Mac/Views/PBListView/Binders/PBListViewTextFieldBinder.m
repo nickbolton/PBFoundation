@@ -33,8 +33,8 @@
 
 - (void)postClientConfiguration:(PBListView *)listView
                            meta:(PBListViewUIElementMeta *)meta
-                           view:(NSTextField *)textField
-                          index:(NSInteger)index {
+                           view:(NSTextField *)textField {
+
     NSAssert([textField isKindOfClass:[NSTextField class]], @"view is not a NSTextField");
 
     PBShadowTextFieldCell *cell = textField.cell;
@@ -59,24 +59,29 @@
     NSAssert([meta isKindOfClass:[PBListViewUIElementMeta class]],
              @"meta is not of type PBListViewUIElementMeta");
 
-    NSString *text = @"";
-    if (meta.keyPath != nil) {
-        id value = [entity valueForKeyPath:meta.keyPath];
-        if (value != nil) {
+    if (meta.staticText != nil) {
+        textField.stringValue = meta.staticText;
+    } else {
 
-            if (meta.valueTransformer != nil) {
-                value = meta.valueTransformer(value);
+        NSString *text = @"";
+        if (meta.keyPath != nil) {
+            id value = [entity valueForKeyPath:meta.keyPath];
+            if (value != nil) {
+
+                if (meta.valueTransformer != nil) {
+                    value = meta.valueTransformer(value);
+                }
+
+                NSAssert([value isKindOfClass:[NSString class]],
+                         @"value of %@ at keyPath '%@' is not an NSString",
+                         NSStringFromClass([entity class]), meta.keyPath);
+
+                text = value;
             }
-
-            NSAssert([value isKindOfClass:[NSString class]],
-                     @"value of %@ at keyPath '%@' is not an NSString",
-                     NSStringFromClass([entity class]), meta.keyPath);
-            
-            text = value;
         }
+        
+        textField.stringValue = text;
     }
-
-    textField.stringValue = text;
 }
 
 @end

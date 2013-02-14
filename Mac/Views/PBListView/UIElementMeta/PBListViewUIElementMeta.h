@@ -8,6 +8,20 @@
 
 #import <Foundation/Foundation.h>
 
+typedef NS_ENUM(NSInteger, PBListViewAnchorPosition) {
+
+    PBListViewAnchorPositionNone = 0,
+    PBListViewAnchorPositionCenter,
+    PBListViewAnchorPositionTop,
+    PBListViewAnchorPositionBottom,
+    PBListViewAnchorPositionLeft,
+    PBListViewAnchorPositionRight,
+    PBListViewAnchorPositionTopLeft,
+    PBListViewAnchorPositionTopRight,
+    PBListViewAnchorPositionBottomLeft,
+    PBListViewAnchorPositionBottomRight,
+};
+
 @class PBListViewUIElementBinder;
 @class PBListViewUIElementMeta;
 @class PBListViewCommand;
@@ -34,13 +48,21 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic, strong) NSColor *textShadowColor;
 @property (nonatomic) NSSize shadowOffset;
 @property (nonatomic) BOOL fixedPosition;
-@property (nonatomic) BOOL rightJustified;
 @property (nonatomic) BOOL hoverAlphaEnabled;
 @property (nonatomic) CGFloat hoverOffAlpha;
+@property (nonatomic) NSString *staticText;
 @property (nonatomic, strong) NSImage *image;
 @property (nonatomic, strong) NSImage *pressedImage;
 @property (nonatomic, strong) NSImage *onImage;
 @property (nonatomic, strong) NSImage *disabledImage;
+
+// If an anchor position is other than none, the ui element will
+// be positioned as instructed with the given insets.
+// It will override any other position property and the element
+// is treated as independent of other elements.
+// The insets will be applied after any left/right margins though.
+@property (nonatomic) PBListViewAnchorPosition anchorPosition;
+@property (nonatomic) NSEdgeInsets anchorInsets;
 
 @property (nonatomic, strong) PBMenu *menu;
 @property (nonatomic, strong) NSIndexSet *menuSeparatorIndexes;

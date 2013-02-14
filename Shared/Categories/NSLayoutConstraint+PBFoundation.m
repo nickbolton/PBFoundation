@@ -230,9 +230,9 @@
 }
 
 #if TARGET_OS_IPHONE
-+ (void)alignToTop:(UIView *)view {
++ (void)alignToTop:(UIView *)view withPadding:(CGFloat)padding {
 #else
-+ (void)alignToTop:(NSView *)view {
++ (void)alignToTop:(NSView *)view withPadding:(CGFloat)padding {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -242,14 +242,14 @@
      toItem:view.superview
      attribute:NSLayoutAttributeTop
      multiplier:1.0f
-     constant:0.0f];
+     constant:padding];
     [view.superview addConstraint:constraint];
 }
 
 #if TARGET_OS_IPHONE
-+ (void)alignToBottom:(UIView *)view {
++ (void)alignToBottom:(UIView *)view withPadding:(CGFloat)padding {
 #else
-+ (void)alignToBottom:(NSView *)view {
++ (void)alignToBottom:(NSView *)view withPadding:(CGFloat)padding {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -259,14 +259,14 @@
      toItem:view.superview
      attribute:NSLayoutAttributeBottom
      multiplier:1.0f
-     constant:0.0f];
+     constant:padding];
     [view.superview addConstraint:constraint];
 }
 
 #if TARGET_OS_IPHONE
-+ (void)alignToLeft:(UIView *)view {
++ (void)alignToLeft:(UIView *)view withPadding:(CGFloat)padding {
 #else
-+ (void)alignToLeft:(NSView *)view {
++ (void)alignToLeft:(NSView *)view withPadding:(CGFloat)padding {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -276,14 +276,14 @@
      toItem:view.superview
      attribute:NSLayoutAttributeLeft
      multiplier:1.0f
-     constant:0.0f];
+     constant:padding];
     [view.superview addConstraint:constraint];
 }
 
 #if TARGET_OS_IPHONE
-+ (void)alignToRight:(UIView *)view {
++ (void)alignToRight:(UIView *)view withPadding:(CGFloat)padding {
 #else
-+ (void)alignToRight:(NSView *)view {
++ (void)alignToRight:(NSView *)view withPadding:(CGFloat)padding {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -293,7 +293,7 @@
      toItem:view.superview
      attribute:NSLayoutAttributeRight
      multiplier:1.0f
-     constant:0.0f];
+     constant:padding];
     [view.superview addConstraint:constraint];
 }
 

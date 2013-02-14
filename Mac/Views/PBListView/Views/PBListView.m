@@ -244,7 +244,7 @@
 
         [rowView addSubview:topLine];
 
-        [NSLayoutConstraint alignToTop:topLine];
+        [NSLayoutConstraint alignToTop:topLine withPadding:0.0f];
         [NSLayoutConstraint expandWidthToSuperview:topLine];
         [NSLayoutConstraint addHeightConstraint:lineHeight toView:topLine];
     }
@@ -281,11 +281,6 @@
     NSInteger index = 0;
     for (PBListViewUIElementMeta *meta in metaList) {
 
-        // only the last most element can be right-justified
-        if (index < (metaList.count - 1)) {
-            meta.rightJustified = NO;
-        }
-
         NSView *view = [meta.binder buildUIElement:self];
         view.translatesAutoresizingMaskIntoConstraints = NO;
         [cellView addSubview:view];
@@ -294,14 +289,17 @@
         index++;
     }
 
+    NSMutableArray *relativeViews = [NSMutableArray array];
+    NSMutableArray *relativeMetaList = [NSMutableArray array];
 
     [views enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
         PBListViewUIElementMeta *meta = metaList[idx];
         [meta.binder
          configureView:self
-         views:views
-         metaList:metaList
-         atIndex:idx];
+         view:obj
+         meta:meta
+         relativeViews:relativeViews
+         relativeMetaList:relativeMetaList];
     }];
 
     return cellView;

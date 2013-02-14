@@ -24,10 +24,10 @@
 + (void)expandWidthToSuperview:(UIView *)view;
 + (void)expandHeightToSuperview:(UIView *)view;
 + (void)expandToSuperview:(UIView *)view;
-+ (void)alignToTop:(UIView *)view;
-+ (void)alignToBottom:(UIView *)view;
-+ (void)alignToLeft:(UIView *)view;
-+ (void)alignToRight:(UIView *)view;
++ (void)alignToTop:(UIView *)view withPadding:(CGFloat)padding;
++ (void)alignToBottom:(UIView *)view withPadding:(CGFloat)padding;
++ (void)alignToLeft:(UIView *)view withPadding:(CGFloat)padding;
++ (void)alignToRight:(UIView *)view withPadding:(CGFloat)padding;
 #else
 + (void)addMinWidthConstraint:(CGFloat)minWidth toView:(NSView *)view;
 + (void)addMaxWidthConstraint:(CGFloat)maxWidth toView:(NSView *)view;
@@ -42,10 +42,10 @@
 + (void)expandWidthToSuperview:(NSView *)view;
 + (void)expandHeightToSuperview:(NSView *)view;
 + (void)expandToSuperview:(NSView *)view;
-+ (void)alignToTop:(NSView *)view;
-+ (void)alignToBottom:(NSView *)view;
-+ (void)alignToLeft:(NSView *)view;
-+ (void)alignToRight:(NSView *)view;
++ (void)alignToTop:(NSView *)view withPadding:(CGFloat)padding;
++ (void)alignToBottom:(NSView *)view withPadding:(CGFloat)padding;
++ (void)alignToLeft:(NSView *)view withPadding:(CGFloat)padding;
++ (void)alignToRight:(NSView *)view withPadding:(CGFloat)padding;
 #endif
 
 

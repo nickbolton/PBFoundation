@@ -9,18 +9,24 @@
 #import "PBListViewMenuButtonBinder.h"
 #import "PBListViewUIElementMeta.h"
 #import "PBMenu.h"
+#import "PBButton.h"
 
 @implementation PBListViewMenuButtonBinder
 
 - (void)configureView:(PBListView *)listView
-                views:(NSArray *)views
-             metaList:(NSArray *)metaList
-              atIndex:(NSInteger)index {
+                 view:(PBButton *)button
+                 meta:(PBListViewUIElementMeta *)meta
+        relativeViews:(NSMutableArray *)relativeViews
+     relativeMetaList:(NSMutableArray *)relativeMetaList {
 
-    [super configureView:listView views:views metaList:metaList atIndex:index];
+    NSAssert([button isKindOfClass:[PBButton class]], @"view is not a PBButton");
 
-    NSButton *button = views[index];
-    PBListViewUIElementMeta *meta = metaList[index];
+    [super
+     configureView:listView
+     view:button
+     meta:meta
+     relativeViews:relativeViews
+     relativeMetaList:relativeMetaList];
 
     if (meta.menu != nil) {
         meta.actionHandler = ^(NSButton *button, id entity, PBListViewUIElementMeta *meta) {
