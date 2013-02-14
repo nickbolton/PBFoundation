@@ -15,9 +15,6 @@
 #else
 + (void)addMinWidthConstraint:(CGFloat)minWidth toView:(NSView *)view {
 #endif
-    if (minWidth < 0) {
-        NSLog(@"ZZZ");
-    }
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
      constraintWithItem:view
@@ -35,9 +32,6 @@
 #else
 + (void)addMaxWidthConstraint:(CGFloat)maxWidth toView:(NSView *)view {
 #endif
-    if (maxWidth == 0) {
-        NSLog(@"ZZZ");
-    }
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
      constraintWithItem:view
@@ -55,9 +49,6 @@
 #else
 + (void)addWidthConstraint:(CGFloat)width toView:(NSView *)view {
 #endif
-    if (width < 0) {
-        NSLog(@"ZZZ");
-    }
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
      constraintWithItem:view
@@ -89,9 +80,6 @@
 #else
 + (void)addMinHeightConstraint:(CGFloat)minHeight toView:(NSView *)view {
 #endif
-    if (minHeight < 0) {
-        NSLog(@"ZZZ");
-    }
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
      constraintWithItem:view
@@ -109,9 +97,6 @@
 #else
 + (void)addMaxHeightConstraint:(CGFloat)maxHeight toView:(NSView *)view {
 #endif
-    if (maxHeight < 0) {
-        NSLog(@"ZZZ");
-    }
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
      constraintWithItem:view
@@ -129,9 +114,6 @@
 #else
 + (void)addHeightConstraint:(CGFloat)height toView:(NSView *)view {
 #endif
-    if (height < 0) {
-        NSLog(@"ZZZ");
-    }
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
      constraintWithItem:view
