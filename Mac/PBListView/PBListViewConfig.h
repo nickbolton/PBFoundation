@@ -43,15 +43,19 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
                            atDepth:(NSUInteger)depth;
 
 - (void)registerDefaultBackgroundImage:(NSImage *)defaultBackgroundImage
-               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
         defaultHoveringBackgroundImage:(NSImage *)defaultHoveringBackgroundImage
+               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
        selectedHoveringBackgroundImage:(NSImage *)selectedHoveringBackgroundImage
+               expandedBackgroundImage:(NSImage *)expandedBackgroundImage
+       expandedHoveringBackgroundImage:(NSImage *)expandedHoveringBackgroundImage
                   forEntityType:(Class)entityType
                      atPosition:(PBListViewPositionType)positionType;
 - (void)registerDefaultBackgroundImage:(NSImage *)defaultBackgroundImage
-               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
         defaultHoveringBackgroundImage:(NSImage *)defaultHoveringBackgroundImage
+               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
        selectedHoveringBackgroundImage:(NSImage *)selectedHoveringBackgroundImage
+               expandedBackgroundImage:(NSImage *)expandedBackgroundImage
+       expandedHoveringBackgroundImage:(NSImage *)expandedHoveringBackgroundImage
                          forEntityType:(Class)entityType
                         atDepth:(NSUInteger)depth
                      atPosition:(PBListViewPositionType)positionType;
@@ -60,16 +64,20 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
                         atDepth:(NSUInteger)depth
                      atPosition:(PBListViewPositionType)positionType
                        selected:(BOOL)selected
-                       hovering:(BOOL)hovering;
+                       hovering:(BOOL)hovering
+                       expanded:(BOOL)expanded;
 
 - (NSImage *)backgroundImageForEntityType:(Class)entityType
                                   atDepth:(NSUInteger)depth
                                atPosition:(PBListViewPositionType)positionType
                                  selected:(BOOL)selected
-                                 hovering:(BOOL)hovering;
+                                 hovering:(BOOL)hovering
+                                 expanded:(BOOL)expanded;
 
-- (void)registerRowHeight:(CGFloat)rowHeight forEntityType:(Class)entityType;
-- (CGFloat)rowHeightForEntityType:(Class)entityType;
+- (void)registerRowHeight:(CGFloat)rowHeight
+            forEntityType:(Class)entityType
+                  atDepth:(NSUInteger)depth;
+- (CGFloat)rowHeightForEntityType:(Class)entityType atDepth:(NSUInteger)depth;
 
 - (PBMenu *)contextMenuForEntityType:(Class)entityType atDepth:(NSUInteger)depth;
 - (void)registerContextMenu:(PBMenu *)menu

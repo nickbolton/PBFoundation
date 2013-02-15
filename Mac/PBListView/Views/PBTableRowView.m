@@ -66,17 +66,25 @@
 
 - (void)updateBackgroundImage {
 
-    if (self.isSelected) {
-        if (_hovering &&_selectedHoveredBackgroundImage != nil) {
-            _backgroundImageView.image = _selectedHoveredBackgroundImage;
+    if (self.isExpanded) {
+        if (_hovering && _expandedHoveringBackgroundImage != nil) {
+            _backgroundImageView.image = _expandedHoveringBackgroundImage;
+        } else if (_expandedBackgroundImage != nil) {
+            _backgroundImageView.image = _expandedBackgroundImage;
+        } else {
+            _backgroundImageView.image = _backgroundImage;
+        }
+    } else if (self.isSelected) {
+        if (_hovering && _selectedHoveringBackgroundImage != nil) {
+            _backgroundImageView.image = _selectedHoveringBackgroundImage;
         } else if (_selectedBackgroundImage != nil) {
             _backgroundImageView.image = _selectedBackgroundImage;
         } else {
             _backgroundImageView.image = _backgroundImage;
         }
     } else {
-        if (_hovering && _hoveredBackgroundImage != nil) {
-            _backgroundImageView.image = _hoveredBackgroundImage;
+        if (_hovering && _hoveringBackgroundImage != nil) {
+            _backgroundImageView.image = _hoveringBackgroundImage;
         } else {
             _backgroundImageView.image = _backgroundImage;
         }

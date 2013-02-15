@@ -49,6 +49,7 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic) NSSize shadowOffset;
 @property (nonatomic) BOOL fixedPosition;
 @property (nonatomic) BOOL hoverAlphaEnabled;
+@property (nonatomic) BOOL ignoreMargins;
 @property (nonatomic) CGFloat hoverOffAlpha;
 @property (nonatomic) NSString *staticText;
 @property (nonatomic, strong) NSImage *image;

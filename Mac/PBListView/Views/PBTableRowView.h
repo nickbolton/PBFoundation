@@ -25,13 +25,17 @@
 @property (nonatomic) CGFloat selectedBorderRadius;
 
 @property (nonatomic, strong) NSImage *backgroundImage;
+@property (nonatomic, strong) NSImage *hoveringBackgroundImage;
 @property (nonatomic, strong) NSImage *selectedBackgroundImage;
-@property (nonatomic, strong) NSImage *hoveredBackgroundImage;
-@property (nonatomic, strong) NSImage *selectedHoveredBackgroundImage;
+@property (nonatomic, strong) NSImage *selectedHoveringBackgroundImage;
+@property (nonatomic, strong) NSImage *expandedBackgroundImage;
+@property (nonatomic, strong) NSImage *expandedHoveringBackgroundImage;
+
 @property (nonatomic, strong) NSImageView *backgroundImageView;
 
 @property (nonatomic, weak) id <PBTableRowDelegate> delegate;
 
+@property (nonatomic, getter = isExpanded) BOOL expanded;
 @property (nonatomic, readonly, getter = isHovering) BOOL hovering;
 
 - (void)startMouseEnteredEvents;

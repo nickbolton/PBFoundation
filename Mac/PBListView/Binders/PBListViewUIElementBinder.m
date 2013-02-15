@@ -70,8 +70,8 @@
     } else {
 
 
-        CGFloat leftMargin = [listView.listViewConfig leftMargin];
-        CGFloat rightMargin = [listView.listViewConfig rightMargin];
+        CGFloat leftMargin = meta.ignoreMargins ? 0.0f : [listView.listViewConfig leftMargin];
+        CGFloat rightMargin = meta.ignoreMargins ? 0.0f : [listView.listViewConfig rightMargin];
 
         NSString *visualFormat;
         NSArray *hConstraints;
@@ -140,8 +140,8 @@
                          meta:(PBListViewUIElementMeta *)meta
                listViewConfig:(PBListViewConfig *)listViewConfig {
 
-    CGFloat leftMargin = [listViewConfig leftMargin];
-    CGFloat rightMargin = [listViewConfig rightMargin];
+    CGFloat leftMargin = meta.ignoreMargins ? 0.0f : [listViewConfig leftMargin];
+    CGFloat rightMargin = meta.ignoreMargins ? 0.0f : [listViewConfig rightMargin];
 
     [NSLayoutConstraint addWidthConstraint:meta.size.width toView:view];
     [NSLayoutConstraint addHeightConstraint:meta.size.height toView:view];

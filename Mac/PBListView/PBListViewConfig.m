@@ -16,9 +16,11 @@
 @property (nonatomic, strong) NSMutableDictionary *metaListRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowHeightRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowDefaultBackgroundImageRegistry;
-@property (nonatomic, strong) NSMutableDictionary *rowSelectedBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowDefaultHoveringBackgroundImageRegistry;
+@property (nonatomic, strong) NSMutableDictionary *rowSelectedBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowSelectedHoveringBackgroundImageRegistry;
+@property (nonatomic, strong) NSMutableDictionary *rowExpandedBackgroundImageRegistry;
+@property (nonatomic, strong) NSMutableDictionary *rowExpandedHoveringBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *entityCommands;
 @property (nonatomic, strong) NSMutableDictionary *contextMenuSeparators;
 @property (nonatomic, strong) NSMutableDictionary *contextMenus;
@@ -37,6 +39,8 @@
         self.rowSelectedBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.rowDefaultHoveringBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.rowSelectedHoveringBackgroundImageRegistry = [NSMutableDictionary dictionary];
+        self.rowExpandedBackgroundImageRegistry = [NSMutableDictionary dictionary];
+        self.rowExpandedHoveringBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.entityCommands = [NSMutableDictionary dictionary];
         self.contextMenuSeparators = [NSMutableDictionary dictionary];
         self.contextMenus = [NSMutableDictionary dictionary];
@@ -46,8 +50,8 @@
         self.maxSize = NSMakeSize(MAXFLOAT, MAXFLOAT);
         self.rowDividerLineColor = nil;
         self.rowDividerLineHeight = 1.0f;
-        self.selectedBackgroundColor = [NSColor colorWithRGBHex:0xD7E4F1];
-        self.selectedBorderColor = [NSColor colorWithRGBHex:0x3775BC alpha:1.0f];
+        self.selectedBackgroundColor = nil; //[NSColor colorWithRGBHex:0xD7E4F1];
+        self.selectedBorderColor = nil; // [NSColor colorWithRGBHex:0x3775BC alpha:1.0f];
         self.selectedBorderRadius = 10.0f;
         self.autoBuildContextualMenu = YES;
     }
@@ -181,25 +185,31 @@
 }
 
 - (void)registerDefaultBackgroundImage:(NSImage *)defaultBackgroundImage
-               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
         defaultHoveringBackgroundImage:(NSImage *)defaultHoveringBackgroundImage
+               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
        selectedHoveringBackgroundImage:(NSImage *)selectedHoveringBackgroundImage
+               expandedBackgroundImage:(NSImage *)expandedBackgroundImage
+       expandedHoveringBackgroundImage:(NSImage *)expandedHoveringBackgroundImage
                          forEntityType:(Class)entityType
                      atPosition:(PBListViewPositionType)positionType {
     [self
      registerDefaultBackgroundImage:defaultBackgroundImage
-     selectedBackgroundImage:selectedBackgroundImage
      defaultHoveringBackgroundImage:defaultHoveringBackgroundImage
+     selectedBackgroundImage:selectedBackgroundImage
      selectedHoveringBackgroundImage:selectedHoveringBackgroundImage
+     expandedBackgroundImage:expandedBackgroundImage
+     expandedHoveringBackgroundImage:expandedHoveringBackgroundImage
      forEntityType:entityType
      atDepth:0
      atPosition:positionType];
 }
 
 - (void)registerDefaultBackgroundImage:(NSImage *)defaultBackgroundImage
-               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
         defaultHoveringBackgroundImage:(NSImage *)defaultHoveringBackgroundImage
+               selectedBackgroundImage:(NSImage *)selectedBackgroundImage
        selectedHoveringBackgroundImage:(NSImage *)selectedHoveringBackgroundImage
+               expandedBackgroundImage:(NSImage *)expandedBackgroundImage
+       expandedHoveringBackgroundImage:(NSImage *)expandedHoveringBackgroundImage
                          forEntityType:(Class)entityType
                                atDepth:(NSUInteger)depth
                             atPosition:(PBListViewPositionType)positionType {
@@ -210,7 +220,8 @@
      atDepth:depth
      atPosition:positionType
      selected:NO
-     hovering:NO];
+     hovering:NO
+     expanded:NO];
 
     [self
      registerBackgroundImage:selectedBackgroundImage
@@ -218,7 +229,8 @@
      atDepth:depth
      atPosition:positionType
      selected:YES
-     hovering:NO];
+     hovering:NO
+     expanded:NO];
 
     [self
      registerBackgroundImage:defaultHoveringBackgroundImage
@@ -226,7 +238,8 @@
      atDepth:depth
      atPosition:positionType
      selected:NO
-     hovering:YES];
+     hovering:YES
+     expanded:NO];
 
     [self
      registerBackgroundImage:selectedHoveringBackgroundImage
@@ -234,7 +247,26 @@
      atDepth:depth
      atPosition:positionType
      selected:YES
-     hovering:YES];
+     hovering:YES
+     expanded:NO];
+
+    [self
+     registerBackgroundImage:expandedBackgroundImage
+     forEntityType:entityType
+     atDepth:depth
+     atPosition:positionType
+     selected:NO
+     hovering:NO
+     expanded:YES];
+
+    [self
+     registerBackgroundImage:expandedHoveringBackgroundImage
+     forEntityType:entityType
+     atDepth:depth
+     atPosition:positionType
+     selected:NO
+     hovering:YES
+     expanded:YES];
 
 }
 
@@ -243,7 +275,8 @@
                         atDepth:(NSUInteger)depth
                      atPosition:(PBListViewPositionType)positionType
                        selected:(BOOL)selected
-                       hovering:(BOOL)hovering {
+                       hovering:(BOOL)hovering
+                       expanded:(BOOL)expanded {
 
     NSAssert(positionType < PBListViewPositionTypeCount,
              @"positionType is out of range %ld > %ld", positionType, PBListViewPositionTypeCount);
@@ -254,7 +287,8 @@
          backgroundImagesForEntityType:entityType
          atDepth:depth
          selected:selected
-         hovering:hovering];
+         hovering:hovering
+         expanded:expanded];
 
         if (backgroundImages.count == 0) {
 
@@ -272,7 +306,8 @@
                                   atDepth:(NSUInteger)depth
                                atPosition:(PBListViewPositionType)positionType
                                  selected:(BOOL)selected
-                                 hovering:(BOOL)hovering {
+                                 hovering:(BOOL)hovering
+                                 expanded:(BOOL)expanded {
 
     NSAssert(positionType < PBListViewPositionTypeCount,
              @"positionType is out of range %ld > %ld", positionType, PBListViewPositionTypeCount);
@@ -282,7 +317,8 @@
      backgroundImagesForEntityType:entityType
      atDepth:depth
      selected:selected
-     hovering:hovering];
+     hovering:hovering
+     expanded:expanded];
     
     if (positionType < backgroundImages.count) {
         return backgroundImages[positionType];
@@ -294,11 +330,18 @@
 - (NSMutableArray *)backgroundImagesForEntityType:(Class)entityType
                                           atDepth:(NSUInteger)depth
                                          selected:(BOOL)selected
-                                         hovering:(BOOL)hovering {
+                                         hovering:(BOOL)hovering
+                                         expanded:(BOOL)expanded {
 
     NSMutableDictionary *backgroundImageRegistry;
 
-    if (selected) {
+    if (expanded) {
+        if (hovering) {
+            backgroundImageRegistry = _rowExpandedHoveringBackgroundImageRegistry;
+        } else {
+            backgroundImageRegistry = _rowExpandedBackgroundImageRegistry;
+        }
+    } else if (selected) {
         if (hovering) {
             backgroundImageRegistry = _rowSelectedHoveringBackgroundImageRegistry;
         } else {
@@ -326,13 +369,18 @@
     return depths[depth];
 }
 
-- (void)registerRowHeight:(CGFloat)rowHeight forEntityType:(Class)entityType {
-    NSString *key = NSStringFromClass(entityType);
+- (void)registerRowHeight:(CGFloat)rowHeight
+            forEntityType:(Class)entityType
+                  atDepth:(NSUInteger)depth {
+    NSString *key =
+    [NSString stringWithFormat:@"%@-%lu", NSStringFromClass(entityType), depth];
     [_rowHeightRegistry setObject:@(rowHeight) forKey:key];
 }
 
-- (CGFloat)rowHeightForEntityType:(Class)entityType {
-    NSString *key = NSStringFromClass(entityType);
+- (CGFloat)rowHeightForEntityType:(Class)entityType
+                          atDepth:(NSUInteger)depth {
+    NSString *key =
+    [NSString stringWithFormat:@"%@-%lu", NSStringFromClass(entityType), depth];
     return [[_rowHeightRegistry objectForKey:key] floatValue];
 }
 

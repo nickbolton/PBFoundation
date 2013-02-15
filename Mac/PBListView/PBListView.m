@@ -14,6 +14,7 @@
 #import "PBShadowTextFieldCell.h"
 #import "PBListViewCommand.h"
 #import "PBEmptyConfiguration.h"
+#import "PBEndMarker.h"
 #import "PBMenu.h"
 #import <Carbon/Carbon.h>
 
@@ -54,7 +55,8 @@
 
     [_listViewConfig
      registerRowHeight:50.0f
-     forEntityType:[PBEmptyConfiguration class]];
+     forEntityType:[PBEmptyConfiguration class]
+     atDepth:0];
 
     _userReloadKeyCode = kVK_ANSI_R;
     _userReloadKeyModifiers = NSCommandKeyMask;
@@ -142,7 +144,8 @@
 
 - (NSImage *)backgroundImageForRow:(NSInteger)row
                           selected:(BOOL)selected
-                          hovering:(BOOL)hovering {
+                          hovering:(BOOL)hovering
+                          expanded:(BOOL)expanded {
 
     NSImage *image = nil;
     id entity = [self entityAtRow:row];
@@ -167,7 +170,8 @@
                  atDepth:[entity listViewEntityDepth]
                  atPosition:position
                  selected:selected
-                 hovering:hovering];
+                 hovering:hovering
+                 expanded:expanded];
     }
 
     return image;
@@ -346,33 +350,35 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         [self metaListForEntityType:entityType atDepth:entityDepth];
 
 #if DEBUG
-        if (metaList.count == 0) {
+        if ([entity isKindOfClass:[PBEndMarker class]] == NO) {
+            if (metaList.count == 0) {
 
-            NSString *emptyTitle =
-            [NSString stringWithFormat:
-             NSLocalizedString(@"UI element not defined for entity '%@' at depth %ld", nil),
-             NSStringFromClass(entityType), entityDepth];
+                NSString *emptyTitle =
+                [NSString stringWithFormat:
+                 NSLocalizedString(@"UI element not defined for entity '%@' at depth %ld", nil),
+                 NSStringFromClass(entityType), entityDepth];
 
-            entity =
-            [PBEmptyConfiguration
-             emptyConfigurationWithTitle:emptyTitle
-             depth:entityDepth];
-            entityType = [entity class];
+                entity =
+                [PBEmptyConfiguration
+                 emptyConfigurationWithTitle:emptyTitle
+                 depth:entityDepth];
+                entityType = [entity class];
 
-            metaList =
-            [_listViewConfig
-             metaListForEntityType:[PBEmptyConfiguration class]
-             atDepth:entityDepth];
+                metaList =
+                [_listViewConfig
+                 metaListForEntityType:[PBEmptyConfiguration class]
+                 atDepth:entityDepth];
 
-            rowView.backgroundColor = [NSColor whiteColor];
-        }
+                rowView.backgroundColor = [NSColor whiteColor];
+            }
 
-        if (metaList.count == 0) {
-            metaList =
-            [self
-             noUIElementsConfiguredMetaList:entityType
-             depth:entityDepth
-             row:row];
+            if (metaList.count == 0) {
+                metaList =
+                [self
+                 noUIElementsConfiguredMetaList:entityType
+                 depth:entityDepth
+                 row:row];
+            }
         }
 #endif
         
@@ -427,6 +433,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (entity != nil) {
 
+        if ([entity isKindOfClass:[PBEndMarker class]]) {
+            NSLog(@"ZZZ");
+        }
+
         NSString *reuseKey =
         [NSString stringWithFormat:@"ROW%@-%ld",
          NSStringFromClass([entity class]),
@@ -446,7 +456,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         }
 
         NSImage *backgroundImage =
-        [self backgroundImageForRow:row selected:NO hovering:NO];
+        [self backgroundImageForRow:row selected:NO hovering:NO expanded:NO];
 
         if (backgroundImage != nil) {
 
@@ -466,12 +476,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             rowView.backgroundImageView.image = backgroundImage;
 
             rowView.backgroundImage = backgroundImage;
+            rowView.hoveringBackgroundImage =
+            [self backgroundImageForRow:row selected:NO hovering:YES expanded:NO];
             rowView.selectedBackgroundImage =
-            [self backgroundImageForRow:row selected:YES hovering:NO];
-            rowView.hoveredBackgroundImage =
-            [self backgroundImageForRow:row selected:NO hovering:YES];
-            rowView.selectedHoveredBackgroundImage =
-            [self backgroundImageForRow:row selected:YES hovering:YES];
+            [self backgroundImageForRow:row selected:YES hovering:NO expanded:NO];
+            rowView.selectedHoveringBackgroundImage =
+            [self backgroundImageForRow:row selected:YES hovering:YES expanded:NO];
+            rowView.expandedBackgroundImage =
+            [self backgroundImageForRow:row selected:NO hovering:NO expanded:YES];
+            rowView.expandedHoveringBackgroundImage =
+            [self backgroundImageForRow:row selected:NO hovering:YES expanded:YES];
         }
 
         rowView.selectedBackgroundColor = _listViewConfig.selectedBackgroundColor;
@@ -492,18 +506,28 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (entity != nil) {
 
+        if ([entity isKindOfClass:[PBEndMarker class]]) {
+            NSLog(@"ZZZ");
+        }
+
+        NSUInteger entityDepth = [entity listViewEntityDepth];
+
         NSImage *backgroundImage =
         [_listViewConfig
          backgroundImageForEntityType:[entity class]
-         atDepth:[entity listViewEntityDepth]
+         atDepth:entityDepth
          atPosition:PBListViewPositionTypeFirst
          selected:NO
-         hovering:NO];
+         hovering:NO
+         expanded:NO];
 
-        if (backgroundImage != nil) {
+        rowHeight =
+        [_listViewConfig
+         rowHeightForEntityType:[entity class]
+         atDepth:entityDepth];
+
+        if (rowHeight == 0 && backgroundImage != nil) {
             rowHeight = backgroundImage.size.height;
-        } else {
-            rowHeight = [_listViewConfig rowHeightForEntityType:[entity class]];
         }
     }
 
