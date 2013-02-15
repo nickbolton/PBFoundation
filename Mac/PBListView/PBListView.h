@@ -24,6 +24,9 @@
 @required
 - (NSUInteger)listViewEntityDepth;
 
+@optional
+- (NSArray *)listViewChildren;
+
 @end
 
 @protocol PBListViewActionDelegate <NSObject>

@@ -8,22 +8,20 @@
 
 #import "PBListViewConfig.h"
 #import "PBListViewUIElementMeta.h"
+#import "PBListViewRowMeta.h"
 #import "PBMenu.h"
 #import "PBListViewCommand.h"
 
 @interface PBListViewConfig()
 
 @property (nonatomic, strong) NSMutableDictionary *metaListRegistry;
-@property (nonatomic, strong) NSMutableDictionary *rowHeightRegistry;
+@property (nonatomic, strong) NSMutableDictionary *rowMetaRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowDefaultBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowDefaultHoveringBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowSelectedBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowSelectedHoveringBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowExpandedBackgroundImageRegistry;
 @property (nonatomic, strong) NSMutableDictionary *rowExpandedHoveringBackgroundImageRegistry;
-@property (nonatomic, strong) NSMutableDictionary *entityCommands;
-@property (nonatomic, strong) NSMutableDictionary *contextMenuSeparators;
-@property (nonatomic, strong) NSMutableDictionary *contextMenus;
 
 @end
 
@@ -34,16 +32,13 @@
 
     if (self != nil) {
         self.metaListRegistry = [NSMutableDictionary dictionary];
-        self.rowHeightRegistry = [NSMutableDictionary dictionary];
+        self.rowMetaRegistry = [NSMutableDictionary dictionary];
         self.rowDefaultBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.rowSelectedBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.rowDefaultHoveringBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.rowSelectedHoveringBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.rowExpandedBackgroundImageRegistry = [NSMutableDictionary dictionary];
         self.rowExpandedHoveringBackgroundImageRegistry = [NSMutableDictionary dictionary];
-        self.entityCommands = [NSMutableDictionary dictionary];
-        self.contextMenuSeparators = [NSMutableDictionary dictionary];
-        self.contextMenus = [NSMutableDictionary dictionary];
         self.leftMargin = 10.0f;
         self.rightMargin = 10.0f;
         self.minSize = NSMakeSize(300.0f, 300.0f);
@@ -61,88 +56,58 @@
 
 #pragma mark - Meta registering
 
-- (void)registerContextMenuSeparatorPositions:(NSIndexSet *)indexSet
-                                forEntityType:(Class)entityType {
+- (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
+          forEntityType:(Class)entityType {
     [self
-     registerContextMenuSeparatorPositions:indexSet
+     registerRowMeta:rowMeta
      forEntityType:entityType
      atDepth:0];
 }
-
-- (void)registerContextMenuSeparatorPositions:(NSIndexSet *)indexSet
-                                forEntityType:(Class)entityType
-                                      atDepth:(NSUInteger)depth {
-
-    NSString *key =
-    [NSString stringWithFormat:@"%@-%lu",
-     NSStringFromClass(entityType), depth];
-
-    [_contextMenuSeparators setObject:indexSet forKey:key];
-}
-
-- (void)registerCommands:(NSArray *)commands
-           forEntityType:(Class)entityType {
-    [self registerCommands:commands forEntityType:entityType atDepth:0];
-}
-
-- (void)registerCommands:(NSArray *)commands
-           forEntityType:(Class)entityType
-                 atDepth:(NSUInteger)depth {
-    NSString *key = [NSString stringWithFormat:@"%@-%lu",
-                     NSStringFromClass(entityType), depth];
-    [_entityCommands setObject:commands forKey:key];
-
-    if (_autoBuildContextualMenu) {
-
-        PBMenu *menu = [[PBMenu alloc] initWithTitle:@""];
-
-        NSIndexSet *separatorIndexSet = [_contextMenuSeparators objectForKey:key];
-
-        for (PBListViewCommand *command in commands) {
-
-            NSInteger menuItemCount = menu.itemArray.count;
-
-            if (menuItemCount > 0 && [separatorIndexSet containsIndex:menuItemCount]) {
-                [menu addItem:[NSMenuItem separatorItem]];
-            }
-
-            NSMenuItem *menuItem =
-            [[NSMenuItem alloc]
-             initWithTitle:command.title
-             action:NULL
-             keyEquivalent:command.keyEquivalent];
-            menuItem.keyEquivalentModifierMask = command.modifierMask;
-            menuItem.representedObject = command;
-            [menu addItem:menuItem];
-        }
-
-        [self registerContextMenu:menu forEntityType:entityType atDepth:depth];
-    }
-}
-
-- (void)registerContextMenu:(PBMenu *)menu
-              forEntityType:(Class)entityType
-                    atDepth:(NSUInteger)depth {
-
-    if (menu != nil) {
+- (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
+          forEntityType:(Class)entityType
+                atDepth:(NSUInteger)depth {
+    if (rowMeta != nil) {
         NSString *key =
         [NSString stringWithFormat:@"%@-%lu",
          NSStringFromClass(entityType), depth];
-        [_contextMenus setObject:menu forKey:key];
+        [_rowMetaRegistry setObject:rowMeta forKey:key];
+
+        if (_autoBuildContextualMenu) {
+
+            PBMenu *menu = [[PBMenu alloc] initWithTitle:@""];
+
+            NSIndexSet *separatorIndexSet =
+            rowMeta.contextMenuSeparatorPositions;
+
+            for (PBListViewCommand *command in rowMeta.commands) {
+
+                NSInteger menuItemCount = menu.itemArray.count;
+
+                if (menuItemCount > 0 && [separatorIndexSet containsIndex:menuItemCount]) {
+                    [menu addItem:[NSMenuItem separatorItem]];
+                }
+
+                NSMenuItem *menuItem =
+                [[NSMenuItem alloc]
+                 initWithTitle:command.title
+                 action:NULL
+                 keyEquivalent:command.keyEquivalent];
+                menuItem.keyEquivalentModifierMask = command.modifierMask;
+                menuItem.representedObject = command;
+                [menu addItem:menuItem];
+            }
+
+            rowMeta.contextMenu = menu;
+        }
     }
 }
 
-- (PBMenu *)contextMenuForEntityType:(Class)entityType atDepth:(NSUInteger)depth {
+- (PBListViewRowMeta *)rowMetaForEntityType:(Class)entityType
+                                    atDepth:(NSUInteger)depth {
     NSString *key =
     [NSString stringWithFormat:@"%@-%lu",
      NSStringFromClass(entityType), depth];
-    return [_contextMenus objectForKey:key];
-}
-
-- (NSArray *)commandsForEntityType:(Class)entityType atDepth:(NSUInteger)depth {
-    NSString *key = [NSString stringWithFormat:@"%@-%lu",
-                     NSStringFromClass(entityType), depth];
-    return [_entityCommands objectForKey:key];
+    return [_rowMetaRegistry objectForKey:key];
 }
 
 // this returns an array of depths, each of which is an array of elements
@@ -367,21 +332,6 @@
     }
 
     return depths[depth];
-}
-
-- (void)registerRowHeight:(CGFloat)rowHeight
-            forEntityType:(Class)entityType
-                  atDepth:(NSUInteger)depth {
-    NSString *key =
-    [NSString stringWithFormat:@"%@-%lu", NSStringFromClass(entityType), depth];
-    [_rowHeightRegistry setObject:@(rowHeight) forKey:key];
-}
-
-- (CGFloat)rowHeightForEntityType:(Class)entityType
-                          atDepth:(NSUInteger)depth {
-    NSString *key =
-    [NSString stringWithFormat:@"%@-%lu", NSStringFromClass(entityType), depth];
-    return [[_rowHeightRegistry objectForKey:key] floatValue];
 }
 
 @end

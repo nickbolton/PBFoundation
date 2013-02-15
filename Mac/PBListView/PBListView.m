@@ -8,6 +8,7 @@
 
 #import "PBListView.h"
 #import "PBListViewUIElementMeta.h"
+#import "PBListViewRowMeta.h"
 #import "PBListViewUIElementBinder.h"
 #import "PBListViewConfig.h"
 #import "PBTableRowView.h"
@@ -53,10 +54,11 @@
     self.previousSelection = [NSMutableIndexSet indexSet];
     self.listViewConfig = [[PBListViewConfig alloc] init];
 
+    PBListViewRowMeta *rowMeta = [PBListViewRowMeta rowMeta];
+    rowMeta.rowHeight = 50.0f;
     [_listViewConfig
-     registerRowHeight:50.0f
-     forEntityType:[PBEmptyConfiguration class]
-     atDepth:0];
+     registerRowMeta:rowMeta
+     forEntityType:[PBEmptyConfiguration class]];
 
     _userReloadKeyCode = kVK_ANSI_R;
     _userReloadKeyModifiers = NSCommandKeyMask;
@@ -243,8 +245,17 @@
     rowView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     rowView.delegate = self;
 
+    PBListViewRowMeta *rowMeta =
+    [_listViewConfig
+     rowMetaForEntityType:[entity class]
+     atDepth:[entity listViewEntityDepth]];
+
+    if (rowMeta.configurationHandler != nil) {
+        rowMeta.configurationHandler(rowView, rowMeta);
+    }
+
     NSColor *dividerLineColor = _listViewConfig.rowDividerLineColor;
-    
+
     if (row > 0 && dividerLineColor != nil) {
 
         CGFloat lineHeight = _listViewConfig.rowDividerLineHeight;
@@ -262,6 +273,7 @@
         [NSLayoutConstraint alignToTop:topLine withPadding:0.0f];
         [NSLayoutConstraint expandWidthToSuperview:topLine];
         [NSLayoutConstraint addHeightConstraint:lineHeight toView:topLine];
+
     }
 
     return rowView;
@@ -506,10 +518,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (entity != nil) {
 
-        if ([entity isKindOfClass:[PBEndMarker class]]) {
-            NSLog(@"ZZZ");
-        }
-
         NSUInteger entityDepth = [entity listViewEntityDepth];
 
         NSImage *backgroundImage =
@@ -521,10 +529,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
          hovering:NO
          expanded:NO];
 
-        rowHeight =
+        PBListViewRowMeta *rowMeta =
         [_listViewConfig
-         rowHeightForEntityType:[entity class]
-         atDepth:entityDepth];
+         rowMetaForEntityType:[entity class] atDepth:entityDepth];
+        rowHeight = rowMeta.rowHeight;
 
         if (rowHeight == 0 && backgroundImage != nil) {
             rowHeight = backgroundImage.size.height;
@@ -652,12 +660,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
             id <PBListViewEntity> anyEntity = entities.lastObject;
 
-            NSArray *commands =
+            PBListViewRowMeta *rowMeta =
             [_listViewConfig
-             commandsForEntityType:[anyEntity class]
-             atDepth:depth];
+             rowMetaForEntityType:[anyEntity class] atDepth:depth];
 
-            for (PBListViewCommand *command in commands) {
+            for (PBListViewCommand *command in rowMeta.commands) {
                 if (command.keyCode != 0 && [event isModifiersExactly:command.modifierMask] && event.keyCode == command.keyCode) {
                     command.actionHandler(entities);
                 }
@@ -699,14 +706,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (entity != nil) {
 
-        PBMenu *menu =
+        PBListViewRowMeta *rowMeta =
         [_listViewConfig
-         contextMenuForEntityType:[entity class]
+         rowMetaForEntityType:[entity class]
          atDepth:[entity listViewEntityDepth]];
 
         NSView *sourceView = [self rowViewAtRow:row makeIfNecessary:NO];
 
-        if (menu != nil) {
+        if (rowMeta.contextMenu != nil) {
             NSWindow *window = sourceView.window;
             NSEvent *event = window.currentEvent;
 
@@ -720,15 +727,15 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                                      clickCount:event.clickCount
                                        pressure:event.pressure];
 
-            menu.attachedView = sourceView;
+            rowMeta.contextMenu.attachedView = sourceView;
 
-            [menu.itemArray enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+            [rowMeta.contextMenu.itemArray enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
                 NSMenuItem *menuItem = obj;
                 menuItem.target = self;
                 menuItem.action = @selector(invokeCommand:);
             }];
 
-            [NSMenu popUpContextMenu:menu withEvent:event forView:sourceView];
+            [NSMenu popUpContextMenu:rowMeta.contextMenu withEvent:event forView:sourceView];
 
             return;
         }

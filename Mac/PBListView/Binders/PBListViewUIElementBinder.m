@@ -46,8 +46,9 @@
 
     NSView *prevView = relativeViews.lastObject;
 
-    if (meta.configurationHandler != nil) {
+    if (meta.configurationHandler != nil && meta.hasBeenUserConfigured == NO) {
         meta.configurationHandler(view, meta);
+        meta.hasBeenUserConfigured = YES;
     }
 
     [self postClientConfiguration:listView meta:meta view:view];

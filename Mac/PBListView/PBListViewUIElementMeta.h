@@ -50,6 +50,7 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic) BOOL fixedPosition;
 @property (nonatomic) BOOL hoverAlphaEnabled;
 @property (nonatomic) BOOL ignoreMargins;
+@property (nonatomic) BOOL hasBeenUserConfigured;
 @property (nonatomic) CGFloat hoverOffAlpha;
 @property (nonatomic) NSString *staticText;
 @property (nonatomic, strong) NSImage *image;

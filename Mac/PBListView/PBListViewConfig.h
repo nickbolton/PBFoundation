@@ -23,6 +23,7 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 };
 
 @class PBListViewUIElementMeta;
+@class PBListViewRowMeta;
 @class PBMenu;
 
 @interface PBListViewConfig : NSObject
@@ -74,26 +75,12 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
                                  hovering:(BOOL)hovering
                                  expanded:(BOOL)expanded;
 
-- (void)registerRowHeight:(CGFloat)rowHeight
-            forEntityType:(Class)entityType
-                  atDepth:(NSUInteger)depth;
-- (CGFloat)rowHeightForEntityType:(Class)entityType atDepth:(NSUInteger)depth;
-
-- (PBMenu *)contextMenuForEntityType:(Class)entityType atDepth:(NSUInteger)depth;
-- (void)registerContextMenu:(PBMenu *)menu
-              forEntityType:(Class)entityType
-                    atDepth:(NSUInteger)depth;
-- (void)registerContextMenuSeparatorPositions:(NSIndexSet *)indexSet
-                            forEntityType:(Class)entityType;
-- (void)registerContextMenuSeparatorPositions:(NSIndexSet *)indexSet
-           forEntityType:(Class)entityType
-                 atDepth:(NSUInteger)depth;
-- (void)registerCommands:(NSArray *)commands
-           forEntityType:(Class)entityType;
-- (void)registerCommands:(NSArray *)commands
-           forEntityType:(Class)entityType
-                 atDepth:(NSUInteger)depth;
-- (NSArray *)commandsForEntityType:(Class)entityType
-                           atDepth:(NSUInteger)depth;
+- (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
+          forEntityType:(Class)entityType;
+- (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
+          forEntityType:(Class)entityType
+                atDepth:(NSUInteger)depth;
+- (PBListViewRowMeta *)rowMetaForEntityType:(Class)entityType
+                                    atDepth:(NSUInteger)depth;
 
 @end
