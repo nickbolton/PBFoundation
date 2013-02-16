@@ -226,7 +226,7 @@
       keyPath:@"title"
       depth:depth
       binderType:[PBListViewTextFieldBinder class]
-      configuration:^(NSTextField *textField, PBListViewUIElementMeta *meta) {
+      globalConfiguration:^(NSTextField *textField, PBListViewUIElementMeta *meta) {
 
           meta.size = NSMakeSize(width, rowHeight);
           textField.textColor = [NSColor redColor];
@@ -420,6 +420,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         for (PBListViewUIElementMeta *meta in metaList) {
             NSView *uiElement =
             [cellView.subviews objectAtIndex:uiElementIndex];
+
+            if (meta.configurationHandler != nil) {
+                meta.configurationHandler(uiElement, entity, meta, self);
+            }
+
             [meta.binder bindEntity:entity withView:uiElement atRow:row usingMeta:meta];
 
             uiElement.hidden = meta.hiddenWhenMouseNotInRow;

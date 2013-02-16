@@ -28,7 +28,8 @@ typedef NS_ENUM(NSInteger, PBListViewAnchorPosition) {
 @class PBMenu;
 @class PBListView;
 
-typedef void(^PBUIConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
+typedef void(^PBUIGlobalConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
+typedef void(^PBUIConfigurationHandler)(id view, id entity, PBListViewUIElementMeta *meta, PBListView *listView);
 typedef void(^PBUIActionHandler)(id sender, id entity, PBListViewUIElementMeta *meta, PBListView *listView);
 typedef id(^PBUIValueTransformer)(id value);
 
@@ -39,9 +40,11 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic, readonly) Class entityType;
 @property (nonatomic, readonly) NSInteger depth;
 @property (nonatomic, readonly) PBListViewUIElementBinder *binder;
-@property (nonatomic, readonly) PBUIConfigurationHandler configurationHandler;
+@property (nonatomic, readonly) PBUIGlobalConfigurationHandler globalConfigurationHandler; // is executed only once when the view is built
 @property (nonatomic, readonly) BOOL hiddenWhenMouseNotInRow;
 @property (nonatomic, readonly) NSArray *commands;
+
+@property (nonatomic, assign) PBUIConfigurationHandler configurationHandler; // executed every time the view is drawn
 
 @property (nonatomic, readwrite) CGFloat leftPadding;
 @property (nonatomic, readwrite) NSSize size;
@@ -52,7 +55,7 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic) BOOL fixedPosition;
 @property (nonatomic) BOOL hoverAlphaEnabled;
 @property (nonatomic) BOOL ignoreMargins;
-@property (nonatomic) BOOL hasBeenUserConfigured;
+@property (nonatomic) BOOL hasBeenGloballyConfigured;
 @property (nonatomic) CGFloat hoverOffAlpha;
 @property (nonatomic) NSString *staticText;
 @property (nonatomic, strong) NSImage *image;
@@ -81,24 +84,24 @@ typedef id(^PBUIValueTransformer)(id value);
                                                    depth:(NSInteger)depth
                                               binderType:(Class)binderType
                                  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
-                                           configuration:(PBUIConfigurationHandler)configuration;
+                                     globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration;
 
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                               binderType:(Class)binderType
                                  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
-                                           configuration:(PBUIConfigurationHandler)configuration;
+                                     globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration;
 
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                                    depth:(NSInteger)depth
                                               binderType:(Class)binderType
-                                           configuration:(PBUIConfigurationHandler)configuration;
+                                     globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration;
 
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                               binderType:(Class)binderType
-                                           configuration:(PBUIConfigurationHandler)configuration;
+                                     globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration;
 
 - (void)invokeAction:(id)sender;
 

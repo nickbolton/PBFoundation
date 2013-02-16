@@ -17,7 +17,7 @@
 @property (nonatomic, readwrite) Class entityType;
 @property (nonatomic, readwrite) NSInteger depth;
 @property (nonatomic, readwrite) PBListViewUIElementBinder *binder;
-@property (nonatomic, readwrite) PBUIConfigurationHandler configurationHandler;
+@property (nonatomic, readwrite) PBUIGlobalConfigurationHandler globalConfigurationHandler;
 @property (nonatomic, readwrite) BOOL hiddenWhenMouseNotInRow;
 @property (nonatomic, readwrite) NSMutableArray *commands;
 
@@ -30,7 +30,7 @@
                                                    depth:(NSInteger)depth
                                               binderType:(Class)binderType
                                  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
-                                           configuration:(PBUIConfigurationHandler)configuration {
+                                     globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration {
 
     PBListViewUIElementBinder *binder = [[binderType alloc] init];
 
@@ -44,29 +44,29 @@
      depth:depth
      binder:binder
      hiddenWhenMouseNotInRow:hiddenWhenMouseNotInRow
-     configuration:configuration];
+     globalConfiguration:globalConfiguration];
 }
 
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                               binderType:(Class)binderType
                                  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
-                                           configuration:(PBUIConfigurationHandler)configuration {
+                                     globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration {
     return
     [self
      uiElementMetaWithEntityType:entityType
      keyPath:keyPath
-     depth:0
+     depth:-1
      binderType:binderType
      hiddenWhenMouseNotInRow:hiddenWhenMouseNotInRow
-     configuration:configuration];
+     globalConfiguration:globalConfiguration];
 }
 
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                                    depth:(NSInteger)depth
                                               binderType:(Class)binderType
-                                           configuration:(PBUIConfigurationHandler)configuration {
+                                     globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration {
     return
     [self
      uiElementMetaWithEntityType:entityType
@@ -74,21 +74,21 @@
      depth:depth
      binderType:binderType
      hiddenWhenMouseNotInRow:NO
-     configuration:configuration];
+     globalConfiguration:globalConfiguration];
 }
 
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                               binderType:(Class)binderType
-                                           configuration:(PBUIConfigurationHandler)configuration {
+                                     globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration {
     return
     [self
      uiElementMetaWithEntityType:entityType
      keyPath:keyPath
-     depth:0
+     depth:-1
      binderType:binderType
      hiddenWhenMouseNotInRow:NO
-     configuration:configuration];
+     globalConfiguration:globalConfiguration];
 }
 
 - (id)initWithEntityType:(Class)entityType
@@ -96,7 +96,7 @@
                    depth:(NSInteger)depth
                   binder:(PBListViewUIElementBinder *)binder
  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
-           configuration:(PBUIConfigurationHandler)configurationHandler {
+     globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfigurationHandler {
 
     self = [super init];
     if (self != nil) {
@@ -105,7 +105,7 @@
         self.entityType = entityType;
         self.depth = depth;
         self.binder = binder;
-        self.configurationHandler = configurationHandler;
+        self.globalConfigurationHandler = globalConfigurationHandler;
         self.fixedPosition = YES;
         self.hiddenWhenMouseNotInRow = hiddenWhenMouseNotInRow;
         self.textColor = [NSColor blackColor];

@@ -64,15 +64,22 @@
     [self
      registerRowMeta:rowMeta
      forEntityType:entityType
-     atDepth:0];
+     atDepth:NSNotFound];
 }
 - (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
           forEntityType:(Class)entityType
                 atDepth:(NSUInteger)depth {
     if (rowMeta != nil) {
-        NSString *key =
-        [NSString stringWithFormat:@"%@-%lu",
-         NSStringFromClass(entityType), depth];
+        NSString *key;
+
+        if (depth != NSNotFound) {
+            key =
+            [NSString stringWithFormat:@"%@-%lu",
+             NSStringFromClass(entityType), depth];
+        } else {
+            key = NSStringFromClass(entityType);
+        }
+
         [_rowMetaRegistry setObject:rowMeta forKey:key];
 
         if (_autoBuildContextualMenu) {
@@ -110,35 +117,48 @@
     NSString *key =
     [NSString stringWithFormat:@"%@-%lu",
      NSStringFromClass(entityType), depth];
-    return [_rowMetaRegistry objectForKey:key];
-}
-
-// this returns an array of depths, each of which is an array of elements
-- (NSMutableArray *)metaListDepthsForEntityType:(Class)entityType {
-
-    NSString *key = NSStringFromClass(entityType);
-
-    NSMutableArray *registeredElements =
-    [_metaListRegistry objectForKey:key];
-
-    if (registeredElements == nil) {
-        registeredElements = [NSMutableArray array];
-        [_metaListRegistry setObject:registeredElements forKey:key];
+    PBListViewRowMeta *rowMeta = [_rowMetaRegistry objectForKey:key];
+    if (rowMeta == nil) {
+        key = NSStringFromClass(entityType);
+        rowMeta = [_rowMetaRegistry objectForKey:key];
     }
-
-    return registeredElements;
+    return rowMeta;
 }
 
 - (NSArray *)metaListForEntityType:(Class)entityType
                            atDepth:(NSUInteger)depth {
-    NSMutableArray *depths =
-    [self metaListDepthsForEntityType:entityType];
+    return
+    [self
+     metaListForEntityType:entityType
+     atDepth:depth
+     defaultOnEmptyList:YES];
+}
 
-    while (depths.count <= depth) {
-        [depths addObject:[NSMutableArray array]];
+- (NSArray *)metaListForEntityType:(Class)entityType
+                           atDepth:(NSUInteger)depth
+                defaultOnEmptyList:(BOOL)defaultOnEmptyList {
+
+    NSString *key = NSStringFromClass(entityType);
+    NSMutableDictionary *depths =
+    [_metaListRegistry objectForKey:key];
+
+    if (depths == nil) {
+        depths = [NSMutableDictionary dictionary];
+        [_metaListRegistry setObject:depths forKey:key];
+        [depths setObject:[NSMutableArray array] forKey:@(NSNotFound)]; // global value
     }
 
-    return depths[depth];
+    NSMutableArray *metaList = [depths objectForKey:@(depth)];
+    if (metaList == nil) {
+        metaList = [NSMutableArray array];
+        [depths setObject:metaList forKey:@(depth)];
+    }
+
+    if (defaultOnEmptyList && metaList.count == 0) {
+        metaList = [depths objectForKey:@(NSNotFound)];
+    }
+    return metaList;
+
 }
 
 - (void)registerUIElementMeta:(PBListViewUIElementMeta *)meta {
@@ -170,7 +190,7 @@
      expandedBackgroundImage:expandedBackgroundImage
      expandedHoveringBackgroundImage:expandedHoveringBackgroundImage
      forEntityType:entityType
-     atDepth:0
+     atDepth:NSNotFound
      atPosition:positionType];
 }
 
@@ -258,7 +278,8 @@
          atDepth:depth
          selected:selected
          hovering:hovering
-         expanded:expanded];
+         expanded:expanded
+         defaultOnEmptyList:NO];
 
         if (backgroundImages.count == 0) {
 
@@ -288,7 +309,8 @@
      atDepth:depth
      selected:selected
      hovering:hovering
-     expanded:expanded];
+     expanded:expanded
+     defaultOnEmptyList:YES];
     
     if (positionType < backgroundImages.count) {
         return backgroundImages[positionType];
@@ -301,7 +323,8 @@
                                           atDepth:(NSUInteger)depth
                                          selected:(BOOL)selected
                                          hovering:(BOOL)hovering
-                                         expanded:(BOOL)expanded {
+                                         expanded:(BOOL)expanded
+                               defaultOnEmptyList:(BOOL)defaultOnEmptyList {
 
     NSMutableDictionary *backgroundImageRegistry;
 
@@ -324,19 +347,25 @@
     }
 
     NSString *key = NSStringFromClass(entityType);
-    NSMutableArray *depths =
+    NSMutableDictionary *depths =
     [backgroundImageRegistry objectForKey:key];
 
     if (depths == nil) {
-        depths = [NSMutableArray array];
+        depths = [NSMutableDictionary dictionary];
         [backgroundImageRegistry setObject:depths forKey:key];
+        [depths setObject:[NSMutableArray array] forKey:@(NSNotFound)]; // global value
     }
 
-    while (depths.count <= depth) {
-        [depths addObject:[NSMutableArray array]];
+    NSMutableArray *backgroundImages = [depths objectForKey:@(depth)];
+    if (backgroundImages == nil) {
+        backgroundImages = [NSMutableArray array];
+        [depths setObject:backgroundImages forKey:@(depth)];
     }
-
-    return depths[depth];
+    
+    if (defaultOnEmptyList && backgroundImages.count == 0) {
+        backgroundImages = [depths objectForKey:@(NSNotFound)];
+    }
+    return backgroundImages;
 }
 
 @end
