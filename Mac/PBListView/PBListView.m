@@ -544,6 +544,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 #pragma mark - Expanding
 
+- (BOOL)isRowExpanded:(NSInteger)row {
+    PBTableRowView *rowView =
+    [self rowViewAtRow:row makeIfNecessary:NO];
+    return rowView.isExpanded;
+}
+
 - (void)expandRow:(NSInteger)row {
 
     PBTableRowView *rowView =
@@ -551,7 +557,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (_animating || rowView.isExpanded) return;
     
-    id <PBListViewEntity> entity = [self entityAtRow:self.clickedRow];
+    id <PBListViewEntity> entity = [self entityAtRow:row];
 
     if (entity != nil && [entity respondsToSelector:@selector(listViewChildren)]) {
 
@@ -572,7 +578,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
             NSIndexSet *indexSet =
             [NSIndexSet indexSetWithIndexesInRange:
-             NSMakeRange(self.clickedRow+1, children.count)];
+             NSMakeRange(row+1, children.count)];
 
             [_dataSourceEntities insertObjects:children atIndexes:indexSet];
             [self insertRowsAtIndexes:indexSet withAnimation:NSTableViewAnimationSlideDown];
@@ -591,7 +597,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (_animating || rowView.isExpanded == NO) return;
 
-    id <PBListViewEntity> entity = [self entityAtRow:self.clickedRow];
+    id <PBListViewEntity> entity = [self entityAtRow:row];
 
     if (entity != nil && [entity respondsToSelector:@selector(listViewChildren)]) {
 
@@ -612,7 +618,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
             NSIndexSet *indexSet =
             [NSIndexSet indexSetWithIndexesInRange:
-             NSMakeRange(self.clickedRow+1, children.count)];
+             NSMakeRange(row+1, children.count)];
 
             [_dataSourceEntities removeObjectsAtIndexes:indexSet];
             [self removeRowsAtIndexes:indexSet withAnimation:NSTableViewAnimationSlideUp];
@@ -628,8 +634,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (_animating) return;
 
-    NSLog(@"%s", __PRETTY_FUNCTION__);
-    
     id <PBListViewEntity> entity = [self entityAtRow:self.clickedRow];
 
     if (entity != nil && [entity respondsToSelector:@selector(listViewChildren)]) {
@@ -654,7 +658,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 #pragma mark - Selection
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
 
     NSMutableSet *affectedRows = [NSMutableSet set];
 

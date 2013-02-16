@@ -57,5 +57,6 @@
 
 - (void)expandRow:(NSInteger)row;
 - (void)collapseRow:(NSInteger)row;
+- (BOOL)isRowExpanded:(NSInteger)row;
 
 @end
