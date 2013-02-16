@@ -29,7 +29,7 @@
      relativeMetaList:relativeMetaList];
 
     if (meta.menu != nil) {
-        meta.actionHandler = ^(NSButton *button, id entity, PBListViewUIElementMeta *meta) {
+        meta.actionHandler = ^(NSButton *button, id entity, PBListViewUIElementMeta *meta, PBListView *listView) {
 
             NSWindow *window = button.window;
             NSEvent *event = window.currentEvent;

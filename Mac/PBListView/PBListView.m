@@ -22,10 +22,11 @@
 @interface PBListView() <NSTableViewDataSource, NSTableViewDelegate, PBTableRowDelegate> {
 
     BOOL _sizesSet;
+    BOOL _animating;
+    
+    NSMutableArray *_dataSourceEntities;
 }
 
-@property (nonatomic, strong) NSTreeController *treeController;
-@property (nonatomic, readonly) NSArray *sourceArray;
 @property (nonatomic, readwrite) PBListViewConfig *listViewConfig;
 @property (nonatomic, strong) NSIndexSet *previousSelection;
 @property (nonatomic, strong) NSTrackingArea *trackingArea;
@@ -53,6 +54,7 @@
 - (void)commonInit {
     self.previousSelection = [NSMutableIndexSet indexSet];
     self.listViewConfig = [[PBListViewConfig alloc] init];
+    _listViewConfig.listView = self;
 
     PBListViewRowMeta *rowMeta = [PBListViewRowMeta rowMeta];
     rowMeta.rowHeight = 50.0f;
@@ -74,6 +76,8 @@
 
     self.delegate = self;
     self.dataSource = self;
+    self.target = self;
+    self.action = @selector(didClickRow:);
     self.allowsColumnReordering = NO;
     self.allowsColumnResizing = YES;
     self.allowsMultipleSelection = YES;
@@ -136,14 +140,6 @@
 
 #pragma mark - Getters and Setters
 
-- (void)setParentEntityType:(Class)parentEntityType {
-    _parentEntityType = parentEntityType;
-}
-
-- (void)setStaticEntities:(NSArray *)staticEntities {
-    _staticEntities = staticEntities;
-}
-
 - (NSImage *)backgroundImageForRow:(NSInteger)row
                           selected:(BOOL)selected
                           hovering:(BOOL)hovering
@@ -154,14 +150,14 @@
 
     if (entity != nil) {
 
-        NSArray *sourceArray = self.sourceArray;
+        NSArray *entities = self.dataSourceEntities;
         PBListViewPositionType position;
 
-        if (sourceArray.count == 1) {
+        if (entities.count == 1) {
             position = PBListViewPositionTypeOnly;
         } else if (row == 0) {
             position = PBListViewPositionTypeFirst;
-        } else if (row < sourceArray.count - 1) {
+        } else if (row < entities.count - 1) {
             position = PBListViewPositionTypeMiddle;
         } else {
             position = PBListViewPositionTypeLast;
@@ -179,21 +175,25 @@
     return image;
 }
 
-#pragma mark - Entity getting
-
-- (NSArray *)sourceArray {
-    if (_staticEntities != nil) {
-        return _staticEntities;
-    }
-    return (NSArray *)_treeController.arrangedObjects;
+- (void)setDataSourceEntities:(NSArray *)dataSourceEntities {
+    _dataSourceEntities = [dataSourceEntities mutableCopy];
 }
+
+- (NSArray *)dataSourceEntities {
+    if (_dataSourceEntities != nil) {
+        return _dataSourceEntities;
+    }
+    return nil;
+}
+
+#pragma mark - Entity getting
 
 - (id <PBListViewEntity>)entityAtRow:(NSInteger)row {
 
-    NSArray *sourceArray = self.sourceArray;
+    NSArray *entities = self.dataSourceEntities;
 
-    if (row >= 0 && row < sourceArray.count) {
-        id <PBListViewEntity> entity = [sourceArray objectAtIndex:row];
+    if (row >= 0 && row < entities.count) {
+        id <PBListViewEntity> entity = [entities objectAtIndex:row];
 
         NSAssert([entity conformsToProtocol:@protocol(PBListViewEntity)],
                  @"List view entities must conform to PBListViewEntity");
@@ -335,7 +335,7 @@
 #pragma mark - NSTableViewDataSource/Delegate Conformance
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
-    return self.sourceArray.count;
+    return self.dataSourceEntities.count;
 }
 
 - (id)tableView:(NSTableView *)tableView
@@ -445,10 +445,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (entity != nil) {
 
-        if ([entity isKindOfClass:[PBEndMarker class]]) {
-            NSLog(@"ZZZ");
-        }
-
         NSString *reuseKey =
         [NSString stringWithFormat:@"ROW%@-%ld",
          NSStringFromClass([entity class]),
@@ -464,7 +460,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             (id)[self
                  buildRowViewForEntity:entity
                  atRow:row
-                 withTotalEntities:self.sourceArray.count];
+                 withTotalEntities:self.dataSourceEntities.count];
         }
 
         NSImage *backgroundImage =
@@ -546,9 +542,119 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     return rowHeight;
 }
 
+#pragma mark - Expanding
+
+- (void)expandRow:(NSInteger)row {
+
+    PBTableRowView *rowView =
+    [self rowViewAtRow:row makeIfNecessary:NO];
+
+    if (_animating || rowView.isExpanded) return;
+    
+    id <PBListViewEntity> entity = [self entityAtRow:self.clickedRow];
+
+    if (entity != nil && [entity respondsToSelector:@selector(listViewChildren)]) {
+
+        NSArray *children = [entity listViewChildren];
+
+        if (children.count > 0) {
+
+            rowView.expanded = YES;
+            _animating = YES;
+
+            [NSAnimationContext beginGrouping];
+            NSAnimationContext *currentContext = [NSAnimationContext currentContext];
+            currentContext.completionHandler = ^{
+                _animating = NO;
+            };
+
+            [self beginUpdates];
+
+            NSIndexSet *indexSet =
+            [NSIndexSet indexSetWithIndexesInRange:
+             NSMakeRange(self.clickedRow+1, children.count)];
+
+            [_dataSourceEntities insertObjects:children atIndexes:indexSet];
+            [self insertRowsAtIndexes:indexSet withAnimation:NSTableViewAnimationSlideDown];
+
+            [self endUpdates];
+
+            [NSAnimationContext endGrouping];
+        }
+    }
+}
+
+- (void)collapseRow:(NSInteger)row {
+
+    PBTableRowView *rowView =
+    [self rowViewAtRow:row makeIfNecessary:NO];
+
+    if (_animating || rowView.isExpanded == NO) return;
+
+    id <PBListViewEntity> entity = [self entityAtRow:self.clickedRow];
+
+    if (entity != nil && [entity respondsToSelector:@selector(listViewChildren)]) {
+
+        NSArray *children = [entity listViewChildren];
+
+        if (children.count > 0) {
+
+            rowView.expanded = NO;
+            _animating = YES;
+
+            [NSAnimationContext beginGrouping];
+            NSAnimationContext *currentContext = [NSAnimationContext currentContext];
+            currentContext.completionHandler = ^{
+                _animating = NO;
+            };
+            
+            [self beginUpdates];
+
+            NSIndexSet *indexSet =
+            [NSIndexSet indexSetWithIndexesInRange:
+             NSMakeRange(self.clickedRow+1, children.count)];
+
+            [_dataSourceEntities removeObjectsAtIndexes:indexSet];
+            [self removeRowsAtIndexes:indexSet withAnimation:NSTableViewAnimationSlideUp];
+
+            [self endUpdates];
+
+            [NSAnimationContext endGrouping];
+        }
+    }
+}
+
+- (void)didClickRow:(id)sender {
+
+    if (_animating) return;
+
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+    
+    id <PBListViewEntity> entity = [self entityAtRow:self.clickedRow];
+
+    if (entity != nil && [entity respondsToSelector:@selector(listViewChildren)]) {
+
+        PBListViewRowMeta *rowMeta =
+        [_listViewConfig
+         rowMetaForEntityType:[entity class] atDepth:[entity listViewEntityDepth]];
+
+        PBTableRowView *rowView =
+        [self rowViewAtRow:self.clickedRow makeIfNecessary:NO];
+
+        if (rowMeta.expandsOnClick) {
+            if (rowView.isExpanded) {
+                [self collapseRow:self.clickedRow];
+            } else {
+                [self expandRow:self.clickedRow];
+            }
+        }
+    }
+}
+
 #pragma mark - Selection
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
 
     NSMutableSet *affectedRows = [NSMutableSet set];
 

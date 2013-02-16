@@ -26,13 +26,15 @@ typedef NS_ENUM(NSInteger, PBListViewAnchorPosition) {
 @class PBListViewUIElementMeta;
 @class PBListViewCommand;
 @class PBMenu;
+@class PBListView;
 
 typedef void(^PBUIConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
-typedef void(^PBUIActionHandler)(id sender, id entity, PBListViewUIElementMeta *meta);
+typedef void(^PBUIActionHandler)(id sender, id entity, PBListViewUIElementMeta *meta, PBListView *listView);
 typedef id(^PBUIValueTransformer)(id value);
 
 @interface PBListViewUIElementMeta : NSObject
 
+@property (nonatomic, weak) PBListView *listView;
 @property (nonatomic, readonly) NSString *keyPath;
 @property (nonatomic, readonly) Class entityType;
 @property (nonatomic, readonly) NSInteger depth;

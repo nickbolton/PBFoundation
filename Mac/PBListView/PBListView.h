@@ -42,8 +42,7 @@
 
 @interface PBListView : NSTableView
 
-@property (nonatomic, strong) Class parentEntityType;
-@property (nonatomic, strong) NSArray *staticEntities;
+@property (nonatomic, strong) NSArray *dataSourceEntities;
 @property (nonatomic, readonly) PBListViewConfig *listViewConfig;
 @property (nonatomic) CGFloat cornerRadius;
 @property (nonatomic) NSUInteger userReloadKeyCode;
@@ -55,5 +54,8 @@
 @property (nonatomic, weak) id <PBListViewActionDelegate> actionDelegate;
 
 - (void)visualizeConstraints;
+
+- (void)expandRow:(NSInteger)row;
+- (void)collapseRow:(NSInteger)row;
 
 @end

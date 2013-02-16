@@ -64,6 +64,11 @@
     [self updateBackgroundImage];
 }
 
+- (void)setExpanded:(BOOL)expanded {
+    _expanded = expanded;
+    [self updateBackgroundImage];
+}
+
 - (void)updateBackgroundImage {
 
     if (self.isExpanded) {

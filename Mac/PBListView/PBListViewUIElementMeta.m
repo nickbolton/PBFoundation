@@ -145,7 +145,7 @@
     if (_actionHandler != nil) {
 
         id entity = [self findEntity:sender];
-        _actionHandler(sender, entity, self);
+        _actionHandler(sender, entity, self, _listView);
     }
 }
 

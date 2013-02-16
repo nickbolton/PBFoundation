@@ -25,8 +25,11 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 @class PBListViewUIElementMeta;
 @class PBListViewRowMeta;
 @class PBMenu;
+@class PBListView;
 
 @interface PBListViewConfig : NSObject
+
+@property (nonatomic, weak) PBListView *listView;
 
 @property (nonatomic) CGFloat leftMargin;
 @property (nonatomic) CGFloat rightMargin;

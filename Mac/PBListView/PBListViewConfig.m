@@ -58,6 +58,9 @@
 
 - (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
           forEntityType:(Class)entityType {
+
+    rowMeta.listView = _listView;
+
     [self
      registerRowMeta:rowMeta
      forEntityType:entityType
@@ -142,6 +145,8 @@
 
     if (meta != nil) {
         NSAssert(meta.entityType != nil, @"Meta is missing entityType");
+
+        meta.listView = _listView;
 
         NSMutableArray *metaList =
         (NSMutableArray *)[self metaListForEntityType:meta.entityType atDepth:meta.depth];
