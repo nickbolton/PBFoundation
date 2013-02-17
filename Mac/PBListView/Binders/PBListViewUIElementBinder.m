@@ -46,6 +46,9 @@
 
     NSView *prevView = relativeViews.lastObject;
 
+    if (meta.depth == 1) {
+        NSLog(@"ZZZ");
+    }
     if (meta.globalConfigurationHandler != nil && meta.hasBeenGloballyConfigured == NO) {
         meta.globalConfigurationHandler(view, meta);
         meta.hasBeenGloballyConfigured = YES;

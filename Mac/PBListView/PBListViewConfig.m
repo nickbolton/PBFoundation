@@ -11,6 +11,7 @@
 #import "PBListViewRowMeta.h"
 #import "PBMenu.h"
 #import "PBListViewCommand.h"
+#import "PBEndMarker.h"
 
 @interface PBListViewConfig()
 
@@ -56,6 +57,45 @@
 
 #pragma mark - Meta registering
 
+- (void)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
+                                 image:(NSImage *)image
+                           imageAnchor:(PBListViewAnchorPosition)imageAnchor {
+    [self
+     registerEndMarkerRowWithHeight:rowHeight
+     image:image
+     imageAnchor:imageAnchor
+     atDepth:NSNotFound];
+}
+
+- (void)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
+                                 image:(NSImage *)image
+                           imageAnchor:(PBListViewAnchorPosition)imageAnchor
+                               atDepth:(NSUInteger)depth {
+
+    Class entityType = [PBEndMarker class];
+
+    PBListViewRowMeta *rowMeta = [PBListViewRowMeta rowMeta];
+    rowMeta.rowHeight = rowHeight;
+    [_listView.listViewConfig
+     registerRowMeta:rowMeta
+     forEntityType:entityType
+     atDepth:depth];
+
+    [self
+     registerUIElementMeta:
+     [PBListViewUIElementMeta
+      uiElementMetaWithEntityType:entityType
+      keyPath:nil
+      depth:depth
+      binderType:[PBListViewImageBinder class]
+      globalConfiguration:^(NSImageView *imageView, PBListViewUIElementMeta *meta) {
+          meta.image = image;
+          meta.fixedPosition = YES;
+          meta.ignoreMargins = YES;
+          meta.anchorPosition = imageAnchor;
+      }]];
+}
+
 - (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
           forEntityType:(Class)entityType {
 
@@ -66,6 +106,7 @@
      forEntityType:entityType
      atDepth:NSNotFound];
 }
+
 - (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
           forEntityType:(Class)entityType
                 atDepth:(NSUInteger)depth {
@@ -134,6 +175,15 @@
      defaultOnEmptyList:YES];
 }
 
+- (void)removeAllUIElementMetaForEntityType:(Class)entityType
+                                    atDepth:(NSUInteger)depth {
+    NSMutableArray *metaList =
+    (NSMutableArray *)[self metaListForEntityType:entityType
+                                          atDepth:depth
+                               defaultOnEmptyList:NO];
+    [metaList removeAllObjects];
+}
+
 - (NSArray *)metaListForEntityType:(Class)entityType
                            atDepth:(NSUInteger)depth
                 defaultOnEmptyList:(BOOL)defaultOnEmptyList {
@@ -169,7 +219,9 @@
         meta.listView = _listView;
 
         NSMutableArray *metaList =
-        (NSMutableArray *)[self metaListForEntityType:meta.entityType atDepth:meta.depth];
+        (NSMutableArray *)[self metaListForEntityType:meta.entityType
+                                              atDepth:meta.depth
+                                   defaultOnEmptyList:NO];
         [metaList addObject:meta];
     }
 }

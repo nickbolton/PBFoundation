@@ -5,6 +5,7 @@
 //  Created by Nick Bolton on 2/9/13.
 //  Copyright 2013 Pixelbleed. All rights reserved.
 //
+#import "PBListViewUIElementMeta.h"
 
 typedef NS_ENUM(NSInteger, PBListViewPositionType) {
 
@@ -22,7 +23,6 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
     PBListViewUIElementTypeImage,
 };
 
-@class PBListViewUIElementMeta;
 @class PBListViewRowMeta;
 @class PBMenu;
 @class PBListView;
@@ -45,6 +45,8 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 - (void)registerUIElementMeta:(PBListViewUIElementMeta *)meta;
 - (NSArray *)metaListForEntityType:(Class)entityType
                            atDepth:(NSUInteger)depth;
+- (void)removeAllUIElementMetaForEntityType:(Class)entityType
+                                    atDepth:(NSUInteger)depth;
 
 - (void)registerDefaultBackgroundImage:(NSImage *)defaultBackgroundImage
         defaultHoveringBackgroundImage:(NSImage *)defaultHoveringBackgroundImage
@@ -77,6 +79,14 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
                                  selected:(BOOL)selected
                                  hovering:(BOOL)hovering
                                  expanded:(BOOL)expanded;
+
+- (void)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
+                                 image:(NSImage *)image
+                           imageAnchor:(PBListViewAnchorPosition)imageAnchor;
+- (void)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
+                                 image:(NSImage *)image
+                           imageAnchor:(PBListViewAnchorPosition)imageAnchor
+                               atDepth:(NSUInteger)depth;
 
 - (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
           forEntityType:(Class)entityType;

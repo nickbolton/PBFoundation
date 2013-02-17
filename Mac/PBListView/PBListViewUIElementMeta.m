@@ -56,7 +56,7 @@
     [self
      uiElementMetaWithEntityType:entityType
      keyPath:keyPath
-     depth:-1
+     depth:NSNotFound
      binderType:binderType
      hiddenWhenMouseNotInRow:hiddenWhenMouseNotInRow
      globalConfiguration:globalConfiguration];
@@ -85,7 +85,7 @@
     [self
      uiElementMetaWithEntityType:entityType
      keyPath:keyPath
-     depth:-1
+     depth:NSNotFound
      binderType:binderType
      hiddenWhenMouseNotInRow:NO
      globalConfiguration:globalConfiguration];

@@ -351,6 +351,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSTableCellView *cellView = nil;
     id entity = [self entityAtRow:row];
 
+//    NSLog(@"%s row: %ld, entity: %@", __PRETTY_FUNCTION__, row, entity);
+
+//    if (row == 7) {
+//        NSLog(@"ZZZ");
+//    }
+
     if (entity != nil) {
 
         PBTableRowView *rowView = [self rowViewAtRow:row makeIfNecessary:NO];
@@ -448,6 +454,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     PBTableRowView *rowView = nil;
     id entity = [self entityAtRow:row];
 
+//    NSLog(@"%s row: %ld, entity: %@", __PRETTY_FUNCTION__, row, entity);
+
     if (entity != nil) {
 
         NSString *reuseKey =
@@ -517,6 +525,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     id entity = [self entityAtRow:row];
 
+//    if (row == 7) {
+//        NSLog(@"ZZZ");
+//    }
+
     if (entity != nil) {
 
         NSUInteger entityDepth = [entity listViewEntityDepth];
@@ -533,6 +545,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         PBListViewRowMeta *rowMeta =
         [_listViewConfig
          rowMetaForEntityType:[entity class] atDepth:entityDepth];
+
         rowHeight = rowMeta.rowHeight;
 
         if (rowHeight == 0 && backgroundImage != nil) {
@@ -555,7 +568,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     return rowView.isExpanded;
 }
 
-- (void)expandRow:(NSInteger)row {
+- (void)expandRow:(NSInteger)row animate:(BOOL)animate {
 
     PBTableRowView *rowView =
     [self rowViewAtRow:row makeIfNecessary:NO];
@@ -566,36 +579,61 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (entity != nil && [entity respondsToSelector:@selector(listViewChildren)]) {
 
-        NSArray *children = [entity listViewChildren];
+        NSMutableArray *children = [[entity listViewChildren] mutableCopy];
 
         if (children.count > 0) {
 
             rowView.expanded = YES;
-            _animating = YES;
 
-            [NSAnimationContext beginGrouping];
-            NSAnimationContext *currentContext = [NSAnimationContext currentContext];
-            currentContext.completionHandler = ^{
-                _animating = NO;
+            NSTableViewAnimationOptions animationOptions =
+            animate ? NSTableViewAnimationSlideDown : NSTableViewAnimationEffectNone;
+
+            void (^expandRowBlock)(void) = ^{
+
+                [self beginUpdates];
+
+                NSIndexSet *indexSet =
+                [NSIndexSet indexSetWithIndexesInRange:
+                 NSMakeRange(row+1, children.count)];
+
+                [_dataSourceEntities insertObjects:children atIndexes:indexSet];
+                [self insertRowsAtIndexes:indexSet withAnimation:animationOptions];
+
+                [self endUpdates];
             };
 
-            [self beginUpdates];
+            if ([_actionDelegate respondsToSelector:@selector(listView:willExpandRow:)]) {
+                [_actionDelegate listView:self willExpandRow:row];
+            }
 
-            NSIndexSet *indexSet =
-            [NSIndexSet indexSetWithIndexesInRange:
-             NSMakeRange(row+1, children.count)];
+            if (animate) {
+                _animating = YES;
 
-            [_dataSourceEntities insertObjects:children atIndexes:indexSet];
-            [self insertRowsAtIndexes:indexSet withAnimation:NSTableViewAnimationSlideDown];
+                [NSAnimationContext beginGrouping];
+                NSAnimationContext *currentContext = [NSAnimationContext currentContext];
+                currentContext.completionHandler = ^{
+                    _animating = NO;
+                    if ([_actionDelegate respondsToSelector:@selector(listView:didExpandRow:)]) {
+                        [_actionDelegate listView:self didExpandRow:row];
+                    }
+                };
 
-            [self endUpdates];
+                expandRowBlock();
+                
+                [NSAnimationContext endGrouping];
+            } else {
+                
+                expandRowBlock();
 
-            [NSAnimationContext endGrouping];
+                if ([_actionDelegate respondsToSelector:@selector(listView:didExpandRow:)]) {
+                    [_actionDelegate listView:self didExpandRow:row];
+                }
+            }
         }
     }
 }
 
-- (void)collapseRow:(NSInteger)row {
+- (void)collapseRow:(NSInteger)row animate:(BOOL)animate {
 
     PBTableRowView *rowView =
     [self rowViewAtRow:row makeIfNecessary:NO];
@@ -606,31 +644,53 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     if (entity != nil && [entity respondsToSelector:@selector(listViewChildren)]) {
 
-        NSArray *children = [entity listViewChildren];
+        NSMutableArray *children = [[entity listViewChildren] mutableCopy];
 
         if (children.count > 0) {
 
             rowView.expanded = NO;
-            _animating = YES;
 
-            [NSAnimationContext beginGrouping];
-            NSAnimationContext *currentContext = [NSAnimationContext currentContext];
-            currentContext.completionHandler = ^{
-                _animating = NO;
+            NSTableViewAnimationOptions animationOptions =
+            animate ? NSTableViewAnimationSlideUp : NSTableViewAnimationEffectNone;
+
+            void (^collapseRowBlock)(void) = ^{
+                [self beginUpdates];
+
+                NSIndexSet *indexSet =
+                [NSIndexSet indexSetWithIndexesInRange:
+                 NSMakeRange(row+1, children.count)];
+
+                [_dataSourceEntities removeObjectsAtIndexes:indexSet];
+                [self removeRowsAtIndexes:indexSet withAnimation:animationOptions];
+                
+                [self endUpdates];
             };
-            
-            [self beginUpdates];
 
-            NSIndexSet *indexSet =
-            [NSIndexSet indexSetWithIndexesInRange:
-             NSMakeRange(row+1, children.count)];
+            if ([_actionDelegate respondsToSelector:@selector(listView:willCollapseRow:)]) {
+                [_actionDelegate listView:self willCollapseRow:row];
+            }
 
-            [_dataSourceEntities removeObjectsAtIndexes:indexSet];
-            [self removeRowsAtIndexes:indexSet withAnimation:NSTableViewAnimationSlideUp];
+            if (animate) {
+                _animating = YES;
 
-            [self endUpdates];
+                [NSAnimationContext beginGrouping];
+                NSAnimationContext *currentContext = [NSAnimationContext currentContext];
+                currentContext.completionHandler = ^{
+                    _animating = NO;
+                    if ([_actionDelegate respondsToSelector:@selector(listView:didCollapseRow:)]) {
+                        [_actionDelegate listView:self didCollapseRow:row];
+                    }
+                };
 
-            [NSAnimationContext endGrouping];
+                collapseRowBlock();
+
+                [NSAnimationContext endGrouping];
+            } else {
+                collapseRowBlock();
+                if ([_actionDelegate respondsToSelector:@selector(listView:didCollapseRow:)]) {
+                    [_actionDelegate listView:self didCollapseRow:row];
+                }
+            }
         }
     }
 }
@@ -652,9 +712,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
         if (rowMeta.expandsOnClick) {
             if (rowView.isExpanded) {
-                [self collapseRow:self.clickedRow];
+                [self collapseRow:self.clickedRow animate:YES];
             } else {
-                [self expandRow:self.clickedRow];
+                [self expandRow:self.clickedRow animate:YES];
             }
         }
     }
@@ -738,16 +798,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)keyDown:(NSEvent *)event {
 
     if (_userReloadKeyCode != 0 && [event isModifiersExactly:_userReloadKeyModifiers] && event.keyCode == _userReloadKeyCode) {
-        if ([self.actionDelegate respondsToSelector:@selector(userInitiatedReload:)]) {
-            [(id)self.actionDelegate userInitiatedReload:self];
+        if ([self.actionDelegate respondsToSelector:@selector(listViewUserInitiatedReload:)]) {
+            [(id)self.actionDelegate listViewUserInitiatedReload:self];
         }
     } else if (_userDeleteKeyCode != 0 && [event isModifiersExactly:_userDeleteKeyModifiers] && event.keyCode == _userDeleteKeyCode) {
-        if ([self.actionDelegate respondsToSelector:@selector(userInitiatedDelete:)]) {
-            [(id)self.actionDelegate userInitiatedDelete:self];
+        if ([self.actionDelegate respondsToSelector:@selector(listViewUserInitiatedDelete:)]) {
+            [(id)self.actionDelegate listViewUserInitiatedDelete:self];
         }
     } else if (_userSelectKeyCode != 0 && [event isModifiersExactly:_userSelectKeyModifiers] && event.keyCode == _userSelectKeyCode) {
-        if (self.selectedRowIndexes.count == 1 && [self.actionDelegate respondsToSelector:@selector(userInitiatedSelect:)]) {
-            [(id)self.actionDelegate userInitiatedSelect:self];
+        if (self.selectedRowIndexes.count == 1 && [self.actionDelegate respondsToSelector:@selector(listViewUserInitiatedSelect:)]) {
+            [(id)self.actionDelegate listViewUserInitiatedSelect:self];
         }
     } else {
 

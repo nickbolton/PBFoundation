@@ -19,6 +19,8 @@
 #import "PBButton.h"
 #import "PBMenu.h"
 
+@class PBListView;
+
 @protocol PBListViewEntity <NSObject>
 
 @required
@@ -32,9 +34,13 @@
 @protocol PBListViewActionDelegate <NSObject>
 
 @optional
-- (void)userInitiatedReload:(NSTableView *)tableView;
-- (void)userInitiatedDelete:(NSTableView *)tableView;
-- (void)userInitiatedSelect:(NSTableView *)tableView;
+- (void)listViewUserInitiatedReload:(PBListView *)tableView;
+- (void)listViewUserInitiatedDelete:(PBListView *)tableView;
+- (void)listViewUserInitiatedSelect:(PBListView *)tableView;
+- (void)listView:(PBListView *)listView willExpandRow:(NSInteger)row;
+- (void)listView:(PBListView *)listView didExpandRow:(NSInteger)row;
+- (void)listView:(PBListView *)listView willCollapseRow:(NSInteger)row;
+- (void)listView:(PBListView *)listView didCollapseRow:(NSInteger)row;
 
 @end
 
@@ -55,8 +61,8 @@
 
 - (void)visualizeConstraints;
 
-- (void)expandRow:(NSInteger)row;
-- (void)collapseRow:(NSInteger)row;
+- (void)expandRow:(NSInteger)row animate:(BOOL)animate;
+- (void)collapseRow:(NSInteger)row animate:(BOOL)animate;
 - (BOOL)isRowExpanded:(NSInteger)row;
 
 @end
