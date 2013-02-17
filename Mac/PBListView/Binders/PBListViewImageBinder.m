@@ -20,7 +20,7 @@
     return imageView;
 }
 
-- (void)postClientConfiguration:(PBListView *)listView
+- (void)postGlobalConfiguration:(PBListView *)listView
                            meta:(PBListViewUIElementMeta *)meta
                            view:(NSImageView *)imageView {
     

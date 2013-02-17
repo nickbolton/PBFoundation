@@ -33,7 +33,7 @@
     return nil;
 }
 
-- (void)postClientConfiguration:(PBListView *)listView
+- (void)postGlobalConfiguration:(PBListView *)listView
                            meta:(PBListViewUIElementMeta *)meta
                            view:(NSView *)view {
 }
@@ -51,7 +51,7 @@
         meta.hasBeenGloballyConfigured = YES;
     }
 
-    [self postClientConfiguration:listView meta:meta view:view];
+    [self postGlobalConfiguration:listView meta:meta view:view];
 
     if (meta.actionHandler != nil && [view respondsToSelector:@selector(setTarget:)]) {
         [(NSButton *)view setTarget:meta];

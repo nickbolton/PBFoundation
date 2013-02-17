@@ -13,6 +13,7 @@
 #import "PBListViewTextFieldBinder.h"
 #import "PBListViewButtonBinder.h"
 #import "PBListViewSwitchButtonBinder.h"
+#import "PBListViewExpandButtonBinder.h"
 #import "PBListViewMenuButtonBinder.h"
 #import "PBListViewImageBinder.h"
 #import "PBListViewCommand.h"

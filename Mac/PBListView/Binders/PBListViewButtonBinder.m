@@ -36,7 +36,7 @@
     return button;
 }
 
-- (void)postClientConfiguration:(PBListView *)listView
+- (void)postGlobalConfiguration:(PBListView *)listView
                            meta:(PBListViewUIElementMeta *)meta
                            view:(PBButton *)button {
 
