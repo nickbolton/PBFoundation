@@ -22,6 +22,7 @@ typedef NS_ENUM(NSInteger, PBListViewAnchorPosition) {
     PBListViewAnchorPositionBottomRight,
 };
 
+@protocol PBListViewEntity;
 @class PBListViewUIElementBinder;
 @class PBListViewUIElementMeta;
 @class PBListViewCommand;
@@ -29,8 +30,8 @@ typedef NS_ENUM(NSInteger, PBListViewAnchorPosition) {
 @class PBListView;
 
 typedef void(^PBUIGlobalConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
-typedef void(^PBUIConfigurationHandler)(id view, id entity, PBListViewUIElementMeta *meta, PBListView *listView);
-typedef void(^PBUIActionHandler)(id sender, id entity, PBListViewUIElementMeta *meta, PBListView *listView);
+typedef void(^PBUIConfigurationHandler)(id view, id <PBListViewEntity> entity, PBListViewUIElementMeta *meta, PBListView *listView);
+typedef void(^PBUIActionHandler)(id sender, id <PBListViewEntity> entity, PBListViewUIElementMeta *meta, PBListView *listView);
 typedef id(^PBUIValueTransformer)(id value);
 
 @interface PBListViewUIElementMeta : NSObject
