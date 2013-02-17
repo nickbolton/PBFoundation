@@ -33,7 +33,7 @@
 
 @end
 
-@protocol PBListViewActionDelegate <NSObject>
+@protocol PBListViewDelegate <NSObject>
 
 @optional
 - (void)listViewUserInitiatedReload:(PBListView *)tableView;
@@ -59,7 +59,7 @@
 @property (nonatomic) NSUInteger userDeleteKeyModifiers;
 @property (nonatomic) NSUInteger userSelectKeyCode;
 @property (nonatomic) NSUInteger userSelectKeyModifiers;
-@property (nonatomic, weak) id <PBListViewActionDelegate> actionDelegate;
+@property (nonatomic, weak) id <PBListViewDelegate> listViewDelegate;
 
 - (void)visualizeConstraints;
 

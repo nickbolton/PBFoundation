@@ -605,8 +605,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 [self endUpdates];
             };
 
-            if ([_actionDelegate respondsToSelector:@selector(listView:willExpandRow:)]) {
-                [_actionDelegate listView:self willExpandRow:row];
+            if ([_listViewDelegate respondsToSelector:@selector(listView:willExpandRow:)]) {
+                [_listViewDelegate listView:self willExpandRow:row];
             }
 
             if (animate) {
@@ -616,8 +616,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 NSAnimationContext *currentContext = [NSAnimationContext currentContext];
                 currentContext.completionHandler = ^{
                     _animating = NO;
-                    if ([_actionDelegate respondsToSelector:@selector(listView:didExpandRow:)]) {
-                        [_actionDelegate listView:self didExpandRow:row];
+                    if ([_listViewDelegate respondsToSelector:@selector(listView:didExpandRow:)]) {
+                        [_listViewDelegate listView:self didExpandRow:row];
                     }
                 };
 
@@ -628,8 +628,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 
                 expandRowBlock();
 
-                if ([_actionDelegate respondsToSelector:@selector(listView:didExpandRow:)]) {
-                    [_actionDelegate listView:self didExpandRow:row];
+                if ([_listViewDelegate respondsToSelector:@selector(listView:didExpandRow:)]) {
+                    [_listViewDelegate listView:self didExpandRow:row];
                 }
             }
         }
@@ -670,8 +670,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 [self endUpdates];
             };
 
-            if ([_actionDelegate respondsToSelector:@selector(listView:willCollapseRow:)]) {
-                [_actionDelegate listView:self willCollapseRow:row];
+            if ([_listViewDelegate respondsToSelector:@selector(listView:willCollapseRow:)]) {
+                [_listViewDelegate listView:self willCollapseRow:row];
             }
 
             if (animate) {
@@ -681,8 +681,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 NSAnimationContext *currentContext = [NSAnimationContext currentContext];
                 currentContext.completionHandler = ^{
                     _animating = NO;
-                    if ([_actionDelegate respondsToSelector:@selector(listView:didCollapseRow:)]) {
-                        [_actionDelegate listView:self didCollapseRow:row];
+                    if ([_listViewDelegate respondsToSelector:@selector(listView:didCollapseRow:)]) {
+                        [_listViewDelegate listView:self didCollapseRow:row];
                     }
                 };
 
@@ -691,8 +691,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 [NSAnimationContext endGrouping];
             } else {
                 collapseRowBlock();
-                if ([_actionDelegate respondsToSelector:@selector(listView:didCollapseRow:)]) {
-                    [_actionDelegate listView:self didCollapseRow:row];
+                if ([_listViewDelegate respondsToSelector:@selector(listView:didCollapseRow:)]) {
+                    [_listViewDelegate listView:self didCollapseRow:row];
                 }
             }
         }
@@ -812,16 +812,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 - (void)keyDown:(NSEvent *)event {
 
     if (_userReloadKeyCode != 0 && [event isModifiersExactly:_userReloadKeyModifiers] && event.keyCode == _userReloadKeyCode) {
-        if ([self.actionDelegate respondsToSelector:@selector(listViewUserInitiatedReload:)]) {
-            [(id)self.actionDelegate listViewUserInitiatedReload:self];
+        if ([_listViewDelegate respondsToSelector:@selector(listViewUserInitiatedReload:)]) {
+            [(id)_listViewDelegate listViewUserInitiatedReload:self];
         }
     } else if (_userDeleteKeyCode != 0 && [event isModifiersExactly:_userDeleteKeyModifiers] && event.keyCode == _userDeleteKeyCode) {
-        if ([self.actionDelegate respondsToSelector:@selector(listViewUserInitiatedDelete:)]) {
-            [(id)self.actionDelegate listViewUserInitiatedDelete:self];
+        if ([_listViewDelegate respondsToSelector:@selector(listViewUserInitiatedDelete:)]) {
+            [(id)_listViewDelegate listViewUserInitiatedDelete:self];
         }
     } else if (_userSelectKeyCode != 0 && [event isModifiersExactly:_userSelectKeyModifiers] && event.keyCode == _userSelectKeyCode) {
-        if (self.selectedRowIndexes.count == 1 && [self.actionDelegate respondsToSelector:@selector(listViewUserInitiatedSelect:)]) {
-            [(id)self.actionDelegate listViewUserInitiatedSelect:self];
+        if (self.selectedRowIndexes.count == 1 && [_listViewDelegate respondsToSelector:@selector(listViewUserInitiatedSelect:)]) {
+            [(id)_listViewDelegate listViewUserInitiatedSelect:self];
         }
     } else {
 
