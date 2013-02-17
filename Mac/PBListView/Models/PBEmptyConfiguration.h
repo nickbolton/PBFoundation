@@ -13,6 +13,7 @@
 
 @property (nonatomic, strong) NSString *title;
 @property (nonatomic) NSUInteger depth;
+@property (nonatomic, getter = isListViewEntityExpanded) BOOL listViewEntityExpanded;
 
 + (PBEmptyConfiguration *)emptyConfigurationWithTitle:(NSString *)title
                                                 depth:(NSUInteger)depth;

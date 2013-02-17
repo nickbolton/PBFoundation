@@ -452,7 +452,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 rowViewForRow:(NSInteger)row {
 
     PBTableRowView *rowView = nil;
-    id entity = [self entityAtRow:row];
+    id<PBListViewEntity> entity = [self entityAtRow:row];
 
 //    NSLog(@"%s row: %ld, entity: %@", __PRETTY_FUNCTION__, row, entity);
 
@@ -475,6 +475,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                  atRow:row
                  withTotalEntities:self.dataSourceEntities.count];
         }
+
+        rowView.expanded = entity.isListViewEntityExpanded;
 
         NSImage *backgroundImage =
         [self backgroundImageForRow:row selected:NO hovering:NO expanded:NO];
@@ -584,6 +586,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         if (children.count > 0) {
 
             rowView.expanded = YES;
+            entity.listViewEntityExpanded = YES;
 
             NSTableViewAnimationOptions animationOptions =
             animate ? NSTableViewAnimationSlideDown : NSTableViewAnimationEffectNone;
@@ -649,6 +652,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         if (children.count > 0) {
 
             rowView.expanded = NO;
+            entity.listViewEntityExpanded = NO;
 
             NSTableViewAnimationOptions animationOptions =
             animate ? NSTableViewAnimationSlideUp : NSTableViewAnimationEffectNone;
@@ -746,6 +750,16 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)rowViewSetHoverState:(PBTableRowView *)rowView {
     [self setStateForUIElementsForRowView:rowView hidden:NO];
+
+    NSRange visibleRowRange = [self rowsInRect:[self visibleRect]];
+    NSInteger lastRow = visibleRowRange.location + visibleRowRange.length - 1;
+
+    for (NSInteger row = visibleRowRange.location; row <= lastRow; row++) {
+        PBTableRowView *visibleRowView = [self rowViewAtRow:row makeIfNecessary:NO];
+        if (visibleRowView != rowView) {
+            [visibleRowView clearHoverState];
+        }
+    }
 }
 
 - (void)rowViewClearHoverState:(PBTableRowView *)rowView {

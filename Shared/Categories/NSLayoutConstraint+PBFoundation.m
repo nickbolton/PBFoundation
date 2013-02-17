@@ -11,9 +11,9 @@
 @implementation NSLayoutConstraint (PBFoundation)
 
 #if TARGET_OS_IPHONE
-+ (void)addMinWidthConstraint:(CGFloat)minWidth toView:(UIView *)view {
++ (NSLayoutConstraint *)addMinWidthConstraint:(CGFloat)minWidth toView:(UIView *)view {
 #else
-+ (void)addMinWidthConstraint:(CGFloat)minWidth toView:(NSView *)view {
++ (NSLayoutConstraint *)addMinWidthConstraint:(CGFloat)minWidth toView:(NSView *)view {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -25,12 +25,13 @@
      multiplier:1.0f
      constant:minWidth];
     [view addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)addMaxWidthConstraint:(CGFloat)maxWidth toView:(UIView *)view {
++ (NSLayoutConstraint *)addMaxWidthConstraint:(CGFloat)maxWidth toView:(UIView *)view {
 #else
-+ (void)addMaxWidthConstraint:(CGFloat)maxWidth toView:(NSView *)view {
++ (NSLayoutConstraint *)addMaxWidthConstraint:(CGFloat)maxWidth toView:(NSView *)view {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -42,12 +43,13 @@
      multiplier:1.0f
      constant:maxWidth];
     [view addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)addWidthConstraint:(CGFloat)width toView:(UIView *)view {
++ (NSLayoutConstraint *)addWidthConstraint:(CGFloat)width toView:(UIView *)view {
 #else
-+ (void)addWidthConstraint:(CGFloat)width toView:(NSView *)view {
++ (NSLayoutConstraint *)addWidthConstraint:(CGFloat)width toView:(NSView *)view {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -59,26 +61,30 @@
      multiplier:1.0f
      constant:width];
     [view addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)addMinWidthConstraint:(CGFloat)minWidth maxWidthConstraint:(CGFloat)maxWidth toView:(UIView *)view {
++ (NSArray *)addMinWidthConstraint:(CGFloat)minWidth maxWidthConstraint:(CGFloat)maxWidth toView:(UIView *)view {
 #else
-+ (void)addMinWidthConstraint:(CGFloat)minWidth maxWidthConstraint:(CGFloat)maxWidth toView:(NSView *)view {
++ (NSArray *)addMinWidthConstraint:(CGFloat)minWidth maxWidthConstraint:(CGFloat)maxWidth toView:(NSView *)view {
 #endif
 
+    NSMutableArray *constraints = [NSMutableArray array];
+
     if (minWidth == maxWidth) {
-        [self addWidthConstraint:minWidth toView:view];
+        [constraints addObject:[self addWidthConstraint:minWidth toView:view]];
     } else {
-        [self addMinWidthConstraint:minWidth toView:view];
-        [self addMaxWidthConstraint:maxWidth toView:view];
+        [constraints addObject:[self addMinWidthConstraint:minWidth toView:view]];
+        [constraints addObject:[self addMaxWidthConstraint:maxWidth toView:view]];
     }
+    return constraints;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)addMinHeightConstraint:(CGFloat)minHeight toView:(UIView *)view {
++ (NSLayoutConstraint *)addMinHeightConstraint:(CGFloat)minHeight toView:(UIView *)view {
 #else
-+ (void)addMinHeightConstraint:(CGFloat)minHeight toView:(NSView *)view {
++ (NSLayoutConstraint *)addMinHeightConstraint:(CGFloat)minHeight toView:(NSView *)view {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -90,12 +96,13 @@
      multiplier:1.0f
      constant:minHeight];
     [view addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)addMaxHeightConstraint:(CGFloat)maxHeight toView:(UIView *)view {
++ (NSLayoutConstraint *)addMaxHeightConstraint:(CGFloat)maxHeight toView:(UIView *)view {
 #else
-+ (void)addMaxHeightConstraint:(CGFloat)maxHeight toView:(NSView *)view {
++ (NSLayoutConstraint *)addMaxHeightConstraint:(CGFloat)maxHeight toView:(NSView *)view {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -107,12 +114,13 @@
      multiplier:1.0f
      constant:maxHeight];
     [view addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)addHeightConstraint:(CGFloat)height toView:(UIView *)view {
++ (NSLayoutConstraint *)addHeightConstraint:(CGFloat)height toView:(UIView *)view {
 #else
-+ (void)addHeightConstraint:(CGFloat)height toView:(NSView *)view {
++ (NSLayoutConstraint *)addHeightConstraint:(CGFloat)height toView:(NSView *)view {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -124,26 +132,31 @@
      multiplier:1.0f
      constant:height];
     [view addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)addMinHeightConstraint:(CGFloat)minHeight maxHeightConstraint:(CGFloat)maxHeight toView:(UIView *)view {
++ (NSArray *)addMinHeightConstraint:(CGFloat)minHeight maxHeightConstraint:(CGFloat)maxHeight toView:(UIView *)view {
 #else
-+ (void)addMinHeightConstraint:(CGFloat)minHeight maxHeightConstraint:(CGFloat)maxHeight toView:(NSView *)view {
++ (NSArray *)addMinHeightConstraint:(CGFloat)minHeight maxHeightConstraint:(CGFloat)maxHeight toView:(NSView *)view {
 #endif
-    
+
+    NSMutableArray *constraints = [NSMutableArray array];
+
     if (minHeight == maxHeight) {
-        [self addHeightConstraint:minHeight toView:view];
+        [constraints addObject:[self addHeightConstraint:minHeight toView:view]];
     } else {
-        [self addMinHeightConstraint:minHeight toView:view];
-        [self addMaxHeightConstraint:maxHeight toView:view];
+        [constraints addObject:[self addMinHeightConstraint:minHeight toView:view]];
+        [constraints addObject:[self addMaxHeightConstraint:maxHeight toView:view]];
     }
+
+    return constraints;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)horizontallyCenterView:(UIView *)view {
++ (NSLayoutConstraint *)horizontallyCenterView:(UIView *)view {
 #else
-+ (void)horizontallyCenterView:(NSView *)view {
++ (NSLayoutConstraint *)horizontallyCenterView:(NSView *)view {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -155,12 +168,13 @@
      multiplier:1.0f
      constant:0.0f];
     [view.superview addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)verticallyCenterView:(UIView *)view {
++ (NSLayoutConstraint *)verticallyCenterView:(UIView *)view {
 #else
-+ (void)verticallyCenterView:(NSView *)view {
++ (NSLayoutConstraint *)verticallyCenterView:(NSView *)view {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -172,12 +186,13 @@
      multiplier:1.0f
      constant:0.0f];
     [view.superview addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)expandWidthToSuperview:(UIView *)view {
++ (NSArray *)expandWidthToSuperview:(UIView *)view {
 #else
-+ (void)expandWidthToSuperview:(NSView *)view {
++ (NSArray *)expandWidthToSuperview:(NSView *)view {
 #endif
     NSArray *constraints =
     [NSLayoutConstraint
@@ -186,12 +201,13 @@
      metrics:nil
      views:@{@"v" : view}];
     [view.superview addConstraints:constraints];
+    return constraints;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)expandHeightToSuperview:(UIView *)view {
++ (NSArray *)expandHeightToSuperview:(UIView *)view {
 #else
-+ (void)expandHeightToSuperview:(NSView *)view {
++ (NSArray *)expandHeightToSuperview:(NSView *)view {
 #endif
     NSArray *constraints =
     [NSLayoutConstraint
@@ -200,21 +216,24 @@
      metrics:nil
      views:@{@"v" : view}];
     [view.superview addConstraints:constraints];
+    return constraints;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)expandToSuperview:(UIView *)view {
++ (NSArray *)expandToSuperview:(UIView *)view {
 #else
-+ (void)expandToSuperview:(NSView *)view {
++ (NSArray *)expandToSuperview:(NSView *)view {
 #endif
-    [self expandWidthToSuperview:view];
-    [self expandHeightToSuperview:view];
+    NSMutableArray *constraints = [NSMutableArray array];
+    [constraints addObjectsFromArray:[self expandWidthToSuperview:view]];
+    [constraints addObjectsFromArray:[self expandHeightToSuperview:view]];
+    return constraints;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)alignToTop:(UIView *)view withPadding:(CGFloat)padding {
++ (NSLayoutConstraint *)alignToTop:(UIView *)view withPadding:(CGFloat)padding {
 #else
-+ (void)alignToTop:(NSView *)view withPadding:(CGFloat)padding {
++ (NSLayoutConstraint *)alignToTop:(NSView *)view withPadding:(CGFloat)padding {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -226,12 +245,13 @@
      multiplier:1.0f
      constant:padding];
     [view.superview addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)alignToBottom:(UIView *)view withPadding:(CGFloat)padding {
++ (NSLayoutConstraint *)alignToBottom:(UIView *)view withPadding:(CGFloat)padding {
 #else
-+ (void)alignToBottom:(NSView *)view withPadding:(CGFloat)padding {
++ (NSLayoutConstraint *)alignToBottom:(NSView *)view withPadding:(CGFloat)padding {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -243,12 +263,13 @@
      multiplier:1.0f
      constant:padding];
     [view.superview addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)alignToLeft:(UIView *)view withPadding:(CGFloat)padding {
++ (NSLayoutConstraint *)alignToLeft:(UIView *)view withPadding:(CGFloat)padding {
 #else
-+ (void)alignToLeft:(NSView *)view withPadding:(CGFloat)padding {
++ (NSLayoutConstraint *)alignToLeft:(NSView *)view withPadding:(CGFloat)padding {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -260,12 +281,13 @@
      multiplier:1.0f
      constant:padding];
     [view.superview addConstraint:constraint];
+    return constraint;
 }
 
 #if TARGET_OS_IPHONE
-+ (void)alignToRight:(UIView *)view withPadding:(CGFloat)padding {
++ (NSLayoutConstraint *)alignToRight:(UIView *)view withPadding:(CGFloat)padding {
 #else
-+ (void)alignToRight:(NSView *)view withPadding:(CGFloat)padding {
++ (NSLayoutConstraint *)alignToRight:(NSView *)view withPadding:(CGFloat)padding {
 #endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
@@ -277,6 +299,7 @@
      multiplier:1.0f
      constant:padding];
     [view.superview addConstraint:constraint];
+    return constraint;
 }
 
 @end

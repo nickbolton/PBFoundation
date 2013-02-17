@@ -41,5 +41,6 @@
 - (void)startMouseEnteredEvents;
 - (void)stopMouseEnteredEvents;
 - (BOOL)mouseEnteredEventsStarted;
+- (void)clearHoverState;
 
 @end

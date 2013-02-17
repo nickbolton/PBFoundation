@@ -11,5 +11,6 @@
 @interface PBEndMarker : NSObject <PBListViewEntity>
 
 @property (nonatomic) NSUInteger listViewEntityDepth;
+@property (nonatomic, getter = isListViewEntityExpanded) BOOL listViewEntityExpanded;
 
 @end

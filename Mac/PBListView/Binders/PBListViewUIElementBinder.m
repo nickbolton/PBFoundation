@@ -46,9 +46,6 @@
 
     NSView *prevView = relativeViews.lastObject;
 
-    if (meta.depth == 1) {
-        NSLog(@"ZZZ");
-    }
     if (meta.globalConfigurationHandler != nil && meta.hasBeenGloballyConfigured == NO) {
         meta.globalConfigurationHandler(view, meta);
         meta.hasBeenGloballyConfigured = YES;
@@ -72,7 +69,6 @@
          listViewConfig:listView.listViewConfig];
         
     } else {
-
 
         CGFloat leftMargin = meta.ignoreMargins ? 0.0f : [listView.listViewConfig leftMargin];
         CGFloat rightMargin = meta.ignoreMargins ? 0.0f : [listView.listViewConfig rightMargin];
@@ -137,6 +133,7 @@
         
         [relativeViews addObject:view];
         [relativeMetaList addObject:meta];
+
     }
 }
 

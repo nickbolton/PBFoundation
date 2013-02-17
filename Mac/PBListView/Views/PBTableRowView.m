@@ -48,15 +48,23 @@
 }
 
 - (void)mouseEntered:(NSEvent*)event {
+    [super mouseEntered:event];
     [_delegate rowViewSetHoverState:self];
     _hovering = YES;
     [self updateBackgroundImage];
 }
 
 - (void)mouseExited:(NSEvent *)event {
+    [super mouseExited:event];
     [_delegate rowViewClearHoverState:self];
-    _hovering = NO;
-    [self updateBackgroundImage];
+    [self clearHoverState];
+}
+
+- (void)clearHoverState {
+    if (_hovering) {
+        _hovering = NO;
+        [self updateBackgroundImage];
+    }
 }
 
 - (void)setSelected:(BOOL)selected {

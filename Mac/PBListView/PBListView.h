@@ -25,6 +25,7 @@
 
 @required
 - (NSUInteger)listViewEntityDepth;
+@property (nonatomic, getter = isListViewEntityExpanded) BOOL listViewEntityExpanded;
 
 @optional
 - (NSArray *)listViewChildren;
