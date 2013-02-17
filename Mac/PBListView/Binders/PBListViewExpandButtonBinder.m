@@ -17,8 +17,14 @@
                            meta:(PBListViewUIElementMeta *)meta
                            view:(PBButton *)button {
 
+    static NSString * const kOriginalImageKey = @"original-image";
+    static NSString * const kOriginalOnImageKey = @"original-onImage";
+
     [super postGlobalConfiguration:listView meta:meta view:button];
-    
+
+    [button.imageCache setObject:meta.image forKey:kOriginalImageKey];
+    [button.imageCache setObject:meta.onImage forKey:kOriginalOnImageKey];
+
     meta.actionHandler = ^(PBButton *button, id <PBListViewEntity> entity, PBListViewUIElementMeta *meta, PBListView *listView) {
 
         NSInteger row = [listView rowForView:button];
@@ -28,19 +34,23 @@
             [NSAnimationContext beginGrouping];
 
             CGFloat targetAngle;
-            NSImage *endImage = meta.onImage;
+            NSImage *endImage;
+            NSImage *startImage = button.image;
 
             if ([listView isRowExpanded:row]) {
                 [listView collapseRow:row animate:YES];
                 targetAngle = 0.0f;
+                endImage = [button.imageCache objectForKey:kOriginalImageKey];
             } else {
                 [listView expandRow:row animate:YES];
                 targetAngle = -90.0f;
+                endImage = [button.imageCache objectForKey:kOriginalOnImageKey];
             }
 
+            button.image = endImage;
+            button.onImage = startImage;
+
             NSAnimationContext.currentContext.completionHandler = ^{
-                button.onImage = button.image;
-                button.image = endImage;
                 button.frameCenterRotation = 0.0f;
                 meta.image = button.image;
                 meta.onImage = button.onImage;
