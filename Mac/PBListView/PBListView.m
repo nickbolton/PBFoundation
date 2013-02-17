@@ -69,6 +69,11 @@
     _userDeleteKeyModifiers = NSCommandKeyMask;
 
     _userSelectKeyCode = kVK_Space;
+
+    _userExpandKeyCode = kVK_RightArrow;
+    _userExpandKeyModifiers = NSNumericPadKeyMask | NSFunctionKeyMask;
+    _userCollapseKeyCode = kVK_LeftArrow;
+    _userCollapseKeyModifiers = NSNumericPadKeyMask | NSFunctionKeyMask;
 }
 
 - (void)awakeFromNib {
@@ -823,6 +828,18 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         if (self.selectedRowIndexes.count == 1 && [_listViewDelegate respondsToSelector:@selector(listViewUserInitiatedSelect:)]) {
             [(id)_listViewDelegate listViewUserInitiatedSelect:self];
         }
+    } else if (_userExpandKeyCode != 0 && [event isModifiersExactly:_userExpandKeyModifiers] && event.keyCode == _userExpandKeyCode) {
+
+        [self.selectedRowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+            [self expandRow:idx animate:YES];
+        }];
+        
+    } else if (_userCollapseKeyCode != 0 && [event isModifiersExactly:_userCollapseKeyModifiers] && event.keyCode == _userCollapseKeyCode) {
+
+        [self.selectedRowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+            [self collapseRow:idx animate:YES];
+        }];
+        
     } else {
 
         NSMutableArray *entities = [NSMutableArray array];

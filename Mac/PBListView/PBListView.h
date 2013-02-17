@@ -43,7 +43,6 @@
 - (void)listView:(PBListView *)listView didExpandRow:(NSInteger)row;
 - (void)listView:(PBListView *)listView willCollapseRow:(NSInteger)row;
 - (void)listView:(PBListView *)listView didCollapseRow:(NSInteger)row;
-
 @end
 
 @class PBListViewUIElementMeta;
@@ -59,6 +58,10 @@
 @property (nonatomic) NSUInteger userDeleteKeyModifiers;
 @property (nonatomic) NSUInteger userSelectKeyCode;
 @property (nonatomic) NSUInteger userSelectKeyModifiers;
+@property (nonatomic) NSUInteger userExpandKeyCode;
+@property (nonatomic) NSUInteger userExpandKeyModifiers;
+@property (nonatomic) NSUInteger userCollapseKeyCode;
+@property (nonatomic) NSUInteger userCollapseKeyModifiers;
 @property (nonatomic, weak) id <PBListViewDelegate> listViewDelegate;
 
 - (void)visualizeConstraints;

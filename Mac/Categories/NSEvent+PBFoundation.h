@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern NSInteger const kPBEventAllModifiersMask;
+
 @interface NSEvent (PBFoundation)
 
 + (BOOL)isCurrentModifiersExactly:(NSUInteger)modifiers;
