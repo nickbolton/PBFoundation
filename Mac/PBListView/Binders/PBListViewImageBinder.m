@@ -20,10 +20,9 @@
     return imageView;
 }
 
-- (void)postGlobalConfiguration:(PBListView *)listView
-                           meta:(PBListViewUIElementMeta *)meta
-                           view:(NSImageView *)imageView {
-    
+- (void)runtimeConfiguration:(PBListViewUIElementMeta *)meta
+                        view:(NSImageView *)imageView {
+
     NSAssert([imageView isKindOfClass:[NSImageView class]], @"view is not a NSImageView");
 
     imageView.image = meta.image;

@@ -30,6 +30,7 @@
 @property (nonatomic, readwrite) PBListViewConfig *listViewConfig;
 @property (nonatomic, strong) NSIndexSet *previousSelection;
 @property (nonatomic, strong) NSTrackingArea *trackingArea;
+@property (nonatomic, strong) NSMutableIndexSet *expandedRows;
 
 @end
 
@@ -53,6 +54,7 @@
 
 - (void)commonInit {
     self.previousSelection = [NSMutableIndexSet indexSet];
+    self.expandedRows = [NSMutableIndexSet indexSet];
     self.listViewConfig = [[PBListViewConfig alloc] init];
     _listViewConfig.listView = self;
 
@@ -575,13 +577,52 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     return rowView.isExpanded;
 }
 
-- (void)expandRow:(NSInteger)row animate:(BOOL)animate {
+- (void)expandRow:(NSInteger)row
+          animate:(BOOL)animate
+       completion:(void(^)(void))completion {
 
     PBTableRowView *rowView =
-    [self rowViewAtRow:row makeIfNecessary:NO];
+    [self rowViewAtRow:row makeIfNecessary:YES];
 
-    if (_animating || rowView.isExpanded) return;
-    
+    if (_animating || rowView.isExpanded) {
+        if (completion != nil) {
+            completion();
+        }
+        return;
+    }
+
+    if (_listViewConfig.multipleExpansionsAllows == NO && _expandedRows.count > 0) {
+
+        __block NSInteger blockRow = row;
+        NSInteger dataSourceCount = _dataSourceEntities.count;
+        BOOL needToCorrectRow = row > _expandedRows.lastIndex;
+
+        [self collapseRow:_expandedRows.lastIndex animate:animate completion:^{
+
+            if (needToCorrectRow) {
+                blockRow -= dataSourceCount - _dataSourceEntities.count;
+            }
+
+            [self
+             doExpandRow:blockRow
+             animate:animate
+             rowView:rowView
+             completion:completion];
+        }];
+    } else {
+        [self
+         doExpandRow:row
+         animate:animate
+         rowView:rowView
+         completion:completion];
+    }
+}
+
+- (void)doExpandRow:(NSInteger)row
+            animate:(BOOL)animate
+            rowView:(PBTableRowView *)rowView
+         completion:(void(^)(void))completion {
+
     id <PBListViewEntity> entity = [self entityAtRow:row];
 
     if (entity != nil && [entity respondsToSelector:@selector(listViewChildren)]) {
@@ -608,6 +649,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 [self insertRowsAtIndexes:indexSet withAnimation:animationOptions];
 
                 [self endUpdates];
+
+                [_expandedRows addIndex:row];
+                [_expandedRows shiftIndexesStartingAtIndex:row+1 by:indexSet.count];
+
+                NSLog(@"expandedRows: %@", _expandedRows);
             };
 
             if ([_listViewDelegate respondsToSelector:@selector(listView:willExpandRow:)]) {
@@ -624,11 +670,18 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                     if ([_listViewDelegate respondsToSelector:@selector(listView:didExpandRow:)]) {
                         [_listViewDelegate listView:self didExpandRow:row];
                     }
+
+                    if (completion != nil) {
+                        completion();
+                    }
                 };
 
                 expandRowBlock();
                 
                 [NSAnimationContext endGrouping];
+                
+                return;
+                
             } else {
                 
                 expandRowBlock();
@@ -639,14 +692,47 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             }
         }
     }
+
+    if (completion != nil) {
+        completion();
+    }
 }
 
-- (void)collapseRow:(NSInteger)row animate:(BOOL)animate {
+- (void)collapseRow:(NSInteger)row
+            animate:(BOOL)animate
+         completion:(void(^)(void))completion {
 
     PBTableRowView *rowView =
     [self rowViewAtRow:row makeIfNecessary:NO];
 
-    if (_animating || rowView.isExpanded == NO) return;
+    BOOL visible = rowView != nil;
+
+    if (visible == NO) {
+        rowView =
+        [self rowViewAtRow:row makeIfNecessary:YES];
+    }
+
+    if (_animating || rowView.isExpanded == NO) {
+        if (completion != nil) {
+            completion();
+        }
+        return;
+    }
+
+    if (visible == NO) {
+    } else {
+        [self
+         doCollapseRow:row
+         animate:animate
+         rowView:rowView
+         completion:completion];
+    }
+}
+
+- (void)doCollapseRow:(NSInteger)row
+              animate:(BOOL)animate
+              rowView:(PBTableRowView *)rowView
+           completion:(void(^)(void))completion {
 
     id <PBListViewEntity> entity = [self entityAtRow:row];
 
@@ -673,6 +759,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 [self removeRowsAtIndexes:indexSet withAnimation:animationOptions];
                 
                 [self endUpdates];
+
+                [_expandedRows removeIndex:row];
+                [_expandedRows shiftIndexesStartingAtIndex:row+1 by:-indexSet.count];
+
+                NSLog(@"expandedRows: %@", _expandedRows);
+
             };
 
             if ([_listViewDelegate respondsToSelector:@selector(listView:willCollapseRow:)]) {
@@ -689,11 +781,18 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                     if ([_listViewDelegate respondsToSelector:@selector(listView:didCollapseRow:)]) {
                         [_listViewDelegate listView:self didCollapseRow:row];
                     }
+
+                    if (completion != nil) {
+                        completion();
+                    }
                 };
 
                 collapseRowBlock();
 
                 [NSAnimationContext endGrouping];
+
+                return;
+                
             } else {
                 collapseRowBlock();
                 if ([_listViewDelegate respondsToSelector:@selector(listView:didCollapseRow:)]) {
@@ -701,6 +800,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 }
             }
         }
+    }
+
+    if (completion != nil) {
+        completion();
     }
 }
 
@@ -721,9 +824,9 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
         if (rowMeta.expandsOnClick) {
             if (rowView.isExpanded) {
-                [self collapseRow:self.clickedRow animate:YES];
+                [self collapseRow:self.clickedRow animate:YES completion:nil];
             } else {
-                [self expandRow:self.clickedRow animate:YES];
+                [self expandRow:self.clickedRow animate:YES completion:nil];
             }
         }
     }
@@ -831,13 +934,13 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     } else if (_userExpandKeyCode != 0 && [event isModifiersExactly:_userExpandKeyModifiers] && event.keyCode == _userExpandKeyCode) {
 
         [self.selectedRowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
-            [self expandRow:idx animate:YES];
+            [self expandRow:idx animate:YES completion:nil];
         }];
         
     } else if (_userCollapseKeyCode != 0 && [event isModifiersExactly:_userCollapseKeyModifiers] && event.keyCode == _userCollapseKeyCode) {
 
         [self.selectedRowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
-            [self collapseRow:idx animate:YES];
+            [self collapseRow:idx animate:YES completion:nil];
         }];
         
     } else {

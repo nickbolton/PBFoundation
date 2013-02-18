@@ -14,7 +14,6 @@
 
 @property (nonatomic, strong) NSImage *defaultImage;
 @property (nonatomic, strong) NSImage *defaultAlternateImage;
-@property (nonatomic, readwrite) NSMutableDictionary *imageCache;
 
 @end
 
@@ -39,7 +38,6 @@
 - (void)commonInit {
     _onAlphaValue = 1.0f;
     _offAlphaValue = .6f;
-    self.imageCache = [NSMutableDictionary dictionary];
 }
 
 - (void)setEnabled:(BOOL)flag {

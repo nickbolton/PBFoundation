@@ -50,6 +50,7 @@
         self.selectedBorderColor = nil; // [NSColor colorWithRGBHex:0x3775BC alpha:1.0f];
         self.selectedBorderRadius = 10.0f;
         self.autoBuildContextualMenu = YES;
+        self.multipleExpansionsAllows = YES;
     }
 
     return self;

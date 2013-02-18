@@ -66,8 +66,12 @@
 
 - (void)visualizeConstraints;
 
-- (void)expandRow:(NSInteger)row animate:(BOOL)animate;
-- (void)collapseRow:(NSInteger)row animate:(BOOL)animate;
+- (void)expandRow:(NSInteger)row
+          animate:(BOOL)animate
+       completion:(void(^)(void))completion;
+- (void)collapseRow:(NSInteger)row
+            animate:(BOOL)animate
+         completion:(void(^)(void))completion;
 - (BOOL)isRowExpanded:(NSInteger)row;
 
 @end

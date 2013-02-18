@@ -10,12 +10,51 @@
 #import "PBListViewUIElementMeta.h"
 #import "PBButton.h"
 
+NSString * const kPBSwitchButtonBinderOriginalImageKey = @"original-image";
+NSString * const kPBSwitchButtonBinderOriginalOnImageKey = @"original-onImage";
+NSString * const kPBSwitchButtonBinderOriginalPressedImageKey = @"original-pressed-image";
+NSString * const kPBSwitchButtonBinderOriginalPressedOnImageKey = @"original-pressed-onImage";
+
 @implementation PBListViewSwitchButtonBinder
 
 - (id)buildUIElement:(PBListView *)listView {
     NSButton *button = [super buildUIElement:listView];
     button.buttonType = NSMomentaryChangeButton;
     return button;
+}
+
+- (void)configureView:(PBListView *)listView
+                 view:(NSView *)view
+                 meta:(PBListViewUIElementMeta *)meta
+        relativeViews:(NSMutableArray *)relativeViews
+     relativeMetaList:(NSMutableArray *)relativeMetaList {
+
+    [super
+     configureView:listView
+     view:view
+     meta:meta
+     relativeViews:relativeViews
+     relativeMetaList:relativeMetaList];
+
+    if (meta.image != nil) {
+        [meta.imageCache
+         setObject:meta.image forKey:kPBSwitchButtonBinderOriginalImageKey];
+    }
+
+    if (meta.onImage != nil) {
+        [meta.imageCache
+         setObject:meta.onImage forKey:kPBSwitchButtonBinderOriginalOnImageKey];
+    }
+
+    if (meta.pressedImage != nil) {
+        [meta.imageCache
+         setObject:meta.pressedImage forKey:kPBSwitchButtonBinderOriginalPressedImageKey];
+    }
+
+    if (meta.pressedOnImage != nil) {
+        [meta.imageCache
+         setObject:meta.pressedOnImage  forKey:kPBSwitchButtonBinderOriginalPressedOnImageKey];
+    }
 }
 
 - (void)bindEntity:(id)entity
@@ -49,18 +88,18 @@
         }
     }
 
-    BOOL prevState = button.isOn;
-
     button.on = switchValue.boolValue;
 
-    if (prevState != button.isOn) {
-        NSImage *tmp = button.image;
-        button.image = button.onImage;
-        button.onImage = tmp;
-
-        tmp = button.alternateImage;
-        button.alternateImage = button.pressedOnImage;
-        button.pressedOnImage = tmp;
+    if (button.isOn) {
+        button.image =
+        [meta.imageCache objectForKey:kPBSwitchButtonBinderOriginalOnImageKey];
+        button.alternateImage =
+        [meta.imageCache objectForKey:kPBSwitchButtonBinderOriginalPressedOnImageKey];
+    } else {
+        button.image =
+        [meta.imageCache objectForKey:kPBSwitchButtonBinderOriginalImageKey];
+        button.alternateImage =
+        [meta.imageCache objectForKey:kPBSwitchButtonBinderOriginalPressedImageKey];
     }
 
 }

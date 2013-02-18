@@ -44,6 +44,7 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic, readonly) PBUIGlobalConfigurationHandler globalConfigurationHandler; // is executed only once when the view is built
 @property (nonatomic, readonly) BOOL hiddenWhenMouseNotInRow;
 @property (nonatomic, readonly) NSArray *commands;
+@property (nonatomic, readonly) NSMutableDictionary *imageCache;
 
 @property (nonatomic, assign) PBUIConfigurationHandler configurationHandler; // executed every time the view is drawn
 
@@ -62,6 +63,7 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic, strong) NSImage *image;
 @property (nonatomic, strong) NSImage *pressedImage;
 @property (nonatomic, strong) NSImage *onImage;
+@property (nonatomic, strong) NSImage *pressedOnImage;
 @property (nonatomic, strong) NSImage *disabledImage;
 
 // If an anchor position is other than none, the ui element will

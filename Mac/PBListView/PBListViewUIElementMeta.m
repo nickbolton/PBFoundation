@@ -20,6 +20,7 @@
 @property (nonatomic, readwrite) PBUIGlobalConfigurationHandler globalConfigurationHandler;
 @property (nonatomic, readwrite) BOOL hiddenWhenMouseNotInRow;
 @property (nonatomic, readwrite) NSMutableArray *commands;
+@property (nonatomic, readwrite) NSMutableDictionary *imageCache;
 
 @end
 
@@ -115,11 +116,17 @@
         self.hoverOffAlpha = .6f;
         self.size = NSMakeSize(100.0f, 17.0f);
         self.autoBuildContextualMenu = YES;
+        self.imageCache = [NSMutableDictionary dictionary];
     }
     return self;
 }
 
 #pragma mark - Getters and Setters
+
+- (void)setImage:(NSImage *)image {
+    _image = image;
+    self.size = image.size;
+}
 
 - (void)setMenu:(PBMenu *)menu {
     NSAssert([menu isKindOfClass:[PBMenu class]], @"menu is not a PBMenu");

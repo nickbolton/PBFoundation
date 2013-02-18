@@ -27,15 +27,15 @@
           withView:(NSView *)view
              atRow:(NSInteger)row
          usingMeta:(PBListViewUIElementMeta *)meta {
+    [self runtimeConfiguration:meta view:view];
 }
 
 - (id)buildUIElement:(PBListView *)listView {
     return nil;
 }
 
-- (void)postGlobalConfiguration:(PBListView *)listView
-                           meta:(PBListViewUIElementMeta *)meta
-                           view:(NSView *)view {
+- (void)runtimeConfiguration:(PBListViewUIElementMeta *)meta
+                        view:(NSView *)view {
 }
 
 - (void)configureView:(PBListView *)listView
@@ -51,7 +51,7 @@
         meta.hasBeenGloballyConfigured = YES;
     }
 
-    [self postGlobalConfiguration:listView meta:meta view:view];
+    [self runtimeConfiguration:meta view:view];
 
     if (meta.actionHandler != nil && [view respondsToSelector:@selector(setTarget:)]) {
         [(NSButton *)view setTarget:meta];

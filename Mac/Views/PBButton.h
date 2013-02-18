@@ -14,7 +14,6 @@
 @property (nonatomic, strong) NSImage *alternateDisabledImage;
 @property (nonatomic, strong) NSImage *onImage;
 @property (nonatomic, strong) NSImage *pressedOnImage;
-@property (nonatomic, readonly) NSMutableDictionary *imageCache;
 
 @property (nonatomic) CGFloat offAlphaValue;
 @property (nonatomic) CGFloat onAlphaValue;

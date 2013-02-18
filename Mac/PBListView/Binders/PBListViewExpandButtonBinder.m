@@ -11,19 +11,39 @@
 #import "PBListViewUIElementMeta.h"
 #import "PBListView.h"
 
+NSString * const kPBButtonBinderOriginalImageKey = @"original-image";
+NSString * const kPBButtonBinderOriginalOnImageKey = @"original-onImage";
+
 @implementation PBListViewExpandButtonBinder
 
-- (void)postGlobalConfiguration:(PBListView *)listView
-                           meta:(PBListViewUIElementMeta *)meta
-                           view:(PBButton *)button {
+- (void)configureView:(PBListView *)listView
+                 view:(NSView *)view
+                 meta:(PBListViewUIElementMeta *)meta
+        relativeViews:(NSMutableArray *)relativeViews
+     relativeMetaList:(NSMutableArray *)relativeMetaList {
 
-    static NSString * const kOriginalImageKey = @"original-image";
-    static NSString * const kOriginalOnImageKey = @"original-onImage";
+    [super
+     configureView:listView
+     view:view
+     meta:meta
+     relativeViews:relativeViews
+     relativeMetaList:relativeMetaList];
 
-    [super postGlobalConfiguration:listView meta:meta view:button];
+    if (meta.image != nil) {
+        [meta.imageCache
+         setObject:meta.image forKey:kPBButtonBinderOriginalImageKey];
+    }
 
-    [button.imageCache setObject:meta.image forKey:kOriginalImageKey];
-    [button.imageCache setObject:meta.onImage forKey:kOriginalOnImageKey];
+    if (meta.onImage != nil) {
+        [meta.imageCache
+         setObject:meta.onImage forKey:kPBButtonBinderOriginalOnImageKey];
+    }
+}
+
+- (void)runtimeConfiguration:(PBListViewUIElementMeta *)meta
+                        view:(PBButton *)button {
+
+    [super runtimeConfiguration:meta view:button];
 
     meta.actionHandler = ^(PBButton *button, id <PBListViewEntity> entity, PBListViewUIElementMeta *meta, PBListView *listView) {
 
@@ -38,13 +58,13 @@
             NSImage *startImage = button.image;
 
             if ([listView isRowExpanded:row]) {
-                [listView collapseRow:row animate:YES];
+                [listView collapseRow:row animate:YES completion:nil];
                 targetAngle = 0.0f;
-                endImage = [button.imageCache objectForKey:kOriginalImageKey];
+                endImage = [meta.imageCache objectForKey:kPBButtonBinderOriginalImageKey];
             } else {
-                [listView expandRow:row animate:YES];
+                [listView expandRow:row animate:YES completion:nil];
                 targetAngle = -90.0f;
-                endImage = [button.imageCache objectForKey:kOriginalOnImageKey];
+                endImage = [meta.imageCache objectForKey:kPBButtonBinderOriginalOnImageKey];
             }
 
             button.image = endImage;

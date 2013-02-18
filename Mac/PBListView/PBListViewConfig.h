@@ -41,6 +41,7 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
 @property (nonatomic, strong) NSColor *selectedBorderColor;
 @property (nonatomic) CGFloat selectedBorderRadius;
 @property (nonatomic) BOOL autoBuildContextualMenu;
+@property (nonatomic) BOOL multipleExpansionsAllows;
 
 - (void)registerUIElementMeta:(PBListViewUIElementMeta *)meta;
 - (NSArray *)metaListForEntityType:(Class)entityType

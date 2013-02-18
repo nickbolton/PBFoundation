@@ -31,9 +31,8 @@
     return textField;
 }
 
-- (void)postGlobalConfiguration:(PBListView *)listView
-                           meta:(PBListViewUIElementMeta *)meta
-                           view:(NSTextField *)textField {
+- (void)runtimeConfiguration:(PBListViewUIElementMeta *)meta
+                        view:(NSTextField *)textField {
 
     NSAssert([textField isKindOfClass:[NSTextField class]], @"view is not a NSTextField");
 
