@@ -26,8 +26,10 @@
         relativeViews:(NSMutableArray *)relativeViews
      relativeMetaList:(NSMutableArray *)relativeMetaList;
 
-- (void)runtimeConfiguration:(PBListViewUIElementMeta *)meta
-                        view:(NSView *)view;
+- (void)runtimeConfiguration:(PBListView *)listView
+                        meta:(PBListViewUIElementMeta *)meta
+                        view:(NSView *)view
+                         row:(NSInteger)row;
 
 - (id)buildUIElement:(PBListView *)listView;
 

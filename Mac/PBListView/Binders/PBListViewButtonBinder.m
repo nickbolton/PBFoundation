@@ -36,8 +36,10 @@
     return button;
 }
 
-- (void)runtimeConfiguration:(PBListViewUIElementMeta *)meta
-                        view:(PBButton *)button {
+- (void)runtimeConfiguration:(PBListView *)listView
+                        meta:(PBListViewUIElementMeta *)meta
+                        view:(PBButton *)button
+                         row:(NSInteger)row {
 
     NSAssert([button isKindOfClass:[PBButton class]], @"view is not a PBButton");
 

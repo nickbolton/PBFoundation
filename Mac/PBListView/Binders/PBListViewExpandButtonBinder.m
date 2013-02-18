@@ -40,10 +40,12 @@ NSString * const kPBButtonBinderOriginalOnImageKey = @"original-onImage";
     }
 }
 
-- (void)runtimeConfiguration:(PBListViewUIElementMeta *)meta
-                        view:(PBButton *)button {
+- (void)runtimeConfiguration:(PBListView *)listView
+                        meta:(PBListViewUIElementMeta *)meta
+                        view:(PBButton *)button
+                         row:(NSInteger)row {
 
-    [super runtimeConfiguration:meta view:button];
+    [super runtimeConfiguration:listView meta:meta view:button row:row];
 
     meta.actionHandler = ^(PBButton *button, id <PBListViewEntity> entity, PBListViewUIElementMeta *meta, PBListView *listView) {
 
@@ -72,8 +74,6 @@ NSString * const kPBButtonBinderOriginalOnImageKey = @"original-onImage";
 
             NSAnimationContext.currentContext.completionHandler = ^{
                 button.frameCenterRotation = 0.0f;
-                meta.image = button.image;
-                meta.onImage = button.onImage;
             };
 
             button.frameCenterRotation = targetAngle;
@@ -82,6 +82,15 @@ NSString * const kPBButtonBinderOriginalOnImageKey = @"original-onImage";
         }
     };
 
+    if (row >= 0) {
+        if ([listView isRowExpanded:row]) {
+            button.image = [meta.imageCache objectForKey:kPBButtonBinderOriginalOnImageKey];
+            button.onImage = [meta.imageCache objectForKey:kPBButtonBinderOriginalImageKey];
+        } else {
+            button.image = [meta.imageCache objectForKey:kPBButtonBinderOriginalImageKey];
+            button.onImage = [meta.imageCache objectForKey:kPBButtonBinderOriginalOnImageKey];
+        }
+    }
 }
 
 @end

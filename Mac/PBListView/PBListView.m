@@ -438,6 +438,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 meta.configurationHandler(uiElement, entity, meta, self);
             }
 
+            [meta.binder
+             runtimeConfiguration:self
+             meta:meta
+             view:uiElement
+             row:row];
+
             [meta.binder bindEntity:entity withView:uiElement atRow:row usingMeta:meta];
 
             uiElement.hidden = meta.hiddenWhenMouseNotInRow;

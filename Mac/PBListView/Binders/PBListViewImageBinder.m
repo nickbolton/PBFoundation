@@ -20,8 +20,10 @@
     return imageView;
 }
 
-- (void)runtimeConfiguration:(PBListViewUIElementMeta *)meta
-                        view:(NSImageView *)imageView {
+- (void)runtimeConfiguration:(PBListView *)listView
+                        meta:(PBListViewUIElementMeta *)meta
+                        view:(NSImageView *)imageView
+                         row:(NSInteger)row {
 
     NSAssert([imageView isKindOfClass:[NSImageView class]], @"view is not a NSImageView");
 
