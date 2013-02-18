@@ -870,10 +870,12 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSRange visibleRowRange = [self rowsInRect:[self visibleRect]];
     NSInteger lastRow = visibleRowRange.location + visibleRowRange.length - 1;
 
+    NSLog(@"%s range: %@", __PRETTY_FUNCTION__, NSStringFromRange(visibleRowRange));
+
     for (NSInteger row = visibleRowRange.location; row <= lastRow; row++) {
         PBTableRowView *visibleRowView = [self rowViewAtRow:row makeIfNecessary:NO];
         if (visibleRowView != rowView) {
-            [visibleRowView clearHoverState];
+            [self setStateForUIElementsForRowView:visibleRowView hidden:YES];
         }
     }
 }
