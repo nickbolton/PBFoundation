@@ -52,7 +52,12 @@
         meta.hasBeenGloballyConfigured = YES;
     }
 
-    [self runtimeConfiguration:listView meta:meta view:view row:-1];
+#if DEBUG
+    NSLog(@"size: %@", NSStringFromSize(meta.size));
+    NSAssert(meta.size.width > 0,
+             @"UI element at (%@, depth: %ld, col: %ld) has no width.  This is most likely due to the size or image not set in the globalConfigurationHandler",
+             NSStringFromClass(meta.entityType), meta.depth, relativeViews.count);
+#endif
 
     if (meta.actionHandler != nil && [view respondsToSelector:@selector(setTarget:)]) {
         [(NSButton *)view setTarget:meta];

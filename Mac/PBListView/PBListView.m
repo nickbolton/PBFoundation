@@ -327,7 +327,9 @@
     NSMutableArray *relativeMetaList = [NSMutableArray array];
 
     [views enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+
         PBListViewUIElementMeta *meta = metaList[idx];
+
         [meta.binder
          configureView:self
          view:obj

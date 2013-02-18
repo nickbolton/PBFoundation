@@ -114,7 +114,7 @@
         self.textFont = [NSFont fontWithName:@"HelveticaNeue-Bold" size:13.0];
         self.shadowOffset = NSMakeSize(0.0f, -1.0f);
         self.hoverOffAlpha = .6f;
-        self.size = NSMakeSize(100.0f, 17.0f);
+        self.size = NSZeroSize;
         self.autoBuildContextualMenu = YES;
         self.imageCache = [NSMutableDictionary dictionary];
     }

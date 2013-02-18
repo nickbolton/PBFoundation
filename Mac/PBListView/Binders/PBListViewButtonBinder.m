@@ -40,6 +40,11 @@
                         meta:(PBListViewUIElementMeta *)meta
                         view:(PBButton *)button
                          row:(NSInteger)row {
+    [super
+     runtimeConfiguration:listView
+     meta:meta
+     view:button
+     row:row];
 
     NSAssert([button isKindOfClass:[PBButton class]], @"view is not a PBButton");
 
