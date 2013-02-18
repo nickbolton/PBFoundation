@@ -10,6 +10,7 @@
 #import "PBListViewUIElementBinder.h"
 #import "PBListViewCommand.h"
 #import "PBMenu.h"
+#import "PBListViewConfig.h"
 
 @interface PBListViewUIElementMeta()
 
@@ -57,7 +58,7 @@
     [self
      uiElementMetaWithEntityType:entityType
      keyPath:keyPath
-     depth:NSNotFound
+     depth:kPBListViewGlobalDepth
      binderType:binderType
      hiddenWhenMouseNotInRow:hiddenWhenMouseNotInRow
      globalConfiguration:globalConfiguration];
@@ -86,7 +87,7 @@
     [self
      uiElementMetaWithEntityType:entityType
      keyPath:keyPath
-     depth:NSNotFound
+     depth:kPBListViewGlobalDepth
      binderType:binderType
      hiddenWhenMouseNotInRow:NO
      globalConfiguration:globalConfiguration];

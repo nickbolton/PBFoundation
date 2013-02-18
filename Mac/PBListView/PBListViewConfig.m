@@ -13,6 +13,8 @@
 #import "PBListViewCommand.h"
 #import "PBEndMarker.h"
 
+NSUInteger const kPBListViewGlobalDepth = NSNotFound;
+
 @interface PBListViewConfig()
 
 @property (nonatomic, strong) NSMutableDictionary *metaListRegistry;
@@ -65,7 +67,7 @@
      registerEndMarkerRowWithHeight:rowHeight
      image:image
      imageAnchor:imageAnchor
-     atDepth:NSNotFound];
+     atDepth:kPBListViewGlobalDepth];
 }
 
 - (void)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
@@ -105,7 +107,7 @@
     [self
      registerRowMeta:rowMeta
      forEntityType:entityType
-     atDepth:NSNotFound];
+     atDepth:kPBListViewGlobalDepth];
 }
 
 - (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
@@ -114,7 +116,7 @@
     if (rowMeta != nil) {
         NSString *key;
 
-        if (depth != NSNotFound) {
+        if (depth != kPBListViewGlobalDepth) {
             key =
             [NSString stringWithFormat:@"%@-%lu",
              NSStringFromClass(entityType), depth];
@@ -196,7 +198,7 @@
     if (depths == nil) {
         depths = [NSMutableDictionary dictionary];
         [_metaListRegistry setObject:depths forKey:key];
-        [depths setObject:[NSMutableArray array] forKey:@(NSNotFound)]; // global value
+        [depths setObject:[NSMutableArray array] forKey:@(kPBListViewGlobalDepth)]; // global value
     }
 
     NSMutableArray *metaList = [depths objectForKey:@(depth)];
@@ -206,7 +208,7 @@
     }
 
     if (defaultOnEmptyList && metaList.count == 0) {
-        metaList = [depths objectForKey:@(NSNotFound)];
+        metaList = [depths objectForKey:@(kPBListViewGlobalDepth)];
     }
     return metaList;
 
@@ -243,7 +245,7 @@
      expandedBackgroundImage:expandedBackgroundImage
      expandedHoveringBackgroundImage:expandedHoveringBackgroundImage
      forEntityType:entityType
-     atDepth:NSNotFound
+     atDepth:kPBListViewGlobalDepth
      atPosition:positionType];
 }
 
@@ -406,7 +408,7 @@
     if (depths == nil) {
         depths = [NSMutableDictionary dictionary];
         [backgroundImageRegistry setObject:depths forKey:key];
-        [depths setObject:[NSMutableArray array] forKey:@(NSNotFound)]; // global value
+        [depths setObject:[NSMutableArray array] forKey:@(kPBListViewGlobalDepth)]; // global value
     }
 
     NSMutableArray *backgroundImages = [depths objectForKey:@(depth)];
@@ -416,7 +418,7 @@
     }
     
     if (defaultOnEmptyList && backgroundImages.count == 0) {
-        backgroundImages = [depths objectForKey:@(NSNotFound)];
+        backgroundImages = [depths objectForKey:@(kPBListViewGlobalDepth)];
     }
     return backgroundImages;
 }

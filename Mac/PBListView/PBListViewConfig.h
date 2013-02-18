@@ -7,6 +7,8 @@
 //
 #import "PBListViewUIElementMeta.h"
 
+extern NSUInteger const kPBListViewGlobalDepth;
+
 typedef NS_ENUM(NSInteger, PBListViewPositionType) {
 
     PBListViewPositionTypeFirst = 0,
