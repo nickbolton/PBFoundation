@@ -53,7 +53,6 @@
     }
 
 #if DEBUG
-    NSLog(@"size: %@", NSStringFromSize(meta.size));
     NSAssert(meta.size.width > 0,
              @"UI element at (%@, depth: %@, %@ (col: %ld)) has no width.  This is most likely due to the size or image not set in the globalConfigurationHandler",
              NSStringFromClass(meta.entityType), meta.depth != kPBListViewGlobalDepth ? @(meta.depth) : @"global", NSStringFromClass(view.class), relativeViews.count);

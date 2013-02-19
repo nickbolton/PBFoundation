@@ -362,7 +362,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 //    NSLog(@"%s row: %ld, entity: %@", __PRETTY_FUNCTION__, row, entity);
 
-//    if (row == 7) {
+//    if (row == 39) {
 //        NSLog(@"ZZZ");
 //    }
 
@@ -433,8 +433,14 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         BOOL startMouseEnteredEvents = NO;
 
         for (PBListViewUIElementMeta *meta in metaList) {
+
             NSView *uiElement =
             [cellView.subviews objectAtIndex:uiElementIndex];
+
+            if (meta.isReconfigurationNeeded) {
+                meta.globalConfigurationHandler(uiElement, meta);
+                meta.reconfigurationNeeded = NO;
+            }
 
             if (meta.configurationHandler != nil) {
                 meta.configurationHandler(uiElement, entity, meta, self);
@@ -471,6 +477,10 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
 //    NSLog(@"%s row: %ld, entity: %@", __PRETTY_FUNCTION__, row, entity);
 
+//    if (row == 39) {
+//        NSLog(@"ZZZZ");
+//    }
+
     if (entity != nil) {
 
         NSString *reuseKey =
@@ -489,6 +499,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                  buildRowViewForEntity:entity
                  atRow:row
                  withTotalEntities:self.dataSourceEntities.count];
+            rowView.identifier = reuseKey;
         }
 
         rowView.expanded = entity.isListViewEntityExpanded;
@@ -542,7 +553,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     id entity = [self entityAtRow:row];
 
-//    if (row == 7) {
+//    if (row == 39) {
 //        NSLog(@"ZZZ");
 //    }
 
@@ -550,23 +561,27 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
         NSUInteger entityDepth = [entity listViewEntityDepth];
 
-        NSImage *backgroundImage =
-        [_listViewConfig
-         backgroundImageForEntityType:[entity class]
-         atDepth:entityDepth
-         atPosition:PBListViewPositionTypeFirst
-         selected:NO
-         hovering:NO
-         expanded:NO];
-
         PBListViewRowMeta *rowMeta =
         [_listViewConfig
          rowMetaForEntityType:[entity class] atDepth:entityDepth];
 
         rowHeight = rowMeta.rowHeight;
 
-        if (rowHeight == 0 && backgroundImage != nil) {
-            rowHeight = backgroundImage.size.height;
+        if (rowHeight == 0) {
+
+            NSImage *backgroundImage =
+            [_listViewConfig
+             backgroundImageForEntityType:[entity class]
+             atDepth:entityDepth
+             atPosition:PBListViewPositionTypeFirst
+             selected:NO
+             hovering:NO
+             expanded:NO];
+            
+
+            if (backgroundImage != nil) {
+                rowHeight = backgroundImage.size.height;
+            }
         }
     }
 
@@ -661,7 +676,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 [_expandedRows addIndex:row];
                 [_expandedRows shiftIndexesStartingAtIndex:row+1 by:indexSet.count];
 
-                NSLog(@"expandedRows: %@", _expandedRows);
             };
 
             if ([_listViewDelegate respondsToSelector:@selector(listView:willExpandRow:)]) {
@@ -771,8 +785,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
                 [_expandedRows removeIndex:row];
                 [_expandedRows shiftIndexesStartingAtIndex:row+1 by:-indexSet.count];
 
-                NSLog(@"expandedRows: %@", _expandedRows);
-
             };
 
             if ([_listViewDelegate respondsToSelector:@selector(listView:willCollapseRow:)]) {
@@ -869,8 +881,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
     NSRange visibleRowRange = [self rowsInRect:[self visibleRect]];
     NSInteger lastRow = visibleRowRange.location + visibleRowRange.length - 1;
-
-    NSLog(@"%s range: %@", __PRETTY_FUNCTION__, NSStringFromRange(visibleRowRange));
 
     for (NSInteger row = visibleRowRange.location; row <= lastRow; row++) {
         PBTableRowView *visibleRowView = [self rowViewAtRow:row makeIfNecessary:NO];

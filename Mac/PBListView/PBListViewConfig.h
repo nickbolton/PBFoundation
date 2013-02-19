@@ -83,13 +83,13 @@ typedef NS_ENUM(NSInteger, PBListViewUIElementType) {
                                  hovering:(BOOL)hovering
                                  expanded:(BOOL)expanded;
 
-- (void)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
-                                 image:(NSImage *)image
-                           imageAnchor:(PBListViewAnchorPosition)imageAnchor;
-- (void)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
-                                 image:(NSImage *)image
-                           imageAnchor:(PBListViewAnchorPosition)imageAnchor
-                               atDepth:(NSUInteger)depth;
+- (PBListViewUIElementMeta *)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
+                                                      image:(NSImage *)image
+                                                imageAnchor:(PBListViewAnchorPosition)imageAnchor;
+- (PBListViewUIElementMeta *)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
+                                                      image:(NSImage *)image
+                                                imageAnchor:(PBListViewAnchorPosition)imageAnchor
+                                                    atDepth:(NSUInteger)depth;
 
 - (void)registerRowMeta:(PBListViewRowMeta *)rowMeta
           forEntityType:(Class)entityType;

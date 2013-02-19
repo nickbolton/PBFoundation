@@ -60,9 +60,10 @@ NSUInteger const kPBListViewGlobalDepth = NSNotFound;
 
 #pragma mark - Meta registering
 
-- (void)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
-                                 image:(NSImage *)image
-                           imageAnchor:(PBListViewAnchorPosition)imageAnchor {
+- (PBListViewUIElementMeta *)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
+                                                      image:(NSImage *)image
+                                                imageAnchor:(PBListViewAnchorPosition)imageAnchor {
+    return
     [self
      registerEndMarkerRowWithHeight:rowHeight
      image:image
@@ -70,10 +71,10 @@ NSUInteger const kPBListViewGlobalDepth = NSNotFound;
      atDepth:kPBListViewGlobalDepth];
 }
 
-- (void)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
-                                 image:(NSImage *)image
-                           imageAnchor:(PBListViewAnchorPosition)imageAnchor
-                               atDepth:(NSUInteger)depth {
+- (PBListViewUIElementMeta *)registerEndMarkerRowWithHeight:(CGFloat)rowHeight
+                                                      image:(NSImage *)image
+                                                imageAnchor:(PBListViewAnchorPosition)imageAnchor
+                                                    atDepth:(NSUInteger)depth {
 
     Class entityType = [PBEndMarker class];
 
@@ -84,19 +85,24 @@ NSUInteger const kPBListViewGlobalDepth = NSNotFound;
      forEntityType:entityType
      atDepth:depth];
 
-    [self
-     registerUIElementMeta:
-     [PBListViewUIElementMeta
-      uiElementMetaWithEntityType:entityType
-      keyPath:nil
-      depth:depth
-      binderType:[PBListViewImageBinder class]
-      globalConfiguration:^(NSImageView *imageView, PBListViewUIElementMeta *meta) {
-          meta.image = image;
-          meta.fixedPosition = YES;
-          meta.ignoreMargins = YES;
-          meta.anchorPosition = imageAnchor;
-      }]];
+    PBListViewUIElementMeta *meta =
+    [PBListViewUIElementMeta
+     uiElementMetaWithEntityType:entityType
+     keyPath:nil
+     depth:depth
+     binderType:[PBListViewImageBinder class]
+     globalConfiguration:^(NSImageView *imageView, PBListViewUIElementMeta *meta) {
+         meta.image = image;
+         meta.fixedPosition = YES;
+         meta.ignoreMargins = YES;
+         meta.anchorPosition = imageAnchor;
+     }];
+
+    [self registerUIElementMeta:meta];
+
+    meta.reconfigurationNeeded = YES;
+    
+    return meta;
 }
 
 - (void)registerRowMeta:(PBListViewRowMeta *)rowMeta

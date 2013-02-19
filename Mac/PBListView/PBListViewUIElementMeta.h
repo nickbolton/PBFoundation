@@ -58,6 +58,7 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic) BOOL hoverAlphaEnabled;
 @property (nonatomic) BOOL ignoreMargins;
 @property (nonatomic) BOOL hasBeenGloballyConfigured;
+@property (nonatomic, getter = isReconfigurationNeeded) BOOL reconfigurationNeeded;
 @property (nonatomic) CGFloat hoverOffAlpha;
 @property (nonatomic) NSString *staticText;
 @property (nonatomic, strong) NSImage *image;
