@@ -59,6 +59,8 @@
     if (meta.globalConfigurationHandler != nil && meta.hasBeenGloballyConfigured == NO) {
         meta.globalConfigurationHandler(view, meta);
         meta.hasBeenGloballyConfigured = YES;
+
+        [self runtimeConfiguration:listView meta:meta view:view row:-1];
     }
 
 #if DEBUG

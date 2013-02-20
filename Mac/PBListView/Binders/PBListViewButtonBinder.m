@@ -48,7 +48,7 @@
 
     NSAssert([button isKindOfClass:[PBButton class]], @"view is not a PBButton");
 
-    meta.size = meta.image.size;
+    meta.size = meta.image != nil ? meta.image.size : meta.onImage.size;
     button.image = meta.image;
     button.onImage = meta.onImage;
     button.disabledImage = meta.disabledImage;

@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "PBListViewConfig.h"
 #import "PBListViewUIElementMeta.h"
+#import "PBListViewRowMeta.h"
 #import "PBListViewUIElementBinder.h"
 #import "PBListViewTextFieldBinder.h"
 #import "PBListViewButtonBinder.h"
