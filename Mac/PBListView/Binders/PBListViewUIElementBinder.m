@@ -37,6 +37,15 @@
                         meta:(PBListViewUIElementMeta *)meta
                         view:(NSView *)view
                          row:(NSInteger)row {
+
+    if (meta.actionHandler != nil && [view respondsToSelector:@selector(setTarget:)]) {
+        [(NSButton *)view setTarget:meta];
+    }
+
+    if (meta.actionHandler != nil && [view respondsToSelector:@selector(setAction:)]) {
+        [(NSButton *)view setAction:@selector(invokeAction:)];
+    }
+
 }
 
 - (void)configureView:(PBListView *)listView
@@ -57,14 +66,6 @@
              @"UI element at (%@, depth: %@, %@ (col: %ld)) has no width.  This is most likely due to the size or image not set in the globalConfigurationHandler",
              NSStringFromClass(meta.entityType), meta.depth != kPBListViewGlobalDepth ? @(meta.depth) : @"global", NSStringFromClass(view.class), relativeViews.count);
 #endif
-
-    if (meta.actionHandler != nil && [view respondsToSelector:@selector(setTarget:)]) {
-        [(NSButton *)view setTarget:meta];
-    }
-
-    if (meta.actionHandler != nil && [view respondsToSelector:@selector(setAction:)]) {
-        [(NSButton *)view setAction:@selector(invokeAction:)];
-    }
 
     if (meta.anchorPosition != PBListViewAnchorPositionNone) {
 

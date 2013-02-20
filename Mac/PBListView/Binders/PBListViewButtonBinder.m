@@ -61,6 +61,7 @@
 
     cell.textShadowColor = meta.textShadowColor;
     cell.textShadowOffset = meta.shadowOffset;
+
 }
 
 - (void)bindEntity:(id)entity

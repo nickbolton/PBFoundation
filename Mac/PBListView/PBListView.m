@@ -145,6 +145,42 @@
 //    [self.window visualizeConstraints:[_firstRowView constraints]];
 }
 
+- (BOOL)isRowVisible:(NSInteger)row {
+    return [self rowViewAtRow:row makeIfNecessary:NO] != nil;
+}
+
+- (NSIndexSet *)filterInvisibleRows:(NSIndexSet *)indexSet {
+
+    NSMutableIndexSet *result = [indexSet mutableCopy];
+
+    [result
+     enumerateIndexesWithOptions:NSEnumerationReverse
+     usingBlock:^(NSUInteger idx, BOOL *stop) {
+
+         if ([self isRowVisible:idx] == NO) {
+             [result removeIndex:idx];
+         }
+     }];
+
+    return result;
+}
+
+- (NSIndexSet *)filterVisibleRows:(NSIndexSet *)indexSet {
+
+    NSMutableIndexSet *result = [indexSet mutableCopy];
+
+    [result
+     enumerateIndexesWithOptions:NSEnumerationReverse
+     usingBlock:^(NSUInteger idx, BOOL *stop) {
+
+         if ([self isRowVisible:idx]) {
+             [result removeIndex:idx];
+         }
+     }];
+
+    return result;
+}
+
 #pragma mark - Getters and Setters
 
 - (NSImage *)backgroundImageForRow:(NSInteger)row
@@ -741,14 +777,11 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
         return;
     }
 
-    if (visible == NO) {
-    } else {
-        [self
-         doCollapseRow:row
-         animate:animate
-         rowView:rowView
-         completion:completion];
-    }
+    [self
+     doCollapseRow:row
+     animate:animate
+     rowView:rowView
+     completion:completion];
 }
 
 - (void)doCollapseRow:(NSInteger)row
@@ -773,17 +806,33 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             void (^collapseRowBlock)(void) = ^{
                 [self beginUpdates];
 
-                NSIndexSet *indexSet =
+                NSIndexSet *childIndexSet =
                 [NSIndexSet indexSetWithIndexesInRange:
                  NSMakeRange(row+1, children.count)];
 
-                [_dataSourceEntities removeObjectsAtIndexes:indexSet];
-                [self removeRowsAtIndexes:indexSet withAnimation:animationOptions];
-                
+                NSIndexSet *visibleRowIndexSet = [self filterInvisibleRows:childIndexSet];
+                NSIndexSet *invisibleRowIndexSet = [self filterVisibleRows:childIndexSet];
+
+                if (visibleRowIndexSet.firstIndex > invisibleRowIndexSet.lastIndex) {
+                    [_dataSourceEntities removeObjectsAtIndexes:visibleRowIndexSet];
+                    [self removeRowsAtIndexes:visibleRowIndexSet withAnimation:animationOptions];
+
+
+                    [_dataSourceEntities removeObjectsAtIndexes:invisibleRowIndexSet];
+                    [self removeRowsAtIndexes:invisibleRowIndexSet withAnimation:NSTableViewAnimationEffectNone];
+                } else {
+
+                    [_dataSourceEntities removeObjectsAtIndexes:invisibleRowIndexSet];
+                    [self removeRowsAtIndexes:invisibleRowIndexSet withAnimation:NSTableViewAnimationEffectNone];
+
+                    [_dataSourceEntities removeObjectsAtIndexes:visibleRowIndexSet];
+                    [self removeRowsAtIndexes:visibleRowIndexSet withAnimation:animationOptions];
+                }
+
                 [self endUpdates];
 
                 [_expandedRows removeIndex:row];
-                [_expandedRows shiftIndexesStartingAtIndex:row+1 by:-indexSet.count];
+                [_expandedRows shiftIndexesStartingAtIndex:row+1 by:-childIndexSet.count];
 
             };
 
@@ -796,6 +845,7 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
 
                 [NSAnimationContext beginGrouping];
                 NSAnimationContext *currentContext = [NSAnimationContext currentContext];
+                
                 currentContext.completionHandler = ^{
                     _animating = NO;
                     if ([_listViewDelegate respondsToSelector:@selector(listView:didCollapseRow:)]) {

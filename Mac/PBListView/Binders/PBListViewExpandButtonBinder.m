@@ -45,8 +45,6 @@ NSString * const kPBButtonBinderOriginalOnImageKey = @"original-onImage";
                         view:(PBButton *)button
                          row:(NSInteger)row {
 
-    [super runtimeConfiguration:listView meta:meta view:button row:row];
-
     meta.actionHandler = ^(PBButton *button, id <PBListViewEntity> entity, PBListViewUIElementMeta *meta, PBListView *listView) {
 
         NSInteger row = [listView rowForView:button];
@@ -91,6 +89,8 @@ NSString * const kPBButtonBinderOriginalOnImageKey = @"original-onImage";
             button.onImage = [meta.imageCache objectForKey:kPBButtonBinderOriginalOnImageKey];
         }
     }
+
+    [super runtimeConfiguration:listView meta:meta view:button row:row];
 }
 
 @end
