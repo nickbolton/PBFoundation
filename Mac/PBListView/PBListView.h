@@ -51,7 +51,6 @@
 
 @property (nonatomic, strong) NSArray *dataSourceEntities;
 @property (nonatomic, readonly) PBListViewConfig *listViewConfig;
-@property (nonatomic) CGFloat cornerRadius;
 @property (nonatomic) NSUInteger userReloadKeyCode;
 @property (nonatomic) NSUInteger userReloadKeyModifiers;
 @property (nonatomic) NSUInteger userDeleteKeyCode;
