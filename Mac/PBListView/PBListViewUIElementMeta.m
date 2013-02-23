@@ -31,6 +31,7 @@
                                                  keyPath:(NSString *)keyPath
                                                    depth:(NSInteger)depth
                                               binderType:(Class)binderType
+                                                editable:(BOOL)editable
                                  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
                                      globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration {
 
@@ -45,6 +46,7 @@
      keyPath:keyPath
      depth:depth
      binder:binder
+     editable:editable
      hiddenWhenMouseNotInRow:hiddenWhenMouseNotInRow
      globalConfiguration:globalConfiguration];
 }
@@ -52,6 +54,7 @@
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                               binderType:(Class)binderType
+                                                editable:(BOOL)editable
                                  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
                                      globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration {
     return
@@ -60,6 +63,7 @@
      keyPath:keyPath
      depth:kPBListViewGlobalDepth
      binderType:binderType
+     editable:editable
      hiddenWhenMouseNotInRow:hiddenWhenMouseNotInRow
      globalConfiguration:globalConfiguration];
 }
@@ -68,6 +72,7 @@
                                                  keyPath:(NSString *)keyPath
                                                    depth:(NSInteger)depth
                                               binderType:(Class)binderType
+                                                editable:(BOOL)editable
                                      globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration {
     return
     [self
@@ -75,6 +80,7 @@
      keyPath:keyPath
      depth:depth
      binderType:binderType
+     editable:editable
      hiddenWhenMouseNotInRow:NO
      globalConfiguration:globalConfiguration];
 }
@@ -82,6 +88,7 @@
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                               binderType:(Class)binderType
+                                                editable:(BOOL)editable
                                      globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration {
     return
     [self
@@ -89,6 +96,7 @@
      keyPath:keyPath
      depth:kPBListViewGlobalDepth
      binderType:binderType
+     editable:editable
      hiddenWhenMouseNotInRow:NO
      globalConfiguration:globalConfiguration];
 }
@@ -97,6 +105,7 @@
                  keyPath:(NSString *)keyPath
                    depth:(NSInteger)depth
                   binder:(PBListViewUIElementBinder *)binder
+                editable:(BOOL)editable
  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
      globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfigurationHandler {
 
@@ -107,6 +116,8 @@
         self.entityType = entityType;
         self.depth = depth;
         self.binder = binder;
+        self.editable = editable;
+        self.binder.editable = editable;
         self.globalConfigurationHandler = globalConfigurationHandler;
         self.fixedPosition = YES;
         self.hiddenWhenMouseNotInRow = hiddenWhenMouseNotInRow;

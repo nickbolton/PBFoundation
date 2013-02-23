@@ -8,12 +8,14 @@
 
 #import <Foundation/Foundation.h>
 
+@protocol PBListViewEntity;
 @class PBListView;
 @class PBListViewUIElementMeta;
 
 @interface PBListViewUIElementBinder : NSObject
 
 @property (nonatomic) CGFloat defaultPadding;
+@property (nonatomic, getter = isEditable) BOOL editable;
 
 - (void)bindEntity:(id)entity
           withView:(NSView *)view

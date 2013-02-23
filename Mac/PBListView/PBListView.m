@@ -269,6 +269,7 @@
       keyPath:@"title"
       depth:depth
       binderType:[PBListViewTextFieldBinder class]
+      editable:NO
       globalConfiguration:^(NSTextField *textField, PBListViewUIElementMeta *meta) {
 
           meta.size = NSMakeSize(width, rowHeight);
@@ -473,6 +474,8 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
             NSView *uiElement =
             [cellView.subviews objectAtIndex:uiElementIndex];
 
+            uiElement.hidden = meta.hiddenWhenMouseNotInRow;
+
             if (meta.isReconfigurationNeeded) {
                 meta.globalConfigurationHandler(uiElement, meta);
                 meta.reconfigurationNeeded = NO;
@@ -489,8 +492,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
              row:row];
 
             [meta.binder bindEntity:entity withView:uiElement atRow:row usingMeta:meta];
-
-            uiElement.hidden = meta.hiddenWhenMouseNotInRow;
 
             startMouseEnteredEvents |= meta.hiddenWhenMouseNotInRow;
 

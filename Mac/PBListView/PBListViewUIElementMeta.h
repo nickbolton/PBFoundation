@@ -32,7 +32,7 @@ typedef NS_ENUM(NSInteger, PBListViewAnchorPosition) {
 typedef void(^PBUIGlobalConfigurationHandler)(id view, PBListViewUIElementMeta *meta);
 typedef void(^PBUIConfigurationHandler)(id view, id <PBListViewEntity> entity, PBListViewUIElementMeta *meta, PBListView *listView);
 typedef void(^PBUIActionHandler)(id sender, id <PBListViewEntity> entity, PBListViewUIElementMeta *meta, PBListView *listView);
-typedef id(^PBUIValueTransformer)(id value);
+typedef id(^PBUIValueTransformer)(id value, PBListViewUIElementMeta *meta);
 
 @interface PBListViewUIElementMeta : NSObject
 
@@ -58,6 +58,7 @@ typedef id(^PBUIValueTransformer)(id value);
 @property (nonatomic) BOOL hoverAlphaEnabled;
 @property (nonatomic) BOOL ignoreMargins;
 @property (nonatomic) BOOL hasBeenGloballyConfigured;
+@property (nonatomic, getter = isEditable) BOOL editable;
 @property (nonatomic, getter = isReconfigurationNeeded) BOOL reconfigurationNeeded;
 @property (nonatomic) CGFloat hoverOffAlpha;
 @property (nonatomic) NSString *staticText;
@@ -87,12 +88,14 @@ typedef id(^PBUIValueTransformer)(id value);
                                                  keyPath:(NSString *)keyPath
                                                    depth:(NSInteger)depth
                                               binderType:(Class)binderType
+                                                editable:(BOOL)editable
                                  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
                                      globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration;
 
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                               binderType:(Class)binderType
+                                                editable:(BOOL)editable
                                  hiddenWhenMouseNotInRow:(BOOL)hiddenWhenMouseNotInRow
                                      globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration;
 
@@ -100,11 +103,13 @@ typedef id(^PBUIValueTransformer)(id value);
                                                  keyPath:(NSString *)keyPath
                                                    depth:(NSInteger)depth
                                               binderType:(Class)binderType
+                                                editable:(BOOL)editable
                                      globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration;
 
 + (PBListViewUIElementMeta *)uiElementMetaWithEntityType:(Class)entityType
                                                  keyPath:(NSString *)keyPath
                                               binderType:(Class)binderType
+                                                editable:(BOOL)editable
                                      globalConfiguration:(PBUIGlobalConfigurationHandler)globalConfiguration;
 
 - (void)invokeAction:(id)sender;

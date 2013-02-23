@@ -12,6 +12,12 @@
 #import "PBListViewUIElementMeta.h"
 #import "PBListViewConfig.h"
 
+NSString * const kEntityKey = @"entity";
+NSString * const kKeyPathKey = @"key-path";
+
+@interface PBListViewTextFieldBinder() <NSTextFieldDelegate>
+@end
+
 @implementation PBListViewTextFieldBinder
 
 - (id)buildUIElement:(PBListView *)listView {
@@ -20,10 +26,11 @@
     cell.yoffset = -2.0f;
     textField.cell = cell;
 
+    textField.delegate = self;
     textField.alignment = NSLeftTextAlignment;
-    textField.bezeled = NO;
-    textField.editable = NO;
-    textField.selectable = NO;
+    textField.bezeled = self.isEditable;
+    textField.editable = self.isEditable;
+    textField.selectable = self.isEditable;
     textField.drawsBackground = NO;
 //    [textField DEBUG_colorizeSelfAndSubviews];
     ((NSTextFieldCell *)textField.cell).lineBreakMode = NSLineBreakByTruncatingTail;
@@ -60,29 +67,62 @@
     NSAssert([meta isKindOfClass:[PBListViewUIElementMeta class]],
              @"meta is not of type PBListViewUIElementMeta");
 
+    textField.delegate = nil;
+    PBShadowTextFieldCell *cell = textField.cell;
+    cell.representedObject = nil;
+
     if (meta.staticText != nil) {
         textField.stringValue = meta.staticText;
     } else {
 
         NSString *text = @"";
         if (meta.keyPath != nil) {
+
+            cell.representedObject =
+            @{
+              kEntityKey : entity,
+              kKeyPathKey : meta.keyPath,
+              };
+
+            if (self.isEditable) {
+                textField.delegate = self;
+            }
+
             id value = [entity valueForKeyPath:meta.keyPath];
             if (value != nil) {
 
                 if (meta.valueTransformer != nil) {
-                    value = meta.valueTransformer(value);
+                    value = meta.valueTransformer(value, meta);
                 }
 
-                NSAssert([value isKindOfClass:[NSString class]],
+                NSAssert([value isKindOfClass:[NSString class]] || [value isKindOfClass:[NSAttributedString class]],
                          @"value of %@ at keyPath '%@' is not an NSString",
                          NSStringFromClass([entity class]), meta.keyPath);
 
                 text = value;
             }
         }
-        
-        textField.stringValue = text;
+
+        if ([text isKindOfClass:[NSAttributedString class]]) {
+            textField.attributedStringValue = (id)text;
+        } else {
+            textField.stringValue = text;
+        }
     }
+}
+
+- (void)controlTextDidChange:(NSNotification *)notification {
+    NSLog(@"%s - %@", __PRETTY_FUNCTION__, notification);
+
+    NSTextField *textField = notification.object;
+    PBShadowTextFieldCell *cell = textField.cell;
+    NSDictionary *representedObject = cell.representedObject;
+    id entity =
+    [representedObject objectForKey:kEntityKey];
+    NSString *keyPath = [representedObject objectForKey:kKeyPathKey];
+
+    [entity setValue:textField.stringValue forKeyPath:keyPath];
+
 }
 
 @end

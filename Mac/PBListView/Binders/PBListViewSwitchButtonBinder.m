@@ -77,7 +77,7 @@ NSString * const kPBSwitchButtonBinderOriginalPressedOnImageKey = @"original-pre
         if (value != nil) {
 
             if (meta.valueTransformer != nil) {
-                value = meta.valueTransformer(value);
+                value = meta.valueTransformer(value, meta);
             }
 
             NSAssert([value isKindOfClass:[NSNumber class]],

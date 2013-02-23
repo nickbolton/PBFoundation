@@ -84,7 +84,7 @@
         if (value != nil) {
 
             if (meta.valueTransformer != nil) {
-                value = meta.valueTransformer(value);
+                value = meta.valueTransformer(value, meta);
             }
 
             if ([value isKindOfClass:[NSString class]]) {

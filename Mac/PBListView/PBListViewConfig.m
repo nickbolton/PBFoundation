@@ -91,6 +91,7 @@ NSUInteger const kPBListViewGlobalDepth = NSNotFound;
      keyPath:nil
      depth:depth
      binderType:[PBListViewImageBinder class]
+     editable:NO
      globalConfiguration:^(NSImageView *imageView, PBListViewUIElementMeta *meta) {
          meta.image = image;
          meta.fixedPosition = YES;

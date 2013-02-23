@@ -63,12 +63,6 @@
         [self runtimeConfiguration:listView meta:meta view:view row:-1];
     }
 
-#if DEBUG
-    NSAssert(meta.size.width > 0,
-             @"UI element at (%@, depth: %@, %@ (col: %ld)) has no width.  This is most likely due to the size or image not set in the globalConfigurationHandler",
-             NSStringFromClass(meta.entityType), meta.depth != kPBListViewGlobalDepth ? @(meta.depth) : @"global", NSStringFromClass(view.class), relativeViews.count);
-#endif
-
     if (meta.anchorPosition != PBListViewAnchorPositionNone) {
 
         [self
@@ -77,6 +71,12 @@
          listViewConfig:listView.listViewConfig];
         
     } else {
+
+#if DEBUG
+        NSAssert(meta.size.width > 0,
+                 @"UI element at (%@, depth: %@, %@ (col: %ld)) has no width.  This is most likely due to the size or image not set in the globalConfigurationHandler",
+                 NSStringFromClass(meta.entityType), meta.depth != kPBListViewGlobalDepth ? @(meta.depth) : @"global", NSStringFromClass(view.class), relativeViews.count);
+#endif
 
         CGFloat leftMargin = meta.ignoreMargins ? 0.0f : [listView.listViewConfig leftMargin];
         CGFloat rightMargin = meta.ignoreMargins ? 0.0f : [listView.listViewConfig rightMargin];
@@ -152,8 +152,13 @@
     CGFloat leftMargin = meta.ignoreMargins ? 0.0f : [listViewConfig leftMargin];
     CGFloat rightMargin = meta.ignoreMargins ? 0.0f : [listViewConfig rightMargin];
 
-    [NSLayoutConstraint addWidthConstraint:meta.size.width toView:view];
-    [NSLayoutConstraint addHeightConstraint:meta.size.height toView:view];
+    if (meta.size.width > 0) {
+        [NSLayoutConstraint
+         addMinWidthConstraint:0.0f maxWidthConstraint:meta.size.width toView:view];
+    }
+    if (meta.size.height > 0) {
+        [NSLayoutConstraint addHeightConstraint:meta.size.height toView:view];
+    }
 
     switch (meta.anchorPosition) {
 
@@ -171,24 +176,26 @@
             
         case PBListViewAnchorPositionTop:
 
-            [NSLayoutConstraint horizontallyCenterView:view];
             [NSLayoutConstraint alignToTop:view withPadding:meta.anchorInsets.top];
+            [NSLayoutConstraint alignToLeft:view withPadding:meta.anchorInsets.left + leftMargin];
+            [NSLayoutConstraint alignToRight:view withPadding:-meta.anchorInsets.right - rightMargin];
 
 #if DEBUG
-            if (meta.anchorInsets.bottom + meta.anchorInsets.left + meta.anchorInsets.right > 0) {
-                NSLog(@"Warming: anchorInsets other than top will be ignored for TOP anchor position");
+            if (meta.anchorInsets.bottom > 0) {
+                NSLog(@"Warming: anchorInsets.bottom will be ignored for TOP anchor position");
             }
 #endif
             break;
             
         case PBListViewAnchorPositionBottom:
 
-            [NSLayoutConstraint horizontallyCenterView:view];
             [NSLayoutConstraint alignToBottom:view withPadding:-meta.anchorInsets.bottom];
+            [NSLayoutConstraint alignToLeft:view withPadding:meta.anchorInsets.left + leftMargin];
+            [NSLayoutConstraint alignToRight:view withPadding:-meta.anchorInsets.right - rightMargin];
 
 #if DEBUG
-            if (meta.anchorInsets.top + meta.anchorInsets.left + meta.anchorInsets.right > 0) {
-                NSLog(@"Warming: anchorInsets other than bottom will be ignored for BOTTOM anchor position");
+            if (meta.anchorInsets.top > 0) {
+                NSLog(@"Warming: anchorInsets.top will be ignored for BOTTOM anchor position");
             }
 #endif
             break;
@@ -223,7 +230,7 @@
             [NSLayoutConstraint alignToLeft:view withPadding:meta.anchorInsets.left + leftMargin];
 
 #if DEBUG
-            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.right > 0) {
+            if (meta.anchorInsets.bottom + meta.anchorInsets.right > 0) {
                 NSLog(@"Warming: anchorInsets other than left will be ignored for TOPLEFT anchor position");
             }
 #endif
@@ -235,7 +242,7 @@
             [NSLayoutConstraint alignToRight:view withPadding:-meta.anchorInsets.right - rightMargin];
 
 #if DEBUG
-            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.left > 0) {
+            if (meta.anchorInsets.bottom + meta.anchorInsets.left > 0) {
                 NSLog(@"Warming: anchorInsets other than right will be ignored for TOPRIGHT anchor position");
             }
 #endif
@@ -247,7 +254,7 @@
             [NSLayoutConstraint alignToLeft:view withPadding:meta.anchorInsets.left + leftMargin];
 
 #if DEBUG
-            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.right > 0) {
+            if (meta.anchorInsets.top + meta.anchorInsets.right > 0) {
                 NSLog(@"Warming: anchorInsets other than left will be ignored for BOTTOMLEFT anchor position");
             }
 #endif
@@ -259,7 +266,7 @@
             [NSLayoutConstraint alignToRight:view withPadding:-meta.anchorInsets.right - rightMargin];
 
 #if DEBUG
-            if (meta.anchorInsets.top + meta.anchorInsets.bottom + meta.anchorInsets.left > 0) {
+            if (meta.anchorInsets.top + meta.anchorInsets.left > 0) {
                 NSLog(@"Warming: anchorInsets other than right will be ignored for BOTTOMRIGHT anchor position");
             }
 #endif
