@@ -10,8 +10,12 @@
 
 @interface NSString (PBFoundation)
 
++ (NSString *)deviceIdentifier;
++ (NSString *)timestampedGuid;
++ (NSString *)applicationInstanceId;
 + (NSString *)machineName;
 + (NSString *)safeString:(NSString *)value;
 - (NSString *)trimmedValue;
+- (NSString *)md5Digest;
 
 @end
