@@ -7,7 +7,6 @@
 //
 
 #if TARGET_OS_IPHONE
-#import <AppKit/AppKit.h>
 #else
 #import <Cocoa/Cocoa.h>
 #endif
