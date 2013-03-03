@@ -11,6 +11,7 @@
 #import "PBListViewCommand.h"
 #import "PBMenu.h"
 #import "PBListViewConfig.h"
+#import "NSView+PBFoundation.h"
 
 @interface PBListViewUIElementMeta()
 
