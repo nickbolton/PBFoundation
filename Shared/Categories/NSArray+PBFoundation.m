@@ -7,6 +7,7 @@
 //
 
 #import "NSArray+PBFoundation.h"
+#import <CoreData/CoreData.h>
 
 @implementation NSArray (PBFoundation)
 
