@@ -19,7 +19,7 @@
 #define IFT_ETHER 0x6
 #endif
 
-NSString * const kPBRemoteApplicationInstanceIdKey = @"pbr-app-instance-id";
+NSString * const kPBFRemoteApplicationInstanceIdKey = @"pbr-app-instance-id";
 
 @implementation NSString (PBFoundation)
 
@@ -104,12 +104,12 @@ NSString * const kPBRemoteApplicationInstanceIdKey = @"pbr-app-instance-id";
 
     NSString *instanceId =
     [[NSUserDefaults standardUserDefaults]
-     stringForKey:kPBRemoteApplicationInstanceIdKey];
+     stringForKey:kPBFRemoteApplicationInstanceIdKey];
 
     if (instanceId == nil) {
         instanceId = [NSString timestampedGuid];
         [[NSUserDefaults standardUserDefaults]
-         setObject:instanceId forKey:kPBRemoteApplicationInstanceIdKey];
+         setObject:instanceId forKey:kPBFRemoteApplicationInstanceIdKey];
         [[NSUserDefaults standardUserDefaults] synchronize];
     }
 
