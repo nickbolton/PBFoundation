@@ -19,7 +19,7 @@
 #define IFT_ETHER 0x6
 #endif
 
-NSString * const kPBFRemoteApplicationInstanceIdKey = @"pbr-app-instance-id";
+NSString * const kPBFRemoteApplicationInstanceIdKey = @"!pbr-app-instance-id";
 
 @implementation NSString (PBFoundation)
 
