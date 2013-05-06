@@ -36,27 +36,39 @@
       userContext:(id)userContext
          toButton:(NSInteger)buttonIndex {
     NSValue *selectorAsValue = [NSValue valueWithPointer:action];
-    [_targetMap setObject:target forKey:@(buttonIndex)];
-    [_actionMap setObject:selectorAsValue forKey:@(buttonIndex)];
+
+    _targetMap[@(buttonIndex)]=target;
+    _actionMap[@(buttonIndex)]=selectorAsValue;
     if (userContext != nil) {
-        [_userContextMap setObject:userContext forKey:@(buttonIndex)];
+        _userContextMap[@(buttonIndex)]=userContext;
     }
 }
 
-- (void)actionSheet:(UIActionSheet *)actionSheet
-didDismissWithButtonIndex:(NSInteger)buttonIndex {
-
-    id target = [_targetMap objectForKey:@(buttonIndex)];
+- (void)performSelectorForButtonIndex:(NSInteger)buttonIndex {
+    id target = _targetMap[@(buttonIndex)];
 
     if (target != nil) {
 
-        NSValue *selectorValue = [_actionMap objectForKey:@(buttonIndex)];
+        NSValue *selectorValue = _actionMap[@(buttonIndex)];
 
-        id userContext = [_userContextMap objectForKey:@(buttonIndex)];
+        id userContext = _userContextMap[@(buttonIndex)];
 
         SEL sel = selectorValue.pointerValue;
         [target performSelector:sel withObject:userContext];
     }
+
+    [_targetMap removeObjectForKey:@(buttonIndex)];
+    [_actionMap removeObjectForKey:@(buttonIndex)];
+    [_userContextMap removeObjectForKey:@(buttonIndex)];
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet
+didDismissWithButtonIndex:(NSInteger)buttonIndex {
+    [self performSelectorForButtonIndex:buttonIndex];
+}
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    [self performSelectorForButtonIndex:buttonIndex];
 }
 
 @end

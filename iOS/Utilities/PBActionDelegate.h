@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface PBActionDelegate : NSObject <UIActionSheetDelegate>
+@interface PBActionDelegate : NSObject <UIActionSheetDelegate, UIAlertViewDelegate>
 
 - (void)addTarget:(id)target
            action:(SEL)action
