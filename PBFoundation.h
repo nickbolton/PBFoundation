@@ -22,6 +22,7 @@
 #import "NSObject+PBFoundation.h"
 #import "NSLayoutConstraint+PBFoundation.h"
 #import "NSPersistentStoreCoordinator+PBFoundation.h"
+#import "NSNotification+PBFoundation.h"
 
 #if TARGET_OS_IPHONE
 #import "PBActionDelegate.h"
