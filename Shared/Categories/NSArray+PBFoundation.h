@@ -13,7 +13,6 @@
 + (NSArray *)arrayWithCollections:(id)collectionObject, ...;
 
 - (NSArray *)objectIDArray;
-- (NSArray *)entityArray;
 
 - (id)firstObject;
 @end

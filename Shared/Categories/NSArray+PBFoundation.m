@@ -25,26 +25,6 @@
     return result;
 }
 
-- (NSArray *)entityArray {
-
-    NSMutableArray *result = [NSMutableArray arrayWithCapacity:self.count];
-
-    for (NSManagedObjectID *objectID in self) {
-        if ([objectID isKindOfClass:[NSManagedObjectID class]]) {
-
-            NSManagedObject *entity =
-            [[NSManagedObjectContext MR_contextForCurrentThread]
-             existingObjectWithID:objectID];
-
-            if (entity != nil) {
-                [result addObject:entity];
-            }
-        }
-    }
-
-    return result;
-}
-
 - (id)firstObject {
 
     id first = nil;
