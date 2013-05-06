@@ -1,5 +1,5 @@
 //
-//  NSNotification+Utilities.h
+//  NSNotification+PBFoundation.h
 //  timecop
 //
 //  Created by Nick Bolton on 6/24/12.
@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface NSNotification (Utilities)
+@interface NSNotification (PBFoundation)
 
 - (NSArray *)allManagedObjectUpdates;
 - (NSSet *)insertedManagedObjects;

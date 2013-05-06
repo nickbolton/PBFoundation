@@ -1,15 +1,15 @@
 //
-//  NSNotification+Utilities.m
+//  NSNotification+PBFoundation.m
 //  timecop
 //
 //  Created by Nick Bolton on 6/24/12.
 //  Copyright (c) 2012 Pixelbleed LLC. All rights reserved.
 //
 
-#import "NSNotification+Utilities.h"
-#import "NSArray+Utilities.h"
+#import "NSNotification+PBFoundation.h"
+#import "NSArray+PBFoundation.h"
 
-@implementation NSNotification (Utilities)
+@implementation NSNotification (PBFoundation)
 
 - (NSSet *)insertedManagedObjects {
     NSDictionary *userInfo = [self userInfo];
