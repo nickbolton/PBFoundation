@@ -56,10 +56,6 @@
         SEL sel = selectorValue.pointerValue;
         [target performSelector:sel withObject:userContext];
     }
-
-    [_targetMap removeObjectForKey:@(buttonIndex)];
-    [_actionMap removeObjectForKey:@(buttonIndex)];
-    [_userContextMap removeObjectForKey:@(buttonIndex)];
 }
 
 - (void)actionSheet:(UIActionSheet *)actionSheet
