@@ -229,7 +229,7 @@ NSString *PBSRCharacterForKeyCodeAndCocoaFlags(NSInteger keyCode, NSUInteger coc
 #endif
 
 // From: http://developer.apple.com/samplecode/AnimatedSlider/ as "easeFunction"
-CGFloat SRAnimationEaseInOut(CGFloat t) {
+CGFloat PBSRAnimationEaseInOut(CGFloat t) {
 	// This function implements a sinusoidal ease-in/ease-out for t = 0 to 1.0.  T is scaled to represent the interval of one full period of the sine function, and transposed to lie above the X axis.
 	CGFloat x = (CGSin((t * CG_M_PI) - CG_M_PI_2) + 1.0f ) / 2.0f;
 	//	NSLog(@"SRAnimationEaseInOut: %f. a: %f, b: %f, c: %f, d: %f, e: %f", t, (t * M_PI), ((t * M_PI) - M_PI_2), sin((t * M_PI) - M_PI_2), (sin((t * M_PI) - M_PI_2) + 1.0), x);
