@@ -397,12 +397,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     NSTableCellView *cellView = nil;
     id entity = [self entityAtRow:row];
 
-//    NSLog(@"%s row: %ld, entity: %@", __PRETTY_FUNCTION__, row, entity);
-
-//    if (row == 39) {
-//        NSLog(@"ZZZ");
-//    }
-
     if (entity != nil) {
 
         PBTableRowView *rowView = [self rowViewAtRow:row makeIfNecessary:NO];
@@ -512,12 +506,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     PBTableRowView *rowView = nil;
     id<PBListViewEntity> entity = [self entityAtRow:row];
 
-//    NSLog(@"%s row: %ld, entity: %@", __PRETTY_FUNCTION__, row, entity);
-
-//    if (row == 39) {
-//        NSLog(@"ZZZZ");
-//    }
-
     if (entity != nil) {
 
         NSString *reuseKey =
@@ -589,10 +577,6 @@ objectValueForTableColumn:(NSTableColumn *)tableColumn
     CGFloat rowHeight = 0;
 
     id entity = [self entityAtRow:row];
-
-//    if (row == 39) {
-//        NSLog(@"ZZZ");
-//    }
 
     if (entity != nil) {
 
