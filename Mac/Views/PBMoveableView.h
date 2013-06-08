@@ -26,4 +26,6 @@
 @property (nonatomic, getter = isEnabled) BOOL enabled;
 @property (nonatomic) NSEdgeInsets screenInsets;
 
+- (void)commonInit;
+
 @end
