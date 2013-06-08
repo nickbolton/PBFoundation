@@ -59,7 +59,9 @@
         NSPoint currentLocation;
         NSPoint newOrigin;
 
-        NSRect screenFrame = [self.window.screen visibleFrame];
+        NSScreen *screen = self.window.screen;
+
+        NSRect screenFrame = [screen visibleFrame];
         NSRect windowFrame = [self.window frame];
 
         currentLocation = [NSEvent mouseLocation];
@@ -71,11 +73,16 @@
         CGFloat minY = _screenInsets.bottom;
         CGFloat maxY = NSMaxY(screenFrame) - _screenInsets.top;
 
-        // Don't let window get dragged up under the menu bar
-        if ((newOrigin.y+windowFrame.size.height) > maxY) {
-            newOrigin.y = maxY - windowFrame.size.height;
-        } else if (newOrigin.y < minY) {
-            newOrigin.y = minY;
+        if (screen == [NSScreen screens][0]) {
+
+            if ((newOrigin.y+windowFrame.size.height) > maxY) {
+                newOrigin.y = maxY - windowFrame.size.height;
+            }
+
+            // guard against going under the dock
+            if (newOrigin.y < minY) {
+                newOrigin.y = minY;
+            }
         }
 
         //go ahead and move the window to the new location
