@@ -26,6 +26,23 @@
 }
 
 + (void)postNotification:(NSString *)title
+         informativeText:(NSString *)informativeText
+                    icon:(NSImage *)icon
+                userInfo:(NSDictionary *)userInfo {
+
+    NSUserNotification *notification = [[NSUserNotification alloc] init];
+
+    notification.title = title;
+    notification.informativeText = informativeText;
+    notification.deliveryDate = [NSDate date];
+    notification.soundName = NSUserNotificationDefaultSoundName;
+    notification.userInfo = userInfo;
+
+    [[NSUserNotificationCenter defaultUserNotificationCenter]
+     deliverNotification:notification];
+}
+
++ (void)postNotification:(NSString *)title
          informativeText:(NSString *)informativeText {
     [self postNotification:title informativeText:informativeText userInfo:nil];
 }

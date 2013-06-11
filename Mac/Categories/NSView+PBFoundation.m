@@ -52,6 +52,7 @@
 
     NSTextField *testField = [[NSTextField alloc] initWithFrame:self.bounds];
     testField.backgroundColor = color;
+    [testField setEditable:NO];
     [self addSubview:testField positioned:NSWindowBelow relativeTo:nil];
 
     for (NSInteger i = 0; i < (NSInteger)[subviews count]; i++) {

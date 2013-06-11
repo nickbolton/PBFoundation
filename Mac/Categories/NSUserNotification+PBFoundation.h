@@ -14,6 +14,10 @@
          informativeText:(NSString *)informativeText
                 userInfo:(NSDictionary *)userInfo;
 + (void)postNotification:(NSString *)title
+         informativeText:(NSString *)informativeText
+                    icon:(NSImage *)icon
+                userInfo:(NSDictionary *)userInfo;
++ (void)postNotification:(NSString *)title
          informativeText:(NSString *)informativeText;
 
 @end
