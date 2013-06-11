@@ -11,6 +11,7 @@
 @interface PBMoveableView()
 @property (nonatomic) NSPoint mouseDownMouseLocation;
 @property (nonatomic) NSPoint mouseDownWindowLocation;
+@property (nonatomic, getter = isDragging, readwrite) BOOL dragging;
 @end
 
 @implementation PBMoveableView
@@ -33,10 +34,25 @@
 
 - (void)commonInit {
     _enabled = YES;
+
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(windowDidMove:)
+     name:NSWindowDidMoveNotification
+     object:self.window];
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)windowDidMove:(NSNotification *)notification {
+    [_delegate moveableViewMoved:self];
 }
 
 - (void)mouseDown:(NSEvent *)event {
     [super mouseDown:event];
+    self.dragging = YES;
     _mouseDownWindowLocation = self.window.frame.origin;
     _mouseDownMouseLocation = [NSEvent mouseLocation];
 
@@ -45,7 +61,7 @@
 
 - (void)mouseUp:(NSEvent *)event {
     [super mouseUp:event];
-
+    self.dragging = NO;
     [_delegate moveableViewMouseUp:self];
 
     if ([self.window isKindOfClass:[PBMainWindow class]]) {
@@ -88,9 +104,7 @@
         //go ahead and move the window to the new location
         [self.window setFrameOrigin:newOrigin];
 
-        [self setNeedsDisplay:YES];
-        
-        [_delegate moveableViewMoved:self];
+        [self setNeedsDisplay:YES];        
     }
 }
 

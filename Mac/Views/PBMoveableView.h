@@ -24,6 +24,7 @@
 @property (nonatomic, weak) IBOutlet id <PBMoveableViewDelegate> delegate;
 
 @property (nonatomic, getter = isEnabled) BOOL enabled;
+@property (nonatomic, getter = isDragging, readonly) BOOL dragging;
 @property (nonatomic) NSEdgeInsets screenInsets;
 
 - (void)commonInit;

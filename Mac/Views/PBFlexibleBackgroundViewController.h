@@ -8,7 +8,11 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class PBPopoverView;
+
 @interface PBFlexibleBackgroundViewController : NSViewController
+
+@property (nonatomic, weak) IBOutlet PBPopoverView *backgroundView;
 
 @property (nonatomic, strong) NSString *beakImageName;
 @property (nonatomic, strong) NSString *topImageName;

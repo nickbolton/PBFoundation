@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Pixelbleed. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import "PBFlexibleBackgroundViewController.h"
 
 extern NSString *kPBNavigationUpdateFrameNotification;
 extern NSString *kPBNavigationUpdateContainerNotification;
@@ -42,7 +42,7 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 - (void)viewDidAppear;
 @end
 
-@interface PBNavigationViewController : NSViewController
+@interface PBNavigationViewController : PBFlexibleBackgroundViewController
 
 @property (nonatomic, weak) IBOutlet NSView *containerView;
 @property (nonatomic, weak) IBOutlet NSView *navContainer;

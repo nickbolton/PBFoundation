@@ -30,16 +30,14 @@
 
 - (NSSize)minimumSize {
 
-    PBPopoverView *backgroundView = (id)self.view;
-
     CGFloat minWidth =
-    backgroundView.topLeftImage.size.width +
-    backgroundView.topRightImage.size.width +
-    backgroundView.beakImage.size.width;
+    _backgroundView.topLeftImage.size.width +
+    _backgroundView.topRightImage.size.width +
+    _backgroundView.beakImage.size.width;
 
     CGFloat minHeight =
-    backgroundView.topLeftImage.size.height +
-    backgroundView.bottomLeftImage.size.height;
+    _backgroundView.topLeftImage.size.height +
+    _backgroundView.bottomLeftImage.size.height;
 
     return NSMakeSize(minWidth, minHeight);
 }
@@ -47,21 +45,19 @@
 - (void)awakeFromNib {
     [super awakeFromNib];
 
-    PBPopoverView *backgroundView = (id)self.view;
-
-    NSAssert([backgroundView isKindOfClass:[PBPopoverView class]],
+    NSAssert([_backgroundView isKindOfClass:[PBPopoverView class]],
              @"Root view must be a PBPopoverView");
 
-    backgroundView.beakImage = [NSImage imageNamed:_beakImageName];
-    backgroundView.topImage = [NSImage imageNamed:_topImageName];
-    backgroundView.topLeftImage = [NSImage imageNamed:_topLeftImageName];
-    backgroundView.topRightImage = [NSImage imageNamed:_topRightImageName];
-    backgroundView.leftImage = [NSImage imageNamed:_leftImageName];
-    backgroundView.centerImage = [NSImage imageNamed:_centerImageName];
-    backgroundView.rightImage = [NSImage imageNamed:_rightImageName];
-    backgroundView.bottomLeftImage = [NSImage imageNamed:_bottomLeftImageName];
-    backgroundView.bottomImage = [NSImage imageNamed:_bottomImageName];
-    backgroundView.bottomRightImage = [NSImage imageNamed:_bottomRightImageName];
+    _backgroundView.beakImage = [NSImage imageNamed:_beakImageName];
+    _backgroundView.topImage = [NSImage imageNamed:_topImageName];
+    _backgroundView.topLeftImage = [NSImage imageNamed:_topLeftImageName];
+    _backgroundView.topRightImage = [NSImage imageNamed:_topRightImageName];
+    _backgroundView.leftImage = [NSImage imageNamed:_leftImageName];
+    _backgroundView.centerImage = [NSImage imageNamed:_centerImageName];
+    _backgroundView.rightImage = [NSImage imageNamed:_rightImageName];
+    _backgroundView.bottomLeftImage = [NSImage imageNamed:_bottomLeftImageName];
+    _backgroundView.bottomImage = [NSImage imageNamed:_bottomImageName];
+    _backgroundView.bottomRightImage = [NSImage imageNamed:_bottomRightImageName];
 }
 
 @end

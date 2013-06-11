@@ -20,8 +20,10 @@
 @property (nonatomic, strong) NSImage *bottomImage;
 @property (nonatomic, strong) NSImage *bottomRightImage;
 @property (nonatomic, strong) NSImage *beakImage;
-@property (nonatomic) CGFloat beakPosition;
+@property (nonatomic, getter = isBeakVisible) BOOL beakVisible;
 @property (nonatomic, getter = isFlipped) BOOL flipped;
 @property (nonatomic) NSPoint beakReferencePoint;
+
+- (void)setAbsoluteBeakReferencePoint:(NSPoint)point;
 
 @end

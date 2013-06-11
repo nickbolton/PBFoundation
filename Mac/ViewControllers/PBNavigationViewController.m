@@ -9,6 +9,7 @@
 #import "PBNavigationViewController.h"
 #import <QuartzCore/QuartzCore.h>
 #import <Carbon/Carbon.h>
+#import "PBPopoverView.h"
 
 NSString *kPBNavigationUpdateFrameNotification = @"kPBNavigationUpdateFrameNotification";
 NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContainerNotification";
@@ -43,6 +44,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 }
 
 - (void)commonInit {
+    [super commonInit];
     self.viewControllerStack = [NSMutableArray array];
 }
 
@@ -54,6 +56,9 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     _editableTitleField.delegate = self;
     _editableTitleField;
 
+    NSAssert([self.backgroundView isKindOfClass:[PBPopoverView class]],
+             @"Root view must be a PBPopoverView");
+    self.backgroundView.flipped = NO;
 }
 
 - (void)setTitle:(NSString *)title {
