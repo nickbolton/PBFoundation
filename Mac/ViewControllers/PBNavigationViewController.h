@@ -61,7 +61,18 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)viewController
                    animate:(BOOL)animate;
+- (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)viewController
+                   animate:(BOOL)animate
+                completion:(void(^)(void))completionBlock;
+- (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)viewController
+                   animate:(BOOL)animate
+                  fromRoot:(BOOL)fromRoot
+                completion:(void(^)(void))completionBlock;
 - (void)popViewController:(BOOL)animate;
+- (void)popViewController:(BOOL)animate
+               completion:(void(^)(void))completionBlock;
+- (void)popToRootViewController:(BOOL)animate
+                     completion:(void(^)(void))completionBlock;
 - (BOOL)isViewControllerInNavigationStack:(NSViewController<PBNavigationViewProtocol> *)viewController;
 - (void)startPushNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
 - (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration;

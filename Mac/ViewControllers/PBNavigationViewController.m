@@ -22,6 +22,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
 @property (nonatomic, readwrite) NSMutableArray *viewControllerStack;
 @property (nonatomic, strong) NSViewController <PBNavigationViewProtocol> *editingTitleViewController;
+@property (nonatomic, strong) NSViewController *altCurrentViewController;
 
 @end
 
@@ -97,6 +98,23 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)nextViewController
                    animate:(BOOL)animate {
+    [self pushViewController:nextViewController animate:animate completion:nil];
+}
+
+- (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)nextViewController
+                   animate:(BOOL)animate
+                completion:(void (^)(void))completionBlock {
+    [self
+     pushViewController:nextViewController
+     animate:animate
+     fromRoot:NO
+     completion:completionBlock];
+}
+
+- (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)nextViewController
+                   animate:(BOOL)animate
+                  fromRoot:(BOOL)fromRoot
+                completion:(void(^)(void))completionBlock {
 
     if ([self.editingTitleViewController needsEditableTitleField]) {
         if ([self.editingTitleViewController respondsToSelector:@selector(titleChanged:)]) {
@@ -112,6 +130,9 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     }
 
     if (shouldLeaveCurrentViewController == NO) {
+        if (completionBlock != nil) {
+            completionBlock();
+        }
         return;
     }
 
@@ -155,6 +176,25 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         [nextViewController viewWillActivate];
     }
 
+    if (fromRoot) {
+        while (_viewControllerStack.count > 1) {
+
+            NSViewController<PBNavigationViewProtocol> *viewController =
+            _viewControllerStack.lastObject;
+
+            if ([viewController respondsToSelector:@selector(viewWillDeactivate)]) {
+                [viewController viewWillDeactivate];
+            }
+
+            [viewController.view removeFromSuperview];
+            [_viewControllerStack removeLastObject];
+
+            if ([viewController respondsToSelector:@selector(viewDidDeactivate)]) {
+                [viewController viewDidDeactivate];
+            }
+        }
+    }
+
     [_viewControllerStack addObject:nextViewController];
 
     if (_viewControllerStack.count == 1) {
@@ -180,6 +220,10 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
              }
 
              [self navigationFinished];
+
+             if (completionBlock != nil) {
+                 completionBlock();
+             }
          }];
         
     } else {
@@ -246,6 +290,10 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                           [self.currentViewController viewDidActivate];
                       }
                       [self navigationFinished];
+
+                      if (completionBlock != nil) {
+                          completionBlock();
+                      }
                   }];                 
              }];
         } else {
@@ -256,7 +304,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
             frame.origin.x = 0;
             newView.frame = frame;
 
-            [_navContainer replaceSubview:currentView with:newView];
             [PBAnimator
              animateWithDuration:duration
              timingFunction:PB_EASE_INOUT
@@ -268,17 +315,52 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                   userInfo:nil];
 
              } completion:^{
+
                  if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
                      [self.currentViewController viewDidActivate];
                  }
                  [self navigationFinished];
+                 if (completionBlock != nil) {
+                     completionBlock();
+                 }
              }];
         }
     }
+}
 
+- (void)popToRootViewController:(BOOL)animate
+                     completion:(void(^)(void))completionBlock {
+
+    self.altCurrentViewController = self.currentViewController;
+
+    while (_viewControllerStack.count > 2) {
+
+        NSViewController<PBNavigationViewProtocol> *viewController =
+        _viewControllerStack.lastObject;
+
+        if ([viewController respondsToSelector:@selector(viewWillDeactivate)]) {
+            [viewController viewWillDeactivate];
+        }
+
+        [viewController.view removeFromSuperview];
+        [_viewControllerStack removeLastObject];
+
+        if ([viewController respondsToSelector:@selector(viewDidDeactivate)]) {
+            [viewController viewDidDeactivate];
+        }
+    }
+
+    [self popViewController:animate completion:completionBlock];
+
+    self.altCurrentViewController = nil;
 }
 
 - (void)popViewController:(BOOL)animate {
+    [self popViewController:animate completion:nil];
+}
+
+- (void)popViewController:(BOOL)animate
+               completion:(void(^)(void))completionBlock {
 
     if (_viewControllerStack.count > 1) {
 
@@ -296,13 +378,24 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         }
 
         if (shouldLeaveCurrentViewController == NO) {
+
+            if (completionBlock != nil) {
+                completionBlock();
+            }
             return;
         }
 
         NSTimeInterval duration = PB_WINDOW_ANIMATION_DURATION;
 
-        NSViewController<PBNavigationViewProtocol> *currentViewController = self.currentViewController;
-        NSViewController<PBNavigationViewProtocol> *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
+        NSViewController<PBNavigationViewProtocol> *currentViewController;
+        NSViewController<PBNavigationViewProtocol> *nextViewController =
+        _viewControllerStack[_viewControllerStack.count - 2];
+
+        if (_altCurrentViewController != nil) {
+            currentViewController = _altCurrentViewController;
+        } else {
+            currentViewController = self.currentViewController;
+        }
 
         if ([currentViewController respondsToSelector:@selector(viewWillDeactivate)]) {
             [currentViewController viewWillDeactivate];
@@ -376,7 +469,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
              timingFunction:PB_EASE_INOUT
              completionBlock:^{
                  NSViewController<PBNavigationViewProtocol> *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
-                 [self.currentViewController.view removeFromSuperview];
+                 [currentViewController.view removeFromSuperview];
 
                  [PBAnimator
                   animateWithDuration:duration
@@ -391,8 +484,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                   } completion:^{
                       [self navigationFinished];
 
-                      if ([self.currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
-                          [self.currentViewController viewDidDeactivate];
+                      if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
+                          [currentViewController viewDidDeactivate];
                       }
 
                       if ([nextViewController respondsToSelector:@selector(viewDidAppear)]) {
@@ -401,6 +494,9 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
                       [_viewControllerStack removeLastObject];
 
+                      if (completionBlock != nil) {
+                          completionBlock();
+                      }
                   }];
              }];
 
@@ -421,6 +517,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                   userInfo:nil];
 
              } completion:^{
+
                  [self navigationFinished];
 
                  if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
@@ -432,7 +529,16 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                  }
 
                  [_viewControllerStack removeLastObject];
+                 
+                 if (completionBlock != nil) {
+                     completionBlock();
+                 }
              }];
+        }
+    } else {
+
+        if (completionBlock != nil) {
+            completionBlock();
         }
     }
 }
