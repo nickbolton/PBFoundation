@@ -7,14 +7,10 @@
 //
 
 #import "PBPopoverView.h"
-#import "PBRunningAverageValue.h"
 #import <QuartzCore/QuartzCore.h>
 
 @interface PBPopoverView() {
-
 }
-
-@property (nonatomic, strong) PBRunningAverageValue *beakPosition;
 
 @end
 
@@ -37,34 +33,20 @@
 }
 
 - (void)commonInit {
-    self.beakPosition = [[PBRunningAverageValue alloc] init];
 }
 
-- (void)setBeakVisible:(BOOL)beakVisible {
-    _beakVisible = beakVisible;
-    [_beakPosition clearRunningValues];
-}
-
-- (void)setAbsoluteBeakReferencePoint:(NSPoint)point {
-    [_beakPosition clearRunningValues];
-    self.beakReferencePoint = point;
-}
-
-- (void)setBeakReferencePoint:(NSPoint)beakReferencePoint {
-    _beakReferencePoint = beakReferencePoint;
+- (CGFloat)beakPosition {
 
     static CGFloat padding = 25.0f;
 
     NSRect referenceFrame = NSZeroRect;
-    referenceFrame.origin = beakReferencePoint;
+    referenceFrame.origin = _beakReferencePoint;
 
     NSRect referenceFrameInWindowSpace =
     [self.window convertRectFromScreen:referenceFrame];
 
     NSPoint referencePointInViewSpace =
     [self convertPointFromBacking:referenceFrameInWindowSpace.origin];
-
-    NSRect frame = self.frame;
 
     CGFloat distanceToRightSize = NSWidth(self.frame) - referencePointInViewSpace.x;
 
@@ -73,9 +55,7 @@
     position = MIN(position, NSWidth(self.frame) - _beakImage.size.width - padding);
     position = MAX(position, padding);
 
-    _beakPosition.value = position;
-    
-    [self setNeedsDisplay:YES];
+    return position;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -96,18 +76,20 @@
                         1.0f,
                         _flipped);
 
-    if (_beakPosition.value >= 0.0f && _beakVisible) {
+    CGFloat beakPosition = [self beakPosition];
+    
+    if (beakPosition >= 0.0f && _beakVisible) {
         NSRect beakFrame;
 
         if (_flipped) {
 
-            beakFrame = NSMakeRect(_beakPosition.value,
+            beakFrame = NSMakeRect(beakPosition,
                                    0.0f,
                                    _beakImage.size.width,
                                    _beakImage.size.height);
         } else {
 
-            beakFrame = NSMakeRect(_beakPosition.value,
+            beakFrame = NSMakeRect(beakPosition,
                                    NSHeight(self.bounds) - _beakImage.size.height,
                                    _beakImage.size.width,
                                    _beakImage.size.height);

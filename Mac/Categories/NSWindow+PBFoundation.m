@@ -32,11 +32,28 @@
                  duration:(CGFloat)duration
            timingFunction:(CAMediaTimingFunction *)timingFunction
           completionBlock:(void (^)(void))completionBlock {
+    [self
+     animateToNewFrame:newFrame
+     animations:nil
+     duration:duration
+     timingFunction:timingFunction
+     completionBlock:completionBlock];
+}
+
+- (void)animateToNewFrame:(NSRect)newFrame
+               animations:(void(^)(void))animations
+                 duration:(CGFloat)duration
+           timingFunction:(CAMediaTimingFunction *)timingFunction
+          completionBlock:(void (^)(void))completionBlock {
 
     [PBAnimator
      animateWithDuration:duration
      timingFunction:timingFunction
      animation:^{
+
+         if (animations != nil) {
+             animations();
+         }
          [[self animator] setFrame:newFrame display:YES];
      }
      completion:^{

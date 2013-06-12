@@ -69,6 +69,10 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     _titleField.stringValue = [NSString safeString:[self.currentViewController title]];
 }
 
+- (CGFloat)containerHeight {
+    return NSWidth(self.containerView.frame);
+}
+
 - (NSViewController *)currentViewController {
     return [_viewControllerStack lastObject];
 }
@@ -84,6 +88,11 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 }
 
 - (void)navigationFinished {
+}
+
+- (void)updateContainer:(NSSize)size
+             animations:(void(^)(void))animations
+             completion:(void(^)(void))completionBlock {
 }
 
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)nextViewController

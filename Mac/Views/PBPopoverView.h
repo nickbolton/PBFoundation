@@ -24,6 +24,9 @@
 @property (nonatomic, getter = isFlipped) BOOL flipped;
 @property (nonatomic) NSPoint beakReferencePoint;
 
-- (void)setAbsoluteBeakReferencePoint:(NSPoint)point;
+//- (void)setAbsoluteBeakReferencePoint:(NSPoint)point;
+//- (void)setBeakReferencePoint:(NSPoint)beakReferencePoint
+//              withWindowFrame:(NSRect)frame
+//                     absolute:(BOOL)absolute;
 
 @end

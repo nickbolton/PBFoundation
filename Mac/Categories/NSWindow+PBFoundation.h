@@ -15,6 +15,12 @@
            timingFunction:(CAMediaTimingFunction *)timingFunction
           completionBlock:(void (^)(void))completionBlock;
 
+- (void)animateToNewFrame:(NSRect)newFrame
+               animations:(void(^)(void))animations
+                 duration:(CGFloat)duration
+           timingFunction:(CAMediaTimingFunction *)timingFunction
+          completionBlock:(void (^)(void))completionBlock;
+
 - (void)animateToNewOrigin:(NSPoint)newOrigin
                   duration:(CGFloat)duration
             timingFunction:(CAMediaTimingFunction *)timingFunction

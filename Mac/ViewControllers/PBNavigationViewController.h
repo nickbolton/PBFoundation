@@ -40,6 +40,8 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 - (void)viewWillAppear;
 - (void)viewWillDisappear;
 - (void)viewDidAppear;
+- (void)viewWillDismissModal;
+
 @end
 
 @interface PBNavigationViewController : PBFlexibleBackgroundViewController
@@ -52,6 +54,10 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 @property (nonatomic, readonly) NSMutableArray *viewControllerStack;
 
 @property (nonatomic, readonly) NSViewController<PBNavigationViewProtocol> *currentViewController;
+@property (nonatomic, getter = isModal) BOOL modal;
+@property (nonatomic) CGSize previousContainerSize;
+@property (nonatomic) CGSize containerSize;
+@property (nonatomic) CGFloat defaultContainerWidth;
 
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)viewController
                    animate:(BOOL)animate;
@@ -61,5 +67,8 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 - (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
 - (void)navigationFinished;
 - (void)updateTitle;
+- (void)updateContainer:(NSSize)size
+             animations:(void(^)(void))animations
+             completion:(void(^)(void))completionBlock;
 
 @end
