@@ -19,6 +19,8 @@ static CVReturn PBPopoverViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
 
 static NSTimeInterval const kPBPopoverAnimationDuration = .15f;
 
+static PBPopoverView *_PBPopoverViewInstance = nil;
+
 @interface PBPopoverView() {
 
     CVDisplayLinkRef _displayLink;
@@ -81,6 +83,7 @@ static NSTimeInterval const kPBPopoverAnimationDuration = .15f;
     if (_animating) {
 
         if (_displayLink == nil) {
+            _PBPopoverViewInstance = self;
             CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
             CVDisplayLinkSetOutputCallback(_displayLink, &PBPopoverViewDisplayLinkCallback, (__bridge void*)self);
             CVDisplayLinkStart(_displayLink);
@@ -218,6 +221,5 @@ static CVReturn PBPopoverViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
                                                  CVOptionFlags flagsIn,
                                                  CVOptionFlags* flagsOut,
                                                  void* displayLinkContext) {
-    PBPopoverView *view = (__bridge id)displayLinkContext;
-    [view setNeedsDisplay:YES];
+    [_PBPopoverViewInstance setNeedsDisplay:YES];
 }

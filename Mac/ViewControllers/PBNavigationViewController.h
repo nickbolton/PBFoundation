@@ -80,5 +80,6 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
              animations:(void(^)(void))animations
              completion:(void(^)(void))completionBlock;
 - (NSSize)adjustedContainerSize:(CGSize)size;
+- (void)setModalTitle:(NSAttributedString *)title;
 
 @end

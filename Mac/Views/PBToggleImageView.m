@@ -76,7 +76,6 @@
 }
 
 - (void)mouseDown:(NSEvent *)event {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
 
     if (self.isEnabled) {
 
@@ -95,7 +94,6 @@
 }
 
 - (void)mouseUp:(NSEvent *)event {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
 
     if (self.isEnabled) {
         
@@ -113,7 +111,6 @@
 }
 
 - (void)mouseEntered:(NSEvent *)event {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
     _mouseOverView = YES;
 
     self.window.acceptsMouseMovedEvents = YES;
@@ -126,7 +123,6 @@
 }
 
 - (void)mouseExited:(NSEvent *)event {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
     _mouseOverView = NO;
 
     self.window.acceptsMouseMovedEvents = NO;
@@ -139,7 +135,6 @@
 }
 
 - (void)mouseMoved:(NSEvent *)event {
-    NSLog(@"%s", __PRETTY_FUNCTION__);
     if (self.target != nil && _mouseMovedAction != nil) {
         [self.target performSelector:_mouseMovedAction withObject:self];
     }

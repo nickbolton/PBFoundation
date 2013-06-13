@@ -23,6 +23,9 @@
 #import "NSLayoutConstraint+PBFoundation.h"
 #import "NSPersistentStoreCoordinator+PBFoundation.h"
 #import "NSNotification+PBFoundation.h"
+#import "PBDateRange.h"
+#import "PBCalendarManager.h"
+#import "NSDate+PBFoundation.h"
 
 #if TARGET_OS_IPHONE
 #import "PBActionDelegate.h"

@@ -74,6 +74,9 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     return NSWidth(self.containerView.frame);
 }
 
+- (void)setModalTitle:(NSAttributedString *)title {
+}
+
 - (NSSize)adjustedContainerSize:(CGSize)size {
     return NSZeroSize;
 }
