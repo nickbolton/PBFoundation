@@ -8,9 +8,27 @@
 
 #import "PBPopoverView.h"
 #import <QuartzCore/QuartzCore.h>
+#import "PBRunningAverageValue.h"
+
+static CVReturn PBPopoverViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
+                                                 const CVTimeStamp* nowTimestamp,
+                                                 const CVTimeStamp* outputTime,
+                                                 CVOptionFlags flagsIn,
+                                                 CVOptionFlags* flagsOut,
+                                                 void* displayLinkContext);
+
+static NSTimeInterval const kPBPopoverAnimationDuration = .15f;
 
 @interface PBPopoverView() {
+
+    CVDisplayLinkRef _displayLink;
+    CGFloat _beakTargetPosition;
+    CGFloat _beakCurrentPosition;
+    CGFloat _remainingAnimationDuration;
+    CGFloat _beakDelta;
 }
+
+@property (nonatomic, strong) PBRunningAverageValue *beakPosition;
 
 @end
 
@@ -32,10 +50,71 @@
     return self;
 }
 
-- (void)commonInit {
+- (void)dealloc {
+
+    if (_displayLink != nil) {
+        CVDisplayLinkRelease(_displayLink);
+        _displayLink = nil;
+    }
 }
 
-- (CGFloat)beakPosition {
+- (void)commonInit {
+    self.beakPosition = [[PBRunningAverageValue alloc] init];
+    _beakPosition.queueSize = 1;
+}
+
+- (void)setSmoothingBeakMovement:(BOOL)smoothingBeakMovement {
+    _smoothingBeakMovement = smoothingBeakMovement;
+
+    if (_smoothingBeakMovement) {
+        _beakPosition.queueSize = 10;
+    } else {
+        _beakPosition.queueSize = 1;
+    }
+
+    [self resetBeak];
+}
+
+- (void)setAnimating:(BOOL)animating {
+    _animating = animating;
+
+    if (_animating) {
+
+        if (_displayLink == nil) {
+            CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
+            CVDisplayLinkSetOutputCallback(_displayLink, &PBPopoverViewDisplayLinkCallback, (__bridge void*)self);
+            CVDisplayLinkStart(_displayLink);
+        }
+
+    } else {
+
+        CVDisplayLinkRelease(_displayLink);
+        _displayLink = nil;
+    }
+}
+
+- (void)resetBeak {
+    [self.beakPosition clearRunningValues];
+    [self setNeedsDisplay:YES];
+
+    if (_animating) {
+        _beakTargetPosition = [self calculateBeakPosition];
+        _remainingAnimationDuration = kPBPopoverAnimationDuration;
+        _beakDelta = (_beakTargetPosition - _beakCurrentPosition) / (60.0f * kPBPopoverAnimationDuration);
+    }
+}
+
+- (void)setBeakReferencePoint:(NSPoint)beakReferencePoint {
+    _beakReferencePoint = beakReferencePoint;
+
+    if (_animating) {
+        _beakTargetPosition = [self calculateBeakPosition];
+        _remainingAnimationDuration = kPBPopoverAnimationDuration;
+        _beakDelta = (_beakTargetPosition - _beakCurrentPosition) / (60.0f * kPBPopoverAnimationDuration);
+    }
+}
+
+- (CGFloat)calculateBeakPosition {
 
     static CGFloat padding = 25.0f;
 
@@ -76,20 +155,42 @@
                         1.0f,
                         _flipped);
 
-    CGFloat beakPosition = [self beakPosition];
+    self.beakPosition.value = [self calculateBeakPosition];
     
-    if (beakPosition >= 0.0f && _beakVisible) {
+    if ((_animating ||_beakPosition.value >= 0.0f) && _beakVisible) {
         NSRect beakFrame;
+
+        CGFloat xPos;
+
+        if (_animating) {
+
+            xPos = _beakCurrentPosition + _beakDelta;
+
+            if (_beakDelta >= 0.0f) {
+
+                xPos = MIN(xPos, _beakTargetPosition);
+
+            } else {
+
+                xPos = MAX(xPos, _beakTargetPosition);
+            }
+
+        } else {
+
+            xPos = self.beakPosition.value;
+        }
+
+        _beakCurrentPosition = xPos;
 
         if (_flipped) {
 
-            beakFrame = NSMakeRect(beakPosition,
+            beakFrame = NSMakeRect(xPos,
                                    0.0f,
                                    _beakImage.size.width,
                                    _beakImage.size.height);
         } else {
 
-            beakFrame = NSMakeRect(beakPosition,
+            beakFrame = NSMakeRect(xPos,
                                    NSHeight(self.bounds) - _beakImage.size.height,
                                    _beakImage.size.width,
                                    _beakImage.size.height);
@@ -110,3 +211,13 @@
 }
 
 @end
+
+static CVReturn PBPopoverViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
+                                                 const CVTimeStamp* nowTimestamp,
+                                                 const CVTimeStamp* outputTime,
+                                                 CVOptionFlags flagsIn,
+                                                 CVOptionFlags* flagsOut,
+                                                 void* displayLinkContext) {
+    PBPopoverView *view = (__bridge id)displayLinkContext;
+    [view setNeedsDisplay:YES];
+}

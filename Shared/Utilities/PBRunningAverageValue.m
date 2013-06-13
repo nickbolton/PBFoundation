@@ -8,7 +8,7 @@
 
 #import "PBRunningAverageValue.h"
 
-static NSInteger const kPBSampleQueueSize = 10;
+static NSInteger const kPBDefaultQueueSize = 10;
 
 @interface PBRunningAverageValue() {
     CGFloat _avgValue;
@@ -22,6 +22,16 @@ static NSInteger const kPBSampleQueueSize = 10;
 @implementation PBRunningAverageValue
 
 @dynamic value;
+
+- (id)init {
+    self = [super init];
+
+    if (self != nil) {
+        self.queueSize = kPBDefaultQueueSize;
+    }
+
+    return self;
+}
 
 - (NSMutableArray *)values {
     if (_values == nil) {
@@ -38,26 +48,30 @@ static NSInteger const kPBSampleQueueSize = 10;
 
     // keep a running average
 
-    if (self.values.count == kPBSampleQueueSize) {
+    @synchronized (self) {
+        if (self.values.count == _queueSize) {
 
-        CGFloat firstValue = [self.values[0] floatValue];
+            CGFloat firstValue = [self.values[0] floatValue];
 
-        _totalValue -= firstValue;
+            _totalValue -= firstValue;
 
-        [self.values removeObjectAtIndex:0];
+            [self.values removeObjectAtIndex:0];
+        }
+
+        [self.values addObject:@(value)];
+
+        _totalValue += value;
+        
+        _avgValue = _totalValue / self.values.count;
     }
-
-    [self.values addObject:@(value)];
-
-    _totalValue += value;
-
-    _avgValue = _totalValue / self.values.count;
 }
 
 - (void)clearRunningValues {
-    [self.values removeAllObjects];
-    _avgValue = 0.0f;
-    _totalValue = 0.0f;
+    @synchronized (self) {
+        [self.values removeAllObjects];
+        _avgValue = 0.0f;
+        _totalValue = 0.0f;
+    }
 }
 
 @end

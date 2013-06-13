@@ -55,8 +55,6 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 
 @property (nonatomic, readonly) NSViewController<PBNavigationViewProtocol> *currentViewController;
 @property (nonatomic, getter = isModal) BOOL modal;
-@property (nonatomic) CGSize previousContainerSize;
-@property (nonatomic) CGSize containerSize;
 @property (nonatomic) CGFloat defaultContainerWidth;
 
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)viewController
@@ -81,5 +79,6 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 - (void)updateContainer:(NSSize)size
              animations:(void(^)(void))animations
              completion:(void(^)(void))completionBlock;
+- (NSSize)adjustedContainerSize:(CGSize)size;
 
 @end

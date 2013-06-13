@@ -11,6 +11,7 @@
 @interface PBRunningAverageValue : NSObject
 
 @property (nonatomic) CGFloat value;
+@property (nonatomic) NSUInteger queueSize;
 
 - (void)clearRunningValues;
 

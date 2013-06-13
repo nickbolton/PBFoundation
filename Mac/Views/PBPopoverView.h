@@ -23,10 +23,9 @@
 @property (nonatomic, getter = isBeakVisible) BOOL beakVisible;
 @property (nonatomic, getter = isFlipped) BOOL flipped;
 @property (nonatomic) NSPoint beakReferencePoint;
+@property (nonatomic) BOOL smoothingBeakMovement;
+@property (nonatomic, getter = isAnimating) BOOL animating;
 
-//- (void)setAbsoluteBeakReferencePoint:(NSPoint)point;
-//- (void)setBeakReferencePoint:(NSPoint)beakReferencePoint
-//              withWindowFrame:(NSRect)frame
-//                     absolute:(BOOL)absolute;
+- (void)resetBeak;
 
 @end

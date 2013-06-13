@@ -74,6 +74,10 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     return NSWidth(self.containerView.frame);
 }
 
+- (NSSize)adjustedContainerSize:(CGSize)size {
+    return NSZeroSize;
+}
+
 - (NSViewController *)currentViewController {
     return [_viewControllerStack lastObject];
 }
