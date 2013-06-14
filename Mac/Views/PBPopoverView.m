@@ -142,8 +142,6 @@ static PBPopoverView *_PBPopoverViewInstance = nil;
 
 - (void)drawRect:(NSRect)dirtyRect {
 
-    [super drawRect:dirtyRect];
-
     NSDrawNinePartImage(self.bounds,
                         _topLeftImage,
                         _topImage,
@@ -154,7 +152,7 @@ static PBPopoverView *_PBPopoverViewInstance = nil;
                         _bottomLeftImage,
                         _bottomImage,
                         _bottomRightImage,
-                        NSCompositeSourceIn,
+                        NSCompositeSourceAtop,
                         1.0f,
                         _flipped);
 
@@ -211,6 +209,7 @@ static PBPopoverView *_PBPopoverViewInstance = nil;
          fraction:1.0f];
     }
 
+    [super drawRect:dirtyRect];
 }
 
 @end

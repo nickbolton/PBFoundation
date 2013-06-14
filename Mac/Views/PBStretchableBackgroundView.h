@@ -8,9 +8,12 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface PBStretchableBackgroundView : NSImageView
+@interface PBStretchableBackgroundView : NSView
 
-@property (nonatomic, strong) NSImage *backgroundImage;
-@property (nonatomic, strong) NSString *backgroundImageName;
+@property (nonatomic, strong) NSImage *startCapImage;
+@property (nonatomic, strong) NSImage *centerFillImage;
+@property (nonatomic, strong) NSImage *endCapImage;
+@property (nonatomic, getter = isVertical) BOOL vertical;
+@property (nonatomic, getter = isFlipped) BOOL flipped;
 
 @end

@@ -36,25 +36,16 @@
 - (void)commonInit {
 }
 
-- (void)setBackgroundImageName:(NSString *)backgroundImageName {
-    _backgroundImageName = backgroundImageName;
-    self.backgroundImage = [NSImage imageNamed:backgroundImageName];
-}
-
-- (void)setBackgroundImage:(NSImage *)backgroundImage {
-    _backgroundImage = backgroundImage;
-    self.backgroundColor =
-    [NSColor colorWithPatternImage:backgroundImage];
-}
-
 - (void)drawRect:(NSRect)dirtyRect {
 
-    NSGraphicsContext* context = [NSGraphicsContext currentContext];
-    [context saveGraphicsState];
-    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(0,[self frame].size.height)];
-    [self.backgroundColor set];
-    NSRectFill([self bounds]);
-    [context restoreGraphicsState];
+    NSDrawThreePartImage(self.bounds,
+                         _startCapImage,
+                         _centerFillImage,
+                         _endCapImage,
+                         _vertical,
+                         NSCompositeSourceAtop,
+                         1.0f,
+                         _flipped);
 
     [super drawRect:dirtyRect];
 }
