@@ -61,6 +61,7 @@ static PBPopoverView *_PBPopoverViewInstance = nil;
 }
 
 - (void)commonInit {
+    [super commonInit];
     self.beakPosition = [[PBRunningAverageValue alloc] init];
     _beakPosition.queueSize = 1;
 }

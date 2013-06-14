@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 Pixelbleed. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import "PBMoveableView.h"
 
-@interface PBPopoverView : NSView
+@interface PBPopoverView : PBMoveableView
 
 @property (nonatomic, strong) NSImage *topLeftImage;
 @property (nonatomic, strong) NSImage *topRightImage;

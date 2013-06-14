@@ -16,12 +16,10 @@ NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContai
 NSString *kPBNavigationEnableUserInteractionNotification = @"kPBNavigationEnableUserInteractionNotification";
 NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisableUserInteractionNotification";
 
-@interface PBNavigationViewController () <NSTextFieldDelegate> {
-    BOOL _editingTitle;
+@interface PBNavigationViewController () {
 }
 
 @property (nonatomic, readwrite) NSMutableArray *viewControllerStack;
-@property (nonatomic, strong) NSViewController <PBNavigationViewProtocol> *editingTitleViewController;
 @property (nonatomic, strong) NSViewController *altCurrentViewController;
 
 @end
@@ -41,11 +39,33 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     self.viewControllerStack = [NSMutableArray array];
 }
 
+- (void)throwAway {
+
+    _navBarContainer.wantsLayer = YES;
+    _mainContainer.wantsLayer = YES;
+
+    _navBarContainer.layer.backgroundColor = [NSColor redColor].CGColor;
+    _mainContainer.layer.backgroundColor = [NSColor yellowColor].CGColor;
+
+    NSTimeInterval delayInSeconds = 1.0f;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        NSRect frame = self.view.window.frame;
+        frame.origin.x += NSWidth(frame)/2.0f;
+        self.backgroundView.beakReferencePoint = frame.origin;
+        self.backgroundView.beakVisible = YES;
+        [self.backgroundView setNeedsDisplay:YES];
+    });
+}
+
+- (void)setupNavigationContainer {
+
+    _mainContainerTopSpace.constant = 23.0f;
+    _mainContainerBottomSpace.constant = -25.0f;
+}
+
 - (void)awakeFromNib {
     [super awakeFromNib];
-
-    _editableTitleField.delegate = self;
-    _editableTitleField;
 
     NSAssert([self.backgroundView isKindOfClass:[PBPopoverView class]],
              @"Root view must be a PBPopoverView");
@@ -53,14 +73,29 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 }
 
 - (void)setTitle:(NSString *)title {
-    _titleField.stringValue = title;
+    _navBarTitleField.stringValue = title;
 }
 
 - (void)updateTitle {
-    _titleField.stringValue = [NSString safeString:[self.currentViewController title]];
+    _navBarTitleField.stringValue =
+    [NSString safeString:[self.currentViewController title]];
 }
 
 - (void)setModalTitle:(NSAttributedString *)title {
+}
+
+- (IBAction)backPressed:(id)sender {
+
+    if (self.isModal) {
+
+        if ([self.currentViewController respondsToSelector:@selector(viewWillDismissModal)]) {
+            [self.currentViewController viewWillDismissModal];
+            self.modal = NO;
+        }
+
+    } else {
+        [self popViewController:YES];
+    }
 }
 
 - (NSSize)adjustedContainerSize:(CGSize)size {
@@ -79,6 +114,9 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 }
 
 - (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration {
+}
+
+- (void)navigationFinished {
 }
 
 - (void)updateContainer:(NSSize)size
@@ -106,12 +144,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                   fromRoot:(BOOL)fromRoot
                 completion:(void(^)(void))completionBlock {
 
-    if ([self.editingTitleViewController needsEditableTitleField]) {
-        if ([self.editingTitleViewController respondsToSelector:@selector(titleChanged:)]) {
-            [self.editingTitleViewController titleChanged:_editableTitleField.stringValue];
-        }
-    }
-
     BOOL shouldLeaveCurrentViewController = YES;
 
     if ([self.currentViewController respondsToSelector:@selector(shouldLeaveViewController)]) {
@@ -131,25 +163,12 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     nextViewController.navigationViewController = self;
     [nextViewController.view setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-    _titleField.stringValue = [nextViewController title];
-    _editableTitleField.stringValue = _titleField.stringValue;
-    _editingTitle = NO;
-    self.editingTitleViewController = nil;
+//    NSRect frame = nextViewController.view.frame;
+//    frame.origin.y = 0;
+//    frame.size.height = NSHeight(_navContainer.frame);
+//    nextViewController.view.frame = frame;
 
-    if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
-        _editingTitle = [nextViewController needsEditableTitleField];
-        self.editingTitleViewController = nextViewController;
-    }
-
-    _titleField.hidden = _editingTitle;
-    _editableTitleField.hidden = !_editingTitle;
-
-    if ([nextViewController respondsToSelector:@selector(placeholderTitleText)]) {
-        ((NSTextFieldCell *)_editableTitleField.cell).placeholderString =
-        [nextViewController placeholderTitleText];
-    } else {
-        ((NSTextFieldCell *)_editableTitleField.cell).placeholderString = nil;
-    }
+    _navBarTitleField.stringValue = [nextViewController title];
 
     NSViewController<PBNavigationViewProtocol> *previousViewController = [_viewControllerStack lastObject];
 
@@ -203,6 +222,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
              if ([nextViewController respondsToSelector:@selector(viewDidActivate)]) {
                  [nextViewController viewDidActivate];
              }
+
+             [self navigationFinished];
 
              if (completionBlock != nil) {
                  completionBlock();
@@ -272,6 +293,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 //                      if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
 //                          [self.currentViewController viewDidActivate];
 //                      }
+//                      [self navigationFinished];
 //
 //                      if (completionBlock != nil) {
 //                          completionBlock();
@@ -301,7 +323,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                  if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
                      [self.currentViewController viewDidActivate];
                  }
-
+                 [self navigationFinished];
                  if (completionBlock != nil) {
                      completionBlock();
                  }
@@ -346,12 +368,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
     if (_viewControllerStack.count > 1) {
 
-        if ([self.editingTitleViewController needsEditableTitleField]) {
-            if ([self.editingTitleViewController respondsToSelector:@selector(titleChanged:)]) {
-                [self.editingTitleViewController titleChanged:_editableTitleField.stringValue];
-            }
-        }
-
         BOOL shouldLeaveCurrentViewController = YES;
 
         if ([self.currentViewController respondsToSelector:@selector(shouldLeaveViewController)]) {
@@ -390,31 +406,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         NSView *currentView = currentViewController.view;
         NSView *newView = nextViewController.view;
 
-        _titleField.stringValue = [nextViewController title];
-        _editableTitleField.stringValue = _titleField.stringValue;
-        _editingTitle = NO;
-        self.editingTitleViewController = nil;
-
-        if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
-            _editingTitle = [nextViewController needsEditableTitleField];
-            self.editingTitleViewController = nextViewController;
-        }
-
-        if ([nextViewController respondsToSelector:@selector(placeholderTitleText)]) {
-            ((NSTextFieldCell *)_editableTitleField.cell).placeholderString =
-            [nextViewController placeholderTitleText];
-        } else {
-            ((NSTextFieldCell *)_editableTitleField.cell).placeholderString = nil;
-        }
-
-        BOOL _editingTitle = NO;
-
-        if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
-            _editingTitle = [nextViewController needsEditableTitleField];
-        }
-
-        _titleField.hidden = _editingTitle;
-        _editableTitleField.hidden = !_editingTitle;
+        _navBarTitleField.stringValue = [nextViewController title];
 
         if (animate) {
 
@@ -464,6 +456,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 //                       userInfo:nil];
 //
 //                  } completion:^{
+//                      [self navigationFinished];
 //
 //                      if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
 //                          [currentViewController viewDidDeactivate];
@@ -499,6 +492,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 //
 //             } completion:^{
 //
+//                 [self navigationFinished];
+//
 //                 if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
 //                     [currentViewController viewDidDeactivate];
 //                 }
@@ -522,32 +517,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     }
 }
 
-#pragma mark - NSTextFieldDelegate Conformance
-
-- (void)controlTextDidChange:(NSNotification *)notification {
-}
-
-- (BOOL)control:(NSControl *)control isValidObject:(id)object {
-
-    BOOL valid = NO;
-
-    if ([object isKindOfClass:[NSString class]]) {
-        valid = ((NSString *)object).length > 0;
-    }
-
-    if (valid) {
-        if ([self.editingTitleViewController respondsToSelector:@selector(titleChanged:)]) {
-            [self.editingTitleViewController titleChanged:object];
-        }
-    }
-
-    return valid;
-}
-
-- (BOOL)control:(NSControl *)control textShouldEndEditing:(NSText *)fieldEditor {
-    return fieldEditor.string.length > 0;
-}
-
 #pragma mark - Key handling
 
 - (void)keyDown:(NSEvent *)event {
@@ -563,6 +532,17 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         }
     }
 
+}
+
+#pragma mark - PBClickableLabelDelegate Conformance
+
+- (void)labelClicked:(PBClickableLabel *)label {
+}
+
+- (void)labelMouseUp:(PBClickableLabel *)label {
+}
+
+- (void)labelDoubleClicked:(PBClickableLabel *)label {
 }
 
 @end

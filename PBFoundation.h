@@ -55,6 +55,7 @@
 #import "NSTextField+PBFoundation.h"
 #import "PBMainWindow.h"
 #import "PBAnimator.h"
+#import "PBClickableLabel.h"
 
 #endif
 
