@@ -29,15 +29,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 @implementation PBNavigationViewController
 
 - (id)init {
-    self = [super initWithNibName:NSStringFromClass([self class]) bundle:nil];
-    if (self) {
-        [self commonInit];
-    }
-    return self;
-}
-
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    self = [super initWithNibName:NSStringFromClass([PBNavigationViewController class]) bundle:nil];
     if (self) {
         [self commonInit];
     }
@@ -51,8 +43,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
 - (void)awakeFromNib {
     [super awakeFromNib];
-
-    [_navContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
 
     _editableTitleField.delegate = self;
     _editableTitleField;
@@ -68,10 +58,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
 - (void)updateTitle {
     _titleField.stringValue = [NSString safeString:[self.currentViewController title]];
-}
-
-- (CGFloat)containerHeight {
-    return NSWidth(self.containerView.frame);
 }
 
 - (void)setModalTitle:(NSAttributedString *)title {
@@ -93,9 +79,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 }
 
 - (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration {
-}
-
-- (void)navigationFinished {
 }
 
 - (void)updateContainer:(NSSize)size
@@ -147,11 +130,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
     nextViewController.navigationViewController = self;
     [nextViewController.view setTranslatesAutoresizingMaskIntoConstraints:NO];
-
-    NSRect frame = nextViewController.view.frame;
-    frame.origin.y = 0;
-    frame.size.height = NSHeight(_navContainer.frame);
-    nextViewController.view.frame = frame;
 
     _titleField.stringValue = [nextViewController title];
     _editableTitleField.stringValue = _titleField.stringValue;
@@ -208,7 +186,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
         [self startPushNavigation:NO duration:0.0f];
 
-        [_navContainer addSubview:nextViewController.view];
+//        [_navContainer addSubview:nextViewController.view];
 
         [PBAnimator
          animateWithDuration:duration
@@ -226,8 +204,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                  [nextViewController viewDidActivate];
              }
 
-             [self navigationFinished];
-
              if (completionBlock != nil) {
                  completionBlock();
              }
@@ -242,67 +218,66 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
             [self startPushNavigation:YES duration:duration];
 
-            NSRect newRect = NSMakeRect(_navContainer.frame.origin.x-currentView.frame.size.width,
-                                        _navContainer.frame.origin.y,
-                                        _navContainer.frame.size.width,
-                                        _navContainer.frame.size.height);
-
-            // make sure the current view is aligned on the left side
-
-            NSRect frame = currentView.frame;
-            frame.origin.x = 0;
-            currentView.frame = frame;
-
-            // place the new view
-            newView.frame = NSMakeRect(currentView.frame.size.width,
-                                       currentView.frame.origin.y,
-                                       newView.frame.size.width,
-                                       newView.frame.size.height);
-
-            [_navContainer addSubview:newView];
-
-            [_navContainer
-             animateToNewFrame:newRect
-             duration:duration
-             timingFunction:PB_EASE_INOUT
-             completionBlock:^{
-
-                 // readjust the container and current view;
-
-                 NSRect frame = _navContainer.frame;
-                 frame.origin.x = 0;
-                 _navContainer.frame = frame;
-
-                 frame = newView.frame;
-                 frame.origin.x = 0;
-                 newView.frame = frame;
-
-                 NSViewController *previousController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
-
-                 [previousController.view removeFromSuperview];
-                 //                             [previousController performIfRespondsToSelector:@selector(viewDidDeactivate)];
-
-                 [PBAnimator
-                  animateWithDuration:duration
-                  timingFunction:PB_EASE_INOUT
-                  animation:^{
-
-                      [[NSNotificationCenter defaultCenter]
-                       postNotificationName:kPBNavigationUpdateFrameNotification
-                       object:self
-                       userInfo:nil];
-
-                  } completion:^{
-                      if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
-                          [self.currentViewController viewDidActivate];
-                      }
-                      [self navigationFinished];
-
-                      if (completionBlock != nil) {
-                          completionBlock();
-                      }
-                  }];                 
-             }];
+//            NSRect newRect = NSMakeRect(_navContainer.frame.origin.x-currentView.frame.size.width,
+//                                        _navContainer.frame.origin.y,
+//                                        _navContainer.frame.size.width,
+//                                        _navContainer.frame.size.height);
+//
+//            // make sure the current view is aligned on the left side
+//
+//            NSRect frame = currentView.frame;
+//            frame.origin.x = 0;
+//            currentView.frame = frame;
+//
+//            // place the new view
+//            newView.frame = NSMakeRect(currentView.frame.size.width,
+//                                       currentView.frame.origin.y,
+//                                       newView.frame.size.width,
+//                                       newView.frame.size.height);
+//
+//            [_navContainer addSubview:newView];
+//
+//            [_navContainer
+//             animateToNewFrame:newRect
+//             duration:duration
+//             timingFunction:PB_EASE_INOUT
+//             completionBlock:^{
+//
+//                 // readjust the container and current view;
+//
+//                 NSRect frame = _navContainer.frame;
+//                 frame.origin.x = 0;
+//                 _navContainer.frame = frame;
+//
+//                 frame = newView.frame;
+//                 frame.origin.x = 0;
+//                 newView.frame = frame;
+//
+//                 NSViewController *previousController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
+//
+//                 [previousController.view removeFromSuperview];
+//                 //                             [previousController performIfRespondsToSelector:@selector(viewDidDeactivate)];
+//
+//                 [PBAnimator
+//                  animateWithDuration:duration
+//                  timingFunction:PB_EASE_INOUT
+//                  animation:^{
+//
+//                      [[NSNotificationCenter defaultCenter]
+//                       postNotificationName:kPBNavigationUpdateFrameNotification
+//                       object:self
+//                       userInfo:nil];
+//
+//                  } completion:^{
+//                      if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
+//                          [self.currentViewController viewDidActivate];
+//                      }
+//
+//                      if (completionBlock != nil) {
+//                          completionBlock();
+//                      }
+//                  }];                 
+//             }];
         } else {
 
             [self startPushNavigation:NO duration:0.0f];
@@ -326,7 +301,7 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                  if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
                      [self.currentViewController viewDidActivate];
                  }
-                 [self navigationFinished];
+
                  if (completionBlock != nil) {
                      completionBlock();
                  }
@@ -445,102 +420,99 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
             [self startPopNavigation:YES duration:duration];
 
-            // move the parent frame
-            _navContainer.frame = NSMakeRect(-newView.frame.size.width,
-                                         _navContainer.frame.origin.y,
-                                         _navContainer.frame.size.width,
-                                         _navContainer.frame.size.height);
-
-            // place the current view
-            currentView.frame = NSMakeRect(newView.frame.size.width,
-                                           currentView.frame.origin.y,
-                                           currentView.frame.size.width,
-                                           currentView.frame.size.height);
-
-            // reposition the new view
-            newView.frame = NSMakeRect(0,
-                                       currentView.frame.origin.y,
-                                       currentView.frame.size.width,
-                                       currentView.frame.size.height);
-
-            [_navContainer addSubview:newView];
-
-            NSRect newRect = NSMakeRect(0,
-                                        _navContainer.frame.origin.y,
-                                        _navContainer.frame.size.width,
-                                        _navContainer.frame.size.height);
-
-            [_navContainer
-             animateToNewFrame:newRect
-             duration:duration
-             timingFunction:PB_EASE_INOUT
-             completionBlock:^{
-                 NSViewController<PBNavigationViewProtocol> *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
-                 [currentViewController.view removeFromSuperview];
-
-                 [PBAnimator
-                  animateWithDuration:duration
-                  timingFunction:PB_EASE_INOUT
-                  animation:^{
-
-                      [[NSNotificationCenter defaultCenter]
-                       postNotificationName:kPBNavigationUpdateFrameNotification
-                       object:self
-                       userInfo:nil];
-
-                  } completion:^{
-                      [self navigationFinished];
-
-                      if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
-                          [currentViewController viewDidDeactivate];
-                      }
-
-                      if ([nextViewController respondsToSelector:@selector(viewDidAppear)]) {
-                          [nextViewController viewDidAppear];
-                      }
-
-                      [_viewControllerStack removeLastObject];
-
-                      if (completionBlock != nil) {
-                          completionBlock();
-                      }
-                  }];
-             }];
+//            // move the parent frame
+//            _navContainer.frame = NSMakeRect(-newView.frame.size.width,
+//                                         _navContainer.frame.origin.y,
+//                                         _navContainer.frame.size.width,
+//                                         _navContainer.frame.size.height);
+//
+//            // place the current view
+//            currentView.frame = NSMakeRect(newView.frame.size.width,
+//                                           currentView.frame.origin.y,
+//                                           currentView.frame.size.width,
+//                                           currentView.frame.size.height);
+//
+//            // reposition the new view
+//            newView.frame = NSMakeRect(0,
+//                                       currentView.frame.origin.y,
+//                                       currentView.frame.size.width,
+//                                       currentView.frame.size.height);
+//
+//            [_navContainer addSubview:newView];
+//
+//            NSRect newRect = NSMakeRect(0,
+//                                        _navContainer.frame.origin.y,
+//                                        _navContainer.frame.size.width,
+//                                        _navContainer.frame.size.height);
+//
+//            [_navContainer
+//             animateToNewFrame:newRect
+//             duration:duration
+//             timingFunction:PB_EASE_INOUT
+//             completionBlock:^{
+//                 NSViewController<PBNavigationViewProtocol> *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
+//                 [currentViewController.view removeFromSuperview];
+//
+//                 [PBAnimator
+//                  animateWithDuration:duration
+//                  timingFunction:PB_EASE_INOUT
+//                  animation:^{
+//
+//                      [[NSNotificationCenter defaultCenter]
+//                       postNotificationName:kPBNavigationUpdateFrameNotification
+//                       object:self
+//                       userInfo:nil];
+//
+//                  } completion:^{
+//
+//                      if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
+//                          [currentViewController viewDidDeactivate];
+//                      }
+//
+//                      if ([nextViewController respondsToSelector:@selector(viewDidAppear)]) {
+//                          [nextViewController viewDidAppear];
+//                      }
+//
+//                      [_viewControllerStack removeLastObject];
+//
+//                      if (completionBlock != nil) {
+//                          completionBlock();
+//                      }
+//                  }];
+//             }];
 
         } else {
 
             [self startPopNavigation:NO duration:0.0f];
             
-            [_navContainer replaceSubview:currentView with:newView];
-
-            [PBAnimator
-             animateWithDuration:duration
-             timingFunction:PB_EASE_INOUT
-             animation:^{
-
-                 [[NSNotificationCenter defaultCenter]
-                  postNotificationName:kPBNavigationUpdateFrameNotification
-                  object:self
-                  userInfo:nil];
-
-             } completion:^{
-
-                 [self navigationFinished];
-
-                 if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
-                     [currentViewController viewDidDeactivate];
-                 }
-
-                 if ([nextViewController respondsToSelector:@selector(viewDidAppear)]) {
-                     [nextViewController viewDidAppear];
-                 }
-
-                 [_viewControllerStack removeLastObject];
-                 
-                 if (completionBlock != nil) {
-                     completionBlock();
-                 }
-             }];
+//            [_navContainer replaceSubview:currentView with:newView];
+//
+//            [PBAnimator
+//             animateWithDuration:duration
+//             timingFunction:PB_EASE_INOUT
+//             animation:^{
+//
+//                 [[NSNotificationCenter defaultCenter]
+//                  postNotificationName:kPBNavigationUpdateFrameNotification
+//                  object:self
+//                  userInfo:nil];
+//
+//             } completion:^{
+//
+//                 if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
+//                     [currentViewController viewDidDeactivate];
+//                 }
+//
+//                 if ([nextViewController respondsToSelector:@selector(viewDidAppear)]) {
+//                     [nextViewController viewDidAppear];
+//                 }
+//
+//                 [_viewControllerStack removeLastObject];
+//                 
+//                 if (completionBlock != nil) {
+//                     completionBlock();
+//                 }
+//             }];
         }
     } else {
 

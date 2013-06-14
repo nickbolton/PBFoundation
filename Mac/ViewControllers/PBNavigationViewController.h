@@ -46,16 +46,20 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 
 @interface PBNavigationViewController : PBFlexibleBackgroundViewController
 
-@property (nonatomic, weak) IBOutlet NSView *containerView;
-@property (nonatomic, weak) IBOutlet NSView *navContainer;
+@property (nonatomic, weak) IBOutlet NSView *navBarContainer;
+@property (nonatomic, weak) IBOutlet NSView *mainContainer;
+@property (nonatomic, weak) IBOutlet NSView *mainContentContainer;
+@property (nonatomic, weak) IBOutlet NSLayoutConstraint *mainContainerTopSpace;
+@property (nonatomic, weak) IBOutlet NSLayoutConstraint *mainContainerBottomSpace;
 @property (nonatomic, weak) IBOutlet NSTextField *titleField;
 @property (nonatomic, weak) IBOutlet NSTextField *editableTitleField;
 @property (nonatomic, weak) IBOutlet PBMiddleAlignedTextFieldCell *editableTitleFieldCell;
+@property (nonatomic, weak) NSView *animationContainer;
+
 @property (nonatomic, readonly) NSMutableArray *viewControllerStack;
 
 @property (nonatomic, readonly) NSViewController<PBNavigationViewProtocol> *currentViewController;
 @property (nonatomic, getter = isModal) BOOL modal;
-@property (nonatomic) CGFloat defaultContainerWidth;
 
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)viewController
                    animate:(BOOL)animate;
@@ -74,7 +78,6 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 - (BOOL)isViewControllerInNavigationStack:(NSViewController<PBNavigationViewProtocol> *)viewController;
 - (void)startPushNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
 - (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
-- (void)navigationFinished;
 - (void)updateTitle;
 - (void)updateContainer:(NSSize)size
              animations:(void(^)(void))animations
