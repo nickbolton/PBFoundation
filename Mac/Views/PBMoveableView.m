@@ -42,10 +42,6 @@
      object:self.window];
 }
 
-- (void)setEnabled:(BOOL)enabled {
-    _enabled = enabled;
-}
-
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
