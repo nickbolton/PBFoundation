@@ -30,25 +30,12 @@
     [NSAnimationContext beginGrouping];
     NSAnimationContext *currentContext = [NSAnimationContext currentContext];
 
-    BOOL hasCompletionBlockSupport = [currentContext respondsToSelector:@selector(setCompletionHandler:)];
-    
-    [currentContext setDuration:duration];
-    
-    if ([currentContext respondsToSelector:@selector(setTimingFunction:)] == YES) {
-        [currentContext performSelector:@selector(setTimingFunction:) withObject:timingFunction];
-    }
-    
-    if (hasCompletionBlockSupport == YES && completionBlock != nil) {
-        [currentContext performSelector:@selector(setCompletionHandler:) withObject:completionBlock]; 
-    }
-    
+    currentContext.duration = duration;
+    currentContext.timingFunction = timingFunction;
+    currentContext.completionHandler = completionBlock;
+
     animationBlock();
     [NSAnimationContext endGrouping];
-    
-    if(completionBlock != nil && hasCompletionBlockSupport == NO) {
-        id completionBlockCopy = [completionBlock copy];
-        [self performSelector:@selector(runEndBlock:) withObject:completionBlockCopy afterDelay:duration + .05f];
-    }
 }
 
 + (void)runEndBlock:(void (^)(void))completionBlock {

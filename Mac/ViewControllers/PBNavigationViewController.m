@@ -11,18 +11,20 @@
 #import <Carbon/Carbon.h>
 #import "PBPopoverView.h"
 
-NSString *kPBNavigationUpdateFrameNotification = @"kPBNavigationUpdateFrameNotification";
-NSString *kPBNavigationUpdateContainerNotification = @"kPBNavigationUpdateContainerNotification";
 NSString *kPBNavigationEnableUserInteractionNotification = @"kPBNavigationEnableUserInteractionNotification";
 NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisableUserInteractionNotification";
 
-@interface PBNavigationViewController () <NSTextFieldDelegate> {
-    BOOL _editingTitle;
+@interface PBNavigationViewController () {
+
+    NSSize _previousContainerSize;
+    NSSize _previousContentSize;
+    BOOL _firstAnimation;
+    NSEdgeInsets _mainContentInsets;
 }
 
 @property (nonatomic, readwrite) NSMutableArray *viewControllerStack;
-@property (nonatomic, strong) NSViewController <PBNavigationViewProtocol> *editingTitleViewController;
 @property (nonatomic, strong) NSViewController *altCurrentViewController;
+@property (nonatomic, strong) NSView *modalView;
 
 @end
 
@@ -36,49 +38,60 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     return self;
 }
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        [self commonInit];
-    }
-    return self;
-}
-
 - (void)commonInit {
     [super commonInit];
     self.viewControllerStack = [NSMutableArray array];
 }
 
+- (void)throwAway {
+
+//    _navBarContainer.wantsLayer = YES;
+//    _mainContainer.wantsLayer = YES;
+//    _mainContentContainer.wantsLayer = YES;
+//    _mainContentContainer.layer.masksToBounds;
+//
+//    _navBarContainer.layer.backgroundColor = [NSColor redColor].CGColor;
+//    _mainContainer.layer.backgroundColor = [NSColor yellowColor].CGColor;
+//    _mainContentContainer.layer.backgroundColor = [NSColor greenColor].CGColor;
+}
+
+- (void)setupNavigationContainer {
+
+    _modalContainer.hidden = YES;
+    _modalContainer.alphaValue = 1.0f;
+}
+
 - (void)awakeFromNib {
     [super awakeFromNib];
-
-    [_navContainer setTranslatesAutoresizingMaskIntoConstraints:NO];
-
-    _editableTitleField.delegate = self;
-    _editableTitleField;
 
     NSAssert([self.backgroundView isKindOfClass:[PBPopoverView class]],
              @"Root view must be a PBPopoverView");
     self.backgroundView.flipped = NO;
+
+    [self setupNavigationContainer];
+    [self throwAway];
 }
 
 - (void)setTitle:(NSString *)title {
-    _titleField.stringValue = title;
+    _navBarTitleField.stringValue = title;
 }
 
 - (void)updateTitle {
-    _titleField.stringValue = [NSString safeString:[self.currentViewController title]];
+    _navBarTitleField.stringValue =
+    [NSString safeString:[self.currentViewController title]];
 }
 
-- (CGFloat)containerHeight {
-    return NSWidth(self.containerView.frame);
-}
+- (IBAction)backPressed:(id)sender {
 
-- (void)setModalTitle:(NSAttributedString *)title {
-}
+    if (self.isModal) {
 
-- (NSSize)adjustedContainerSize:(CGSize)size {
-    return NSZeroSize;
+        if ([self.currentViewController respondsToSelector:@selector(viewWillDismissModal)]) {
+            [self.currentViewController viewWillDismissModal];
+        }
+
+    } else {
+        [self popViewController:YES];
+    }
 }
 
 - (NSViewController *)currentViewController {
@@ -95,10 +108,136 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 - (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration {
 }
 
+- (NSString *)viewKey:(NSView *)view {
+    return [NSString stringWithFormat:@"%p", view];
+}
+
+- (void)clearModalContainer {
+
+    NSArray *subviews = [self.modalContainer.subviews copy];
+    for (NSView *child in subviews) {
+
+        if (child != _modalPillContainer) {
+            [child removeFromSuperview];
+        }
+    }
+
+    self.modalContainer.hidden = YES;
+}
+
+- (void)setModalTitle:(NSAttributedString *)title {
+
+    static CGFloat padding = -5.0f;
+    static CGFloat extraTextWidth = 9.0f;
+    static CGFloat rightPadding = 9.0f;
+
+    _modalLabel.attributedStringValue = title;
+
+    NSSize textSize =
+    [title.string sizeWithAttributes:@{NSFontAttributeName : _modalLabel.font}];
+    textSize.width += extraTextWidth;
+
+    NSRect frame = _modalPillContainer.frame;
+
+    frame.size.width =
+    NSWidth(_modalBackButton.frame) +
+    padding +
+    textSize.width +
+    rightPadding;
+
+    frame.origin.x =
+    (NSWidth(_modalPillContainer.superview.frame) - NSWidth(frame)) / 2.0f;
+
+    _modalPillContainer.frame = frame;
+
+    frame = _modalBackButton.frame;
+    frame.origin.x = 0.0f;
+    _modalBackButton.frame = frame;
+
+    frame = _modalLabel.frame;
+    frame.origin.x = padding + NSMaxX(_modalBackButton.frame);
+    frame.size.width = textSize.width;
+    _modalLabel.frame = frame;
+}
+
+- (void)showModalView:(NSView *)view
+            withTitle:(NSAttributedString *)title
+          desiredSize:(NSSize)desiredSize
+           animations:(void(^)(void))animations
+           completion:(void(^)(void))completionBlock {
+
+    if (view != nil) {
+
+        _modal = YES;
+
+        self.modalView = view;
+
+        [self clearModalContainer];
+
+        self.modalContainer.hidden = NO;
+        self.modalContainer.alphaValue = 0.0f;
+
+        view.frame = self.modalContainer.bounds;
+        [self.modalContainer addSubview:view positioned:NSWindowBelow relativeTo:_modalPillContainer];
+
+        view.autoresizingMask =
+        NSViewWidthSizable | NSViewHeightSizable;
+
+        if (NSEqualSizes(_previousContainerSize, NSZeroSize)) {
+            _previousContainerSize = self.view.window.frame.size;
+        }
+
+        [self setModalTitle:title];
+
+        desiredSize.width = MAX(NSWidth(_modalPillContainer.frame) + 40.0f, desiredSize.width);
+
+        [self
+         updateContainer:desiredSize
+         adjusted:YES
+         animations:^{
+
+             [[self.navBarContainer animator] setAlphaValue:0.0f];
+             [[self.mainContentContainer animator] setAlphaValue:0.0f];
+             [[self.modalContainer animator] setAlphaValue:1.0f];
+
+         } completion:^{
+
+             if (completionBlock != nil) {
+                 completionBlock();
+             }
+         }];
+    }
+}
+
+- (void)dismissModal:(void(^)(void))animations
+          completion:(void(^)(void))completionBlock {
+
+    _modal = NO;
+
+    [self
+     updateContainer:_previousContainerSize
+     adjusted:YES
+     animations:^{
+
+         [[self.navBarContainer animator] setAlphaValue:1.0f];
+         [[self.mainContentContainer animator] setAlphaValue:1.0f];
+         [[self.modalContainer animator] setAlphaValue:0.0f];
+         
+     } completion:^{
+
+         [self.modalView removeFromSuperview];
+         self.modalView = nil;
+         
+         [self clearModalContainer];
+         _previousContainerSize = NSZeroSize;
+     }];
+}
+
 - (void)navigationFinished {
 }
 
 - (void)updateContainer:(NSSize)size
+               adjusted:(BOOL)adjusted
              animations:(void(^)(void))animations
              completion:(void(^)(void))completionBlock {
 }
@@ -123,12 +262,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
                   fromRoot:(BOOL)fromRoot
                 completion:(void(^)(void))completionBlock {
 
-    if ([self.editingTitleViewController needsEditableTitleField]) {
-        if ([self.editingTitleViewController respondsToSelector:@selector(titleChanged:)]) {
-            [self.editingTitleViewController titleChanged:_editableTitleField.stringValue];
-        }
-    }
-
     BOOL shouldLeaveCurrentViewController = YES;
 
     if ([self.currentViewController respondsToSelector:@selector(shouldLeaveViewController)]) {
@@ -146,32 +279,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     NSTimeInterval duration = PB_WINDOW_ANIMATION_DURATION;
 
     nextViewController.navigationViewController = self;
-    [nextViewController.view setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-    NSRect frame = nextViewController.view.frame;
-    frame.origin.y = 0;
-    frame.size.height = NSHeight(_navContainer.frame);
-    nextViewController.view.frame = frame;
-
-    _titleField.stringValue = [nextViewController title];
-    _editableTitleField.stringValue = _titleField.stringValue;
-    _editingTitle = NO;
-    self.editingTitleViewController = nil;
-
-    if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
-        _editingTitle = [nextViewController needsEditableTitleField];
-        self.editingTitleViewController = nextViewController;
-    }
-
-    _titleField.hidden = _editingTitle;
-    _editableTitleField.hidden = !_editingTitle;
-
-    if ([nextViewController respondsToSelector:@selector(placeholderTitleText)]) {
-        ((NSTextFieldCell *)_editableTitleField.cell).placeholderString =
-        [nextViewController placeholderTitleText];
-    } else {
-        ((NSTextFieldCell *)_editableTitleField.cell).placeholderString = nil;
-    }
+    _navBarTitleField.stringValue = [nextViewController title];
 
     NSViewController<PBNavigationViewProtocol> *previousViewController = [_viewControllerStack lastObject];
 
@@ -208,125 +317,136 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
         [self startPushNavigation:NO duration:0.0f];
 
-        [_navContainer addSubview:nextViewController.view];
+        nextViewController.view.frame = _mainContentContainer.bounds;
+        nextViewController.view.autoresizingMask =
+        NSViewWidthSizable | NSViewHeightSizable;
+
+        [_mainContentContainer addSubview:nextViewController.view];
 
         [PBAnimator
          animateWithDuration:duration
          timingFunction:PB_EASE_INOUT
          animation:^{
 
-             [[NSNotificationCenter defaultCenter]
-              postNotificationName:kPBNavigationUpdateFrameNotification
-              object:self
-              userInfo:nil];
+             if ([self.currentViewController respondsToSelector:@selector(performFrameUpdates)]) {
+                 [self.currentViewController performFrameUpdates];
+             }
              
          } completion:^{
+
+             NSSize windowSize = self.view.window.frame.size;
+             NSRect frameInWindow =
+             [self.mainContentContainer
+              convertRect:self.mainContentContainer.bounds
+              toView:nil];
+
+             CGFloat top = windowSize.height - NSMaxY(frameInWindow);
+             CGFloat bottom = NSMinY(frameInWindow);
+             CGFloat left = NSMinX(frameInWindow);
+             CGFloat right = windowSize.width - NSMaxX(frameInWindow);
+
+             bottom += NSHeight(_mainContentContainer.frame) - nextViewController.desiredSize.height;
+
+             _mainContentInsets = NSEdgeInsetsMake(top, left, bottom, right);
+
+             [self navigationFinished];
 
              if ([nextViewController respondsToSelector:@selector(viewDidActivate)]) {
                  [nextViewController viewDidActivate];
              }
 
-             [self navigationFinished];
-
              if (completionBlock != nil) {
                  completionBlock();
              }
          }];
-        
+
     } else {
 
         NSView *currentView = previousViewController.view;
         NSView *newView = nextViewController.view;
 
+        CGFloat viewWidth = NSWidth(currentView.frame);
+
         if (animate) {
 
             [self startPushNavigation:YES duration:duration];
 
-            NSRect newRect = NSMakeRect(_navContainer.frame.origin.x-currentView.frame.size.width,
-                                        _navContainer.frame.origin.y,
-                                        _navContainer.frame.size.width,
-                                        _navContainer.frame.size.height);
-
-            // make sure the current view is aligned on the left side
-
-            NSRect frame = currentView.frame;
-            frame.origin.x = 0;
-            currentView.frame = frame;
-
             // place the new view
-            newView.frame = NSMakeRect(currentView.frame.size.width,
-                                       currentView.frame.origin.y,
-                                       newView.frame.size.width,
-                                       newView.frame.size.height);
-
-            [_navContainer addSubview:newView];
-
-            [_navContainer
-             animateToNewFrame:newRect
-             duration:duration
-             timingFunction:PB_EASE_INOUT
-             completionBlock:^{
-
-                 // readjust the container and current view;
-
-                 NSRect frame = _navContainer.frame;
-                 frame.origin.x = 0;
-                 _navContainer.frame = frame;
-
-                 frame = newView.frame;
-                 frame.origin.x = 0;
-                 newView.frame = frame;
-
-                 NSViewController *previousController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
-
-                 [previousController.view removeFromSuperview];
-                 //                             [previousController performIfRespondsToSelector:@selector(viewDidDeactivate)];
-
-                 [PBAnimator
-                  animateWithDuration:duration
-                  timingFunction:PB_EASE_INOUT
-                  animation:^{
-
-                      [[NSNotificationCenter defaultCenter]
-                       postNotificationName:kPBNavigationUpdateFrameNotification
-                       object:self
-                       userInfo:nil];
-
-                  } completion:^{
-                      if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
-                          [self.currentViewController viewDidActivate];
-                      }
-                      [self navigationFinished];
-
-                      if (completionBlock != nil) {
-                          completionBlock();
-                      }
-                  }];                 
-             }];
-        } else {
-
-            [self startPushNavigation:NO duration:0.0f];
-
-            NSRect frame = newView.frame;
-            frame.origin.x = 0;
+            NSRect frame = _mainContentContainer.bounds;
+            frame.origin.x = viewWidth;
             newView.frame = frame;
+
+            [_mainContentContainer addSubview:newView];
+
+            CGFloat currentHeight = NSHeight(_mainContentContainer.bounds);
 
             [PBAnimator
              animateWithDuration:duration
              timingFunction:PB_EASE_INOUT
              animation:^{
 
-                 [[NSNotificationCenter defaultCenter]
-                  postNotificationName:kPBNavigationUpdateFrameNotification
-                  object:self
-                  userInfo:nil];
+                 NSRect frame = currentView.frame;
+                 frame.origin.x -= viewWidth;
+
+                 [[currentView animator] setFrame:frame];
+
+                 frame = newView.frame;
+                 frame.origin.x = 0;
+
+                 [[newView animator] setFrame:frame];
 
              } completion:^{
 
-                 if ([self.currentViewController respondsToSelector:@selector(viewDidActivate)]) {
-                     [self.currentViewController viewDidActivate];
+                 [currentView removeFromSuperview];
+
+                 NSSize contentSize = nextViewController.desiredSize;
+
+                 NSSize containerSize =
+                 NSMakeSize(NSWidth(self.view.window.frame),
+                            contentSize.height + _mainContentInsets.top + _mainContentInsets.bottom);
+
+                 [self
+                  updateContainer:containerSize
+                  adjusted:NO
+                  animations:nil
+                  completion:^{
+
+                      [self navigationFinished];
+
+                      if ([nextViewController respondsToSelector:@selector(viewDidActivate)]) {
+                          [nextViewController viewDidActivate];
+                      }
+
+                      if (completionBlock != nil) {
+                          completionBlock();
+                      }
+                  }];
+             }];
+
+        } else {
+
+            [self startPushNavigation:NO duration:0.0f];
+
+            [_mainContentContainer addSubview:nextViewController.view];
+            [previousViewController.view removeFromSuperview];
+
+            [PBAnimator
+             animateWithDuration:duration
+             timingFunction:PB_EASE_INOUT
+             animation:^{
+
+                 if ([self.currentViewController respondsToSelector:@selector(performFrameUpdates)]) {
+                     [self.currentViewController performFrameUpdates];
                  }
+
+             } completion:^{
+
                  [self navigationFinished];
+
+                 if ([nextViewController respondsToSelector:@selector(viewDidActivate)]) {
+                     [nextViewController viewDidActivate];
+                 }
+
                  if (completionBlock != nil) {
                      completionBlock();
                  }
@@ -371,12 +491,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
     if (_viewControllerStack.count > 1) {
 
-        if ([self.editingTitleViewController needsEditableTitleField]) {
-            if ([self.editingTitleViewController respondsToSelector:@selector(titleChanged:)]) {
-                [self.editingTitleViewController titleChanged:_editableTitleField.stringValue];
-            }
-        }
-
         BOOL shouldLeaveCurrentViewController = YES;
 
         if ([self.currentViewController respondsToSelector:@selector(shouldLeaveViewController)]) {
@@ -415,80 +529,54 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         NSView *currentView = currentViewController.view;
         NSView *newView = nextViewController.view;
 
-        _titleField.stringValue = [nextViewController title];
-        _editableTitleField.stringValue = _titleField.stringValue;
-        _editingTitle = NO;
-        self.editingTitleViewController = nil;
+        CGFloat viewWidth = NSWidth(currentView.frame);
 
-        if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
-            _editingTitle = [nextViewController needsEditableTitleField];
-            self.editingTitleViewController = nextViewController;
-        }
-
-        if ([nextViewController respondsToSelector:@selector(placeholderTitleText)]) {
-            ((NSTextFieldCell *)_editableTitleField.cell).placeholderString =
-            [nextViewController placeholderTitleText];
-        } else {
-            ((NSTextFieldCell *)_editableTitleField.cell).placeholderString = nil;
-        }
-
-        BOOL _editingTitle = NO;
-
-        if ([nextViewController respondsToSelector:@selector(needsEditableTitleField)]) {
-            _editingTitle = [nextViewController needsEditableTitleField];
-        }
-
-        _titleField.hidden = _editingTitle;
-        _editableTitleField.hidden = !_editingTitle;
+        _navBarTitleField.stringValue = [nextViewController title];
 
         if (animate) {
 
             [self startPopNavigation:YES duration:duration];
 
-            // move the parent frame
-            _navContainer.frame = NSMakeRect(-newView.frame.size.width,
-                                         _navContainer.frame.origin.y,
-                                         _navContainer.frame.size.width,
-                                         _navContainer.frame.size.height);
+            // place the new view
+            newView.frame =
+            NSMakeRect(-viewWidth,
+                       NSMinY(currentView.frame),
+                       viewWidth,
+                       NSHeight(currentView.frame));
 
-            // place the current view
-            currentView.frame = NSMakeRect(newView.frame.size.width,
-                                           currentView.frame.origin.y,
-                                           currentView.frame.size.width,
-                                           currentView.frame.size.height);
+            [_mainContentContainer addSubview:newView];
 
-            // reposition the new view
-            newView.frame = NSMakeRect(0,
-                                       currentView.frame.origin.y,
-                                       currentView.frame.size.width,
-                                       currentView.frame.size.height);
-
-            [_navContainer addSubview:newView];
-
-            NSRect newRect = NSMakeRect(0,
-                                        _navContainer.frame.origin.y,
-                                        _navContainer.frame.size.width,
-                                        _navContainer.frame.size.height);
-
-            [_navContainer
-             animateToNewFrame:newRect
-             duration:duration
+            [PBAnimator
+             animateWithDuration:duration
              timingFunction:PB_EASE_INOUT
-             completionBlock:^{
-                 NSViewController<PBNavigationViewProtocol> *nextViewController = [_viewControllerStack objectAtIndex:_viewControllerStack.count - 2];
-                 [currentViewController.view removeFromSuperview];
+             animation:^{
 
-                 [PBAnimator
-                  animateWithDuration:duration
-                  timingFunction:PB_EASE_INOUT
-                  animation:^{
+                 NSRect frame = currentView.frame;
+                 frame.origin.x += viewWidth;
 
-                      [[NSNotificationCenter defaultCenter]
-                       postNotificationName:kPBNavigationUpdateFrameNotification
-                       object:self
-                       userInfo:nil];
+                 [[currentView animator] setFrame:frame];
 
-                  } completion:^{
+                 frame = newView.frame;
+                 frame.origin.x = 0;
+
+                 [[newView animator] setFrame:frame];
+
+             } completion:^{
+
+                 [currentView removeFromSuperview];
+
+                 NSSize contentSize = nextViewController.desiredSize;
+
+                 NSSize containerSize =
+                 NSMakeSize(NSWidth(self.view.window.frame),
+                            contentSize.height + _mainContentInsets.top + _mainContentInsets.bottom);
+
+                 [self
+                  updateContainer:containerSize
+                  adjusted:NO
+                  animations:nil
+                  completion:^{
+
                       [self navigationFinished];
 
                       if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
@@ -511,36 +599,36 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
             [self startPopNavigation:NO duration:0.0f];
             
-            [_navContainer replaceSubview:currentView with:newView];
-
-            [PBAnimator
-             animateWithDuration:duration
-             timingFunction:PB_EASE_INOUT
-             animation:^{
-
-                 [[NSNotificationCenter defaultCenter]
-                  postNotificationName:kPBNavigationUpdateFrameNotification
-                  object:self
-                  userInfo:nil];
-
-             } completion:^{
-
-                 [self navigationFinished];
-
-                 if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
-                     [currentViewController viewDidDeactivate];
-                 }
-
-                 if ([nextViewController respondsToSelector:@selector(viewDidAppear)]) {
-                     [nextViewController viewDidAppear];
-                 }
-
-                 [_viewControllerStack removeLastObject];
-                 
-                 if (completionBlock != nil) {
-                     completionBlock();
-                 }
-             }];
+//            [_navContainer replaceSubview:currentView with:newView];
+//
+//            [PBAnimator
+//             animateWithDuration:duration
+//             timingFunction:PB_EASE_INOUT
+//             animation:^{
+//
+//                 [[NSNotificationCenter defaultCenter]
+//                  postNotificationName:kPBNavigationUpdateFrameNotification
+//                  object:self
+//                  userInfo:nil];
+//
+//             } completion:^{
+//
+//                 [self navigationFinished];
+//
+//                 if ([currentViewController respondsToSelector:@selector(viewDidDeactivate)]) {
+//                     [currentViewController viewDidDeactivate];
+//                 }
+//
+//                 if ([nextViewController respondsToSelector:@selector(viewDidAppear)]) {
+//                     [nextViewController viewDidAppear];
+//                 }
+//
+//                 [_viewControllerStack removeLastObject];
+//                 
+//                 if (completionBlock != nil) {
+//                     completionBlock();
+//                 }
+//             }];
         }
     } else {
 
@@ -548,32 +636,6 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
             completionBlock();
         }
     }
-}
-
-#pragma mark - NSTextFieldDelegate Conformance
-
-- (void)controlTextDidChange:(NSNotification *)notification {
-}
-
-- (BOOL)control:(NSControl *)control isValidObject:(id)object {
-
-    BOOL valid = NO;
-
-    if ([object isKindOfClass:[NSString class]]) {
-        valid = ((NSString *)object).length > 0;
-    }
-
-    if (valid) {
-        if ([self.editingTitleViewController respondsToSelector:@selector(titleChanged:)]) {
-            [self.editingTitleViewController titleChanged:object];
-        }
-    }
-
-    return valid;
-}
-
-- (BOOL)control:(NSControl *)control textShouldEndEditing:(NSText *)fieldEditor {
-    return fieldEditor.string.length > 0;
 }
 
 #pragma mark - Key handling
@@ -591,6 +653,17 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
         }
     }
 
+}
+
+#pragma mark - PBClickableLabelDelegate Conformance
+
+- (void)labelClicked:(PBClickableLabel *)label {
+}
+
+- (void)labelMouseUp:(PBClickableLabel *)label {
+}
+
+- (void)labelDoubleClicked:(PBClickableLabel *)label {
 }
 
 @end

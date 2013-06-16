@@ -35,6 +35,24 @@
     return self;
 }
 
+- (void)setFrame:(NSRect)frameRect display:(BOOL)displayFlag animate:(BOOL)animateFlag {
+    [super setFrame:frameRect display:displayFlag animate:animateFlag];
+
+//    NSLog(@"%s frame: %@", __PRETTY_FUNCTION__, NSStringFromRect(frameRect));
+}
+
+- (void)setFrame:(NSRect)frameRect display:(BOOL)displayFlag {
+    [super setFrame:frameRect display:displayFlag];
+
+//    NSLog(@"%s frame: %@", __PRETTY_FUNCTION__, NSStringFromRect(frameRect));
+}
+
+- (void)setFrameOrigin:(NSPoint)point {
+    [super setFrameOrigin:point];
+
+//    NSLog(@"%s origin: %@", __PRETTY_FUNCTION__, NSStringFromPoint(point));
+}
+
 - (void)commonInit {
     self.userInteractionEnabled = YES;
     _forceMouseEventsToMoveableView = NO;

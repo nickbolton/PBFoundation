@@ -10,24 +10,12 @@
 #import <QuartzCore/QuartzCore.h>
 #import "PBRunningAverageValue.h"
 
-static CVReturn PBPopoverViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
-                                                 const CVTimeStamp* nowTimestamp,
-                                                 const CVTimeStamp* outputTime,
-                                                 CVOptionFlags flagsIn,
-                                                 CVOptionFlags* flagsOut,
-                                                 void* displayLinkContext);
-
 static NSTimeInterval const kPBPopoverAnimationDuration = .15f;
-
-static PBPopoverView *_PBPopoverViewInstance = nil;
 
 @interface PBPopoverView() {
 
-    CVDisplayLinkRef _displayLink;
     CGFloat _beakTargetPosition;
     CGFloat _beakCurrentPosition;
-    CGFloat _remainingAnimationDuration;
-    CGFloat _beakDelta;
 }
 
 @property (nonatomic, strong) PBRunningAverageValue *beakPosition;
@@ -52,17 +40,11 @@ static PBPopoverView *_PBPopoverViewInstance = nil;
     return self;
 }
 
-- (void)dealloc {
-
-    if (_displayLink != nil) {
-        CVDisplayLinkRelease(_displayLink);
-        _displayLink = nil;
-    }
-}
-
 - (void)commonInit {
+    [super commonInit];
     self.beakPosition = [[PBRunningAverageValue alloc] init];
     _beakPosition.queueSize = 1;
+
 }
 
 - (void)setSmoothingBeakMovement:(BOOL)smoothingBeakMovement {
@@ -77,44 +59,10 @@ static PBPopoverView *_PBPopoverViewInstance = nil;
     [self resetBeak];
 }
 
-- (void)setAnimating:(BOOL)animating {
-    _animating = animating;
-
-    if (_animating) {
-
-        if (_displayLink == nil) {
-            _PBPopoverViewInstance = self;
-            CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
-            CVDisplayLinkSetOutputCallback(_displayLink, &PBPopoverViewDisplayLinkCallback, (__bridge void*)self);
-            CVDisplayLinkStart(_displayLink);
-        }
-
-    } else {
-
-        CVDisplayLinkRelease(_displayLink);
-        _displayLink = nil;
-    }
-}
-
 - (void)resetBeak {
     [self.beakPosition clearRunningValues];
     [self setNeedsDisplay:YES];
 
-    if (_animating) {
-        _beakTargetPosition = [self calculateBeakPosition];
-        _remainingAnimationDuration = kPBPopoverAnimationDuration;
-        _beakDelta = (_beakTargetPosition - _beakCurrentPosition) / (60.0f * kPBPopoverAnimationDuration);
-    }
-}
-
-- (void)setBeakReferencePoint:(NSPoint)beakReferencePoint {
-    _beakReferencePoint = beakReferencePoint;
-
-    if (_animating) {
-        _beakTargetPosition = [self calculateBeakPosition];
-        _remainingAnimationDuration = kPBPopoverAnimationDuration;
-        _beakDelta = (_beakTargetPosition - _beakCurrentPosition) / (60.0f * kPBPopoverAnimationDuration);
-    }
 }
 
 - (CGFloat)calculateBeakPosition {
@@ -157,29 +105,13 @@ static PBPopoverView *_PBPopoverViewInstance = nil;
                         _flipped);
 
     self.beakPosition.value = [self calculateBeakPosition];
-    
-    if ((_animating ||_beakPosition.value >= 0.0f) && _beakVisible) {
+
+    if (_beakPosition.value >= 0.0f && _beakVisible) {
         NSRect beakFrame;
 
         CGFloat xPos;
 
-        if (_animating) {
-
-            xPos = _beakCurrentPosition + _beakDelta;
-
-            if (_beakDelta >= 0.0f) {
-
-                xPos = MIN(xPos, _beakTargetPosition);
-
-            } else {
-
-                xPos = MAX(xPos, _beakTargetPosition);
-            }
-
-        } else {
-
-            xPos = self.beakPosition.value;
-        }
+        xPos = self.beakPosition.value;
 
         _beakCurrentPosition = xPos;
 
@@ -213,12 +145,3 @@ static PBPopoverView *_PBPopoverViewInstance = nil;
 }
 
 @end
-
-static CVReturn PBPopoverViewDisplayLinkCallback(CVDisplayLinkRef displayLink,
-                                                 const CVTimeStamp* nowTimestamp,
-                                                 const CVTimeStamp* outputTime,
-                                                 CVOptionFlags flagsIn,
-                                                 CVOptionFlags* flagsOut,
-                                                 void* displayLinkContext) {
-    [_PBPopoverViewInstance setNeedsDisplay:YES];
-}

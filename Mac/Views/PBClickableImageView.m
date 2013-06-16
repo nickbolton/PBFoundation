@@ -11,6 +11,7 @@
 @interface PBClickableImageView() {
 
     BOOL _didPan;
+    BOOL _lookingForMouseUp;
 }
 
 @property (nonatomic) NSPoint mouseDownMouseLocation;
@@ -66,11 +67,36 @@
     [_delegate moveableViewMouseDown:self];
 }
 
+- (void)lookingForMouseUp {
+
+    if (_lookingForMouseUp) {
+
+        double delayInSeconds = .1f;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+
+            if ([NSEvent pressedMouseButtons] == 0) {
+                _lookingForMouseUp = NO;
+                [self mouseUp:nil];
+            } else {
+                [self lookingForMouseUp];
+            }
+        });
+    }
+}
+
 - (void)mouseDragged:(NSEvent *)event {
     
     _didPan = YES;
 
     if (_enabled) {
+
+        if (_dragging == NO) {
+            [self mouseDown:nil];
+            _lookingForMouseUp = YES;
+            [self lookingForMouseUp];
+        }
+
         NSPoint currentLocation;
         NSPoint newOrigin;
 
@@ -84,6 +110,8 @@
         newOrigin = _mouseDownWindowLocation;
         newOrigin.x += currentLocation.x - _mouseDownMouseLocation.x;
         newOrigin.y += currentLocation.y - _mouseDownMouseLocation.y;
+
+        NSLog(@"%@ -> %@", NSStringFromPoint(_mouseDownWindowLocation), NSStringFromPoint(newOrigin));
 
         CGFloat minY = _screenInsets.bottom;
         CGFloat maxY = NSMaxY(screenFrame) - _screenInsets.top;

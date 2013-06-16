@@ -8,7 +8,11 @@
 
 #import "PBMoveableView.h"
 
-@interface PBMoveableView()
+@interface PBMoveableView() {
+
+    BOOL _lookingForMouseUp;
+}
+
 @property (nonatomic) NSPoint mouseDownMouseLocation;
 @property (nonatomic) NSPoint mouseDownWindowLocation;
 @property (nonatomic, getter = isDragging, readwrite) BOOL dragging;
@@ -42,6 +46,10 @@
      object:self.window];
 }
 
+- (void)setEnabled:(BOOL)enabled {
+    _enabled = enabled;
+}
+
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -51,27 +59,56 @@
 }
 
 - (void)mouseDown:(NSEvent *)event {
-    [super mouseDown:event];
-    self.dragging = YES;
-    _mouseDownWindowLocation = self.window.frame.origin;
-    _mouseDownMouseLocation = [NSEvent mouseLocation];
 
-    [_delegate moveableViewMouseDown:self];
+    if (_enabled) {
+        self.dragging = YES;
+        _mouseDownWindowLocation = self.window.frame.origin;
+        _mouseDownMouseLocation = [NSEvent mouseLocation];
+
+        [_delegate moveableViewMouseDown:self];
+    }
 }
 
 - (void)mouseUp:(NSEvent *)event {
-    [super mouseUp:event];
-    self.dragging = NO;
-    [_delegate moveableViewMouseUp:self];
 
-    if ([self.window isKindOfClass:[PBMainWindow class]]) {
-        ((PBMainWindow *)self.window).forceMouseEventsToMoveableView = NO;
+    self.dragging = NO;
+    if (_enabled) {
+        [_delegate moveableViewMouseUp:self];
+
+        if ([self.window isKindOfClass:[PBMainWindow class]]) {
+            ((PBMainWindow *)self.window).forceMouseEventsToMoveableView = NO;
+        }
+    }
+}
+
+- (void)lookingForMouseUp {
+
+    if (_lookingForMouseUp) {
+
+        double delayInSeconds = .1f;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+
+            if ([NSEvent pressedMouseButtons] == 0) {
+                _lookingForMouseUp = NO;
+                [self mouseUp:nil];
+            } else {
+                [self lookingForMouseUp];
+            }
+        });
     }
 }
 
 - (void)mouseDragged:(NSEvent *)event {
-
+    
     if (_enabled) {
+
+        if (_dragging == NO) {
+            [self mouseDown:nil];
+            _lookingForMouseUp = YES;
+            [self lookingForMouseUp];
+        }
+
         NSPoint currentLocation;
         NSPoint newOrigin;
 

@@ -11,6 +11,7 @@
 @implementation PBClickableLabel
 
 - (void)mouseDown:(NSEvent *)event {
+    [super mouseDown:event];
 
     if ([_delegate respondsToSelector:@selector(labelClicked:)]) {
         [_delegate labelClicked:self];
@@ -25,6 +26,7 @@
 }
 
 - (void)mouseUp:(NSEvent *)event {
+    [super mouseUp:event];
 
     if ([_delegate respondsToSelector:@selector(labelMouseUp:)]) {
         [_delegate labelMouseUp:self];
