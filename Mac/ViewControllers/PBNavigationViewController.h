@@ -22,9 +22,6 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 @property (nonatomic, weak) PBNavigationViewController *navigationViewController;
 
 @optional
-- (BOOL)needsEditableTitleField;
-- (void)titleChanged:(NSString *)title;
-- (NSString *)placeholderTitleText;
 - (BOOL)shouldLeaveViewController;
 
 @required
@@ -62,8 +59,8 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 @property (nonatomic, weak) IBOutlet NSButton *modalBackButton;
 @property (nonatomic, weak) IBOutlet PBStretchableBackgroundView *modalPillCenterView;
 
+@property (nonatomic, readonly) NSEdgeInsets mainContentInsets;
 @property (nonatomic, readonly) NSMutableArray *viewControllerStack;
-
 @property (nonatomic, readonly) NSViewController<PBNavigationViewProtocol> *currentViewController;
 @property (nonatomic, getter = isModal, readonly) BOOL modal;
 @property (nonatomic) CGFloat defaultContainerWidth;
@@ -88,7 +85,11 @@ extern NSString *kPBNavigationDisableUserInteractionNotification;
 - (void)startPushNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
 - (void)startPopNavigation:(BOOL)animate duration:(NSTimeInterval)duration;
 - (void)navigationFinished;
-- (void)updateTitle;
+- (void)updateTitle:(BOOL)animated;
+- (void)updateContentContainer:(NSSize)size
+                      adjusted:(BOOL)adjusted
+                    animations:(void(^)(void))animations
+                    completion:(void(^)(void))completionBlock;
 - (void)updateContainer:(NSSize)size
                adjusted:(BOOL)adjusted
              animations:(void(^)(void))animations

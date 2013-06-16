@@ -28,6 +28,11 @@ typedef void(^NSViewAnimationCompletionBlock)(id userContext);
              middleBlock:(void (^)(void))middleBlock
          completionBlock:(void (^)(void))completionBlock;
 
+- (void)animateFadeOutIn:(CGFloat)duration
+              animations:(void (^)(void))animations
+             middleBlock:(void (^)(void))middleBlock
+         completionBlock:(void (^)(void))completionBlock;
+
 - (void)animateFadeOut:(CGFloat)duration
         timingFunction:(CAMediaTimingFunction *)timingFunction
        completionBlock:(void (^)(void))completionBlock;

@@ -13,6 +13,16 @@
 - (NSRect)titleRectForBounds:(NSRect)theRect {
     NSRect titleFrame = [super titleRectForBounds:theRect];
     NSSize titleSize = [[self attributedStringValue] size];
+
+    if (_leftInset > 0) {
+        titleFrame.origin.x += _leftInset;
+        titleFrame.size.width -= _leftInset;
+    }
+
+    if (_rightInset > 0) {
+        titleFrame.size.width -= _rightInset;
+    }
+
     titleFrame.origin.y = _yoffset + theRect.origin.y - .5 + (theRect.size.height - titleSize.height) / 2.0;
     return NSIntegralRect(titleFrame);
 }

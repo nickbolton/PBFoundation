@@ -12,5 +12,7 @@
 }
 
 @property (nonatomic, assign) NSInteger yoffset;
+@property (nonatomic, assign) NSInteger leftInset;
+@property (nonatomic, assign) NSInteger rightInset;
 
 @end

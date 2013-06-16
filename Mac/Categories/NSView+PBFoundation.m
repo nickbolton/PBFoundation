@@ -189,11 +189,27 @@ completionBlock:(void (^)(void))completionBlock {
 - (void)animateFadeOutIn:(CGFloat)duration
              middleBlock:(void (^)(void))middleBlock
          completionBlock:(void (^)(void))completionBlock {
+    [self
+     animateFadeOutIn:duration
+     animations:nil
+     middleBlock:middleBlock
+     completionBlock:completionBlock];
+}
+
+- (void)animateFadeOutIn:(CGFloat)duration
+              animations:(void (^)(void))animations
+             middleBlock:(void (^)(void))middleBlock
+         completionBlock:(void (^)(void))completionBlock {
+
+    CGFloat alphaValue = self.alphaValue;
 
     [PBAnimator
      animateWithDuration:duration
      timingFunction:PB_EASE_IN
      animation:^{
+         if (animations != nil) {
+             animations();
+         }
          [[self animator] setAlphaValue:0.0f];
      }
      completion:^{
@@ -205,7 +221,7 @@ completionBlock:(void (^)(void))completionBlock {
           animateWithDuration:duration
           timingFunction:PB_EASE_OUT
           animation:^{
-              [[self animator] setAlphaValue:1.0f];
+              [[self animator] setAlphaValue:alphaValue];
           }
           completion:^{
               if (completionBlock != nil) {

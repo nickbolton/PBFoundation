@@ -19,10 +19,10 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     NSSize _previousContainerSize;
     NSSize _previousContentSize;
     BOOL _firstAnimation;
-    NSEdgeInsets _mainContentInsets;
 }
 
 @property (nonatomic, readwrite) NSMutableArray *viewControllerStack;
+@property (nonatomic, readwrite) NSEdgeInsets mainContentInsets;
 @property (nonatomic, strong) NSViewController *altCurrentViewController;
 @property (nonatomic, strong) NSView *modalView;
 
@@ -76,9 +76,23 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
     _navBarTitleField.stringValue = title;
 }
 
-- (void)updateTitle {
-    _navBarTitleField.stringValue =
-    [NSString safeString:[self.currentViewController title]];
+- (void)updateTitle:(BOOL)animated {
+
+    void (^executionBlock)(void) = ^{
+        _navBarTitleField.stringValue =
+        [NSString safeString:[self.currentViewController title]];
+    };
+
+    if (animated) {
+
+        [_navBarTitleField
+         animateFadeOutIn:PB_WINDOW_ANIMATION_DURATION
+         middleBlock:executionBlock
+         completionBlock:nil];
+        
+    } else {
+        executionBlock();
+    }
 }
 
 - (IBAction)backPressed:(id)sender {
@@ -242,6 +256,22 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
              completion:(void(^)(void))completionBlock {
 }
 
+- (void)updateContentContainer:(NSSize)contentSize
+                      adjusted:(BOOL)adjusted
+                    animations:(void(^)(void))animations
+                    completion:(void(^)(void))completionBlock {
+
+    NSSize containerSize =
+    NSMakeSize(NSWidth(self.view.window.frame),
+               contentSize.height + self.mainContentInsets.top + self.mainContentInsets.bottom);
+
+    [self
+     updateContainer:containerSize
+     adjusted:NO
+     animations:nil
+     completion:completionBlock];
+}
+
 - (void)pushViewController:(NSViewController<PBNavigationViewProtocol> *)nextViewController
                    animate:(BOOL)animate {
     [self pushViewController:nextViewController animate:animate completion:nil];
@@ -399,14 +429,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
                  [currentView removeFromSuperview];
 
-                 NSSize contentSize = nextViewController.desiredSize;
-
-                 NSSize containerSize =
-                 NSMakeSize(NSWidth(self.view.window.frame),
-                            contentSize.height + _mainContentInsets.top + _mainContentInsets.bottom);
-
                  [self
-                  updateContainer:containerSize
+                  updateContentContainer:nextViewController.desiredSize
                   adjusted:NO
                   animations:nil
                   completion:^{
@@ -565,14 +589,8 @@ NSString *kPBNavigationDisableUserInteractionNotification = @"kPBNavigationDisab
 
                  [currentView removeFromSuperview];
 
-                 NSSize contentSize = nextViewController.desiredSize;
-
-                 NSSize containerSize =
-                 NSMakeSize(NSWidth(self.view.window.frame),
-                            contentSize.height + _mainContentInsets.top + _mainContentInsets.bottom);
-
                  [self
-                  updateContainer:containerSize
+                  updateContentContainer:nextViewController.desiredSize
                   adjusted:NO
                   animations:nil
                   completion:^{
