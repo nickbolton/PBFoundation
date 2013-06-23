@@ -15,4 +15,7 @@
 
 - (NSColor *)colorWithAlpha:(CGFloat)alpha;
 
+- (CGColorRef)cgColorRef;
+- (NSInteger)hexValue;
+
 @end

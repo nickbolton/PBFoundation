@@ -12,12 +12,28 @@ NSInteger const kPBEventAllModifiersMask = NSNumericPadKeyMask | NSAlphaShiftKey
 
 @implementation NSEvent (PBFoundation)
 
-+ (BOOL)isCurrentModifiersExactly:(NSUInteger)modifiers {
-    return (kPBEventAllModifiersMask & [NSEvent modifierFlags]) == modifiers;
++ (BOOL)isCurrentModifiersEqualsTo:(NSInteger)modifierMask {
+    return ([NSEvent modifierFlags] & kPBEventAllModifiersMask) == modifierMask;
 }
 
-- (BOOL)isModifiersExactly:(NSUInteger)modifiers {
-    return (kPBEventAllModifiersMask & [self modifierFlags]) == modifiers;
++ (BOOL)isCurrentModifiersNone {
+    return ([NSEvent modifierFlags] & kPBEventAllModifiersMask) == 0;
+}
+
++ (BOOL)currentModifiersContains:(NSInteger)modifierMask {
+    return ([NSEvent modifierFlags] & modifierMask) != 0;
+}
+
+- (BOOL)isModifiersEqualsTo:(NSInteger)modifierMask {
+    return (self.modifierFlags & kPBEventAllModifiersMask) == modifierMask;
+}
+
+- (BOOL)isModifiersNone {
+    return (self.modifierFlags & kPBEventAllModifiersMask) == 0;
+}
+
+- (BOOL)modifiersContains:(NSInteger)modifierMask {
+    return (self.modifierFlags & modifierMask) != 0;
 }
 
 @end

@@ -12,7 +12,12 @@ extern NSInteger const kPBEventAllModifiersMask;
 
 @interface NSEvent (PBFoundation)
 
-+ (BOOL)isCurrentModifiersExactly:(NSUInteger)modifiers;
-- (BOOL)isModifiersExactly:(NSUInteger)modifiers;
++ (BOOL)isCurrentModifiersEqualsTo:(NSInteger)modifierMask;
++ (BOOL)isCurrentModifiersNone;
++ (BOOL)currentModifiersContains:(NSInteger)modifierMask;
+
+- (BOOL)isModifiersEqualsTo:(NSInteger)modifierMask;
+- (BOOL)isModifiersNone;
+- (BOOL)modifiersContains:(NSInteger)modifierMask;
 
 @end
