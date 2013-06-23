@@ -22,4 +22,10 @@
     return YES;
 }
 
+#pragma mark - Key Handling
+
+- (void)keyDown:(NSEvent *)event {
+    [_delegate handleKeyEvent:event];
+}
+
 @end

@@ -13,24 +13,27 @@
 - (void)mouseDown:(NSEvent *)event {
     [super mouseDown:event];
     
-    if ([_clickableViewDelegate respondsToSelector:@selector(viewMousedDown:atPoint:)]) {
-        [_clickableViewDelegate viewMousedDown:self atPoint:event.locationInWindow];
+    if ([self.delegate respondsToSelector:@selector(viewMousedDown:atPoint:)]) {
+        [(id<PBClickableViewDelegate>)self.delegate
+         viewMousedDown:self atPoint:event.locationInWindow];
     }
 }
 
 - (void)mouseUp:(NSEvent *)event {
     [super mouseUp:event];
 
-    if ([_clickableViewDelegate respondsToSelector:@selector(viewMousedUp:atPoint:)]) {
-        [_clickableViewDelegate viewMousedUp:self atPoint:event.locationInWindow];
+    if ([self.delegate respondsToSelector:@selector(viewMousedUp:atPoint:)]) {
+        [(id<PBClickableViewDelegate>)self.delegate
+         viewMousedUp:self atPoint:event.locationInWindow];
     }
 }
 
 - (void)mouseDragged:(NSEvent *)event {
     [super mouseDragged:event];
 
-    if ([_clickableViewDelegate respondsToSelector:@selector(viewMouseDragged:atPoint:)]) {
-        [_clickableViewDelegate viewMouseDragged:self atPoint:event.locationInWindow];
+    if ([self.delegate respondsToSelector:@selector(viewMouseDragged:atPoint:)]) {
+        [(id<PBClickableViewDelegate>)self.delegate
+         viewMouseDragged:self atPoint:event.locationInWindow];
     }
 }
 

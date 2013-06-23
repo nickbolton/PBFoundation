@@ -7,6 +7,14 @@
 
 #import <Cocoa/Cocoa.h>
 
+@protocol PBAcceptsFirstViewDelegate <NSObject>
+
+- (void)handleKeyEvent:(NSEvent *)event;
+
+@end
+
 @interface PBAcceptsFirstView : NSView
+
+@property (nonatomic, weak) IBOutlet id <PBAcceptsFirstViewDelegate> delegate;
 
 @end

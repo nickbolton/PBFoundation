@@ -11,7 +11,7 @@
 
 @class PBClickableView;
 
-@protocol PBClickableViewDelegate <NSObject>
+@protocol PBClickableViewDelegate <PBAcceptsFirstViewDelegate>
 
 @optional
 - (void)viewMousedDown:(PBClickableView *)view atPoint:(NSPoint)point;
@@ -21,7 +21,5 @@
 @end
 
 @interface PBClickableView : PBAcceptsFirstView
-
-@property (nonatomic, weak) IBOutlet id <PBClickableViewDelegate> clickableViewDelegate;
 
 @end
