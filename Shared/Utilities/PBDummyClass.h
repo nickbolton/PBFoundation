@@ -1,0 +1,1 @@
+@interface PBDummyClass : NSObject {} @end

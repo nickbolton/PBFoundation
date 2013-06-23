@@ -1,0 +1,2 @@
+@implementation PBDummyClass
+@end
