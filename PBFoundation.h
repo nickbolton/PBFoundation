@@ -26,6 +26,7 @@
 #import "PBDateRange.h"
 #import "PBCalendarManager.h"
 #import "NSDate+PBFoundation.h"
+#import "PBDummyClass.h"
 
 #if TARGET_OS_IPHONE
 #import "PBActionDelegate.h"
