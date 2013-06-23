@@ -56,6 +56,7 @@
 #import "PBMainWindow.h"
 #import "PBAnimator.h"
 #import "PBClickableLabel.h"
+#import "PBClickableView.h"
 
 #endif
 
