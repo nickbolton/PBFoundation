@@ -10,6 +10,62 @@
 #import "PBDrawingCanvas.h"
 #import "PBResizableView.h"
 
+#define DISTANCE(x, y) ( ((x) < (y)) ? ((y) - (x)) : ((x) - (y)) )
+
+NSPoint PBDrawingToolClosestPointInRect(NSPoint pt, NSRect rc) {
+    float x, y;
+    if (pt.x < NSMinX(rc))
+        x = NSMinX(rc);
+    else if (pt.x > NSMaxX(rc))
+        x = NSMaxX(rc);
+    else
+        x = pt.x;
+
+    if (pt.y < NSMinY(rc))
+        y = NSMinY(rc);
+    else if (pt.y > NSMaxY(rc))
+        y = NSMaxY(rc);
+    else
+        y = pt.y;
+
+    return NSMakePoint(x, y);
+}
+
+NSPoint PBDrawingToolClosestPointOnRectEdge(NSPoint pt, NSRect rc) {
+    if (NSPointInRect(pt, rc) == NO)
+        return PBDrawingToolClosestPointInRect(pt, rc);
+
+    // find closest edge
+
+    float d[4];
+    d[0] = pt.x - NSMinX(rc);
+    d[1] = pt.y - NSMinY(rc);
+    d[2] = NSMaxX(rc) - pt.x;
+    d[3] = NSMaxY(rc) - pt.y;
+
+    // find minimum in the array d[]
+    int i_min = 0;
+    float d_min = d[i_min];
+    int i;
+    for (i=1; i < 4; ++i)
+        if (d[i] < d_min)
+            d_min = d[ i_min = i ];
+
+    NSPoint result;
+    switch (i_min)
+    {
+        case 0: result = NSMakePoint(NSMinX(rc), pt.y); break;
+        case 1: result = NSMakePoint(pt.x, NSMinY(rc)); break;
+        case 2: result = NSMakePoint(NSMaxX(rc), pt.y); break;
+        case 3: result = NSMakePoint(pt.x, NSMaxY(rc)); break;
+    }
+    return result;
+}
+
+CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
+    return MIN( DISTANCE(a.x, b.x), DISTANCE(a.y, b.y) );
+}
+
 @interface PBDrawingTool() {
 }
 
@@ -19,7 +75,26 @@
 @implementation PBDrawingTool
 
 - (PBResizableView *)mouseInteractingViewInCanvas:(PBDrawingCanvas *)canvas {
-    return canvas.selectedViews.lastObject;
+
+    PBResizableView *result = nil;
+    CGFloat minDistance = MAXFLOAT;
+
+    NSPoint mouseLocation = [canvas windowLocationOfMouse];
+
+    for (PBResizableView *view in canvas.toolViews) {
+
+        NSPoint closestPoint =
+        PBDrawingToolClosestPointOnRectEdge(mouseLocation, view.frame);
+
+        CGFloat distance = PBDrawingToolDistance(closestPoint, mouseLocation);
+
+        if (distance < minDistance) {
+            result = view;
+            minDistance = distance;
+        }
+    }
+
+    return result;
 }
 
 - (void)cleanup {
@@ -127,6 +202,11 @@
 
     static CGFloat detectSize = 10.0f;
 
+    if ([NSEvent isCurrentModifiersExactly:NSAlternateKeyMask]) {
+        _resizeType = PBPResizeTypeNone;
+        return;
+    }
+
     NSRect frame;
 
     // up-left
@@ -233,7 +313,6 @@
         return;
     }
 
-    _resizeType = PBPResizeTypeNone;
 }
 
 - (void)setCursorForResizeType {

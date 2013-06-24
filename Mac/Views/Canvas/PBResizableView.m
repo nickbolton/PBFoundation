@@ -7,6 +7,10 @@
 //
 
 #import "PBResizableView.h"
+#import "PBGuideView.h"
+
+@interface PBResizableView()
+@end
 
 @implementation PBResizableView
 
@@ -19,19 +23,52 @@
 }
 
 - (void)setFrame:(NSRect)frameRect {
+
     frameRect.origin = [self roundedPoint:frameRect.origin];
     frameRect.size = [self roundedSize:frameRect.size];
 
+    BOOL changed = NSEqualRects(frameRect, self.frame);
+
     [super setFrame:frameRect];
+
+    if (changed) {
+        if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
+            [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
+        }
+    }
 }
 
 - (void)setFrameOrigin:(NSPoint)newOrigin {
-    [super setFrameOrigin:[self roundedPoint:newOrigin]];
+
+    newOrigin = [self roundedPoint:newOrigin];
+
+    BOOL changed = NSEqualPoints(newOrigin, self.frame.origin);
+
+    [super setFrameOrigin:newOrigin];
+
+    if (changed) {
+        if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
+            [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
+        }
+    }
 }
 
 - (void)setFrameSize:(NSSize)newSize {
-    [super setFrameSize:[self roundedSize:newSize]];
+
+    newSize = [self roundedSize:newSize];
+
+    BOOL changed = NSEqualSizes(newSize, self.frame.size);
+
+    [super setFrameSize:newSize];
+
+    if (changed) {
+        if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
+            [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
+        }
+    }
 }
+
+#pragma mark - Drawing
 
 - (void)drawRect:(NSRect)dirtyRect {
 

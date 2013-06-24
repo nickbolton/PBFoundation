@@ -70,6 +70,11 @@
 
             self.moving = YES;
         }
+
+        if ([NSEvent isCurrentModifiersExactly:NSAlternateKeyMask]) {
+            self.resizeType = PBPResizeTypeNone;
+        }
+
         return;
     }
 
@@ -95,12 +100,16 @@
        inCanvas:(PBDrawingCanvas *)canvas {
 
     [super mouseUp:view atPoint:point inCanvas:canvas];
+
+    if (NSEqualSizes(NSZeroSize, canvas.resizingView.frame.size)) {
+        [canvas deleteViews:@[canvas.resizingView]];
+        return;
+    }
     
     if (self.didMove == NO && [NSEvent isCurrentModifiersExactly:NSCommandKeyMask] == NO) {
         if (canvas.resizingView != nil) {
 
-            NSArray *subviews = [canvas.subviews copy];
-            for (PBResizableView *view in subviews) {
+            for (PBResizableView *view in canvas.toolViews) {
                 if (view != canvas.resizingView) {
                     [canvas deselectView:view];
                 }
@@ -119,6 +128,8 @@
     }
 
     self.moving = NO;
+
+    [canvas updateGuides];
 }
 
 - (void)mouseDragged:(PBClickableView *)view

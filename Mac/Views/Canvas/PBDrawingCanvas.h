@@ -15,6 +15,15 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasToolType) {
     PBDrawingCanvasToolTypeRectangle,
 };
 
+typedef NS_ENUM(NSInteger, PBGuidePosition) {
+
+    PBGuidePositionLeft = 0,
+    PBGuidePositionRight,
+    PBGuidePositionTop,
+    PBGuidePositionBottom,
+};
+
+
 @class PBDrawingCanvas;
 @class PBResizableView;
 
@@ -45,12 +54,19 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasToolType) {
 @interface PBDrawingCanvas : PBClickableView <PBAcceptsFirstViewDelegate>
 
 @property (nonatomic) PBDrawingCanvasToolType toolType;
+@property (nonatomic) NSColor *toolColor;
+@property (nonatomic) NSColor *toolSelectedColor;
+@property (nonatomic) NSColor *toolBorderColor;
+@property (nonatomic) NSInteger toolBorderWidth;
+@property (nonatomic) BOOL showSelectionGuides;
 
 // private
 
 @property (nonatomic, readonly) NSMutableArray *selectedViews;
+@property (nonatomic, readonly) NSMutableArray *toolViews;
 @property (nonatomic, strong) PBResizableView *resizingView;
 @property (nonatomic, readonly) NSMutableDictionary *mouseDownSelectedViewOrigins;
+@property (nonatomic, strong) NSColor *backgroundColor;
 
 - (NSPoint)roundedPoint:(NSPoint)point;
 - (NSRect)roundedRect:(NSRect)rect;
@@ -67,5 +83,6 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasToolType) {
 - (NSPoint)windowLocationOfMouse;
 - (NSString *)viewKey:(NSView *)view;
 - (void)selectOnlyViewsInRect:(NSRect)rect;
+- (void)updateGuides;
 
 @end

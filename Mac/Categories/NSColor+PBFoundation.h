@@ -12,7 +12,7 @@
 
 + (NSColor *)colorWithRGBHex:(UInt32)hex;
 + (NSColor *)colorWithRGBHex:(UInt32)hex alpha:(CGFloat)alpha;
-
 - (NSColor *)colorWithAlpha:(CGFloat)alpha;
+- (NSInteger)hexValue;
 
 @end

@@ -7,8 +7,16 @@
 //
 
 #import "PBAcceptsFirstView.h"
+#import "PBDrawingCanvas.h"
 
 @class PBResizableView;
+
+@protocol PBResizableViewDelegate <PBAcceptsFirstViewDelegate>
+
+@optional
+- (void)viewDidMove:(PBResizableView *)view;
+
+@end
 
 @interface PBResizableView : PBAcceptsFirstView
 

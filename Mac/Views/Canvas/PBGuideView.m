@@ -8,30 +8,34 @@
 
 #import "PBGuideView.h"
 
-NSImage *MMGuideViewVerticalImage = nil;
-NSImage *MMGuideViewHorizontalImage = nil;
-
-NSImage * getMMGuideViewVerticalImage() {
-    if (MMGuideViewVerticalImage == nil) {
-        MMGuideViewVerticalImage = [NSImage imageNamed:@"guideVertical.png"];
-    }
-    return MMGuideViewVerticalImage;
-}
-
-NSImage * getMMGuideViewHorizontalImage() {
-    if (MMGuideViewHorizontalImage == nil) {
-        MMGuideViewHorizontalImage = [NSImage imageNamed:@"guideHorizontal.png"];
-    }
-    return MMGuideViewHorizontalImage;
-}
-
-@interface MMGuideView()
+@interface PBGuideView()
 
 - (void)drawVertical:(NSRect)frame;
 - (void)drawHorizontal:(NSRect)frame;
 @end
 
-@implementation MMGuideView
+@implementation PBGuideView
+
+- (id)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (id)initWithFrame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (void)commonInit {
+    self.horizontalImage = [NSImage imageNamed:@"guideHorizontal.png"];
+    self.verticalImage = [NSImage imageNamed:@"guideVertical.png"];
+}
 
 - (void)drawRect:(NSRect)dirtyRect {
     
@@ -47,7 +51,7 @@ NSImage * getMMGuideViewHorizontalImage() {
     NSGraphicsContext *currentContext = [NSGraphicsContext currentContext];
     [currentContext saveGraphicsState];
 
-    NSColor *fillColor = [NSColor colorWithPatternImage:getMMGuideViewHorizontalImage()];
+    NSColor *fillColor = [NSColor colorWithPatternImage:_horizontalImage];
     [fillColor set];
     NSRectFill([self bounds]);
     
@@ -59,7 +63,7 @@ NSImage * getMMGuideViewHorizontalImage() {
     NSGraphicsContext *currentContext = [NSGraphicsContext currentContext];
     [currentContext saveGraphicsState];
     
-    NSColor *fillColor = [NSColor colorWithPatternImage:getMMGuideViewVerticalImage()];
+    NSColor *fillColor = [NSColor colorWithPatternImage:_verticalImage];
     [fillColor set];
     NSRectFill([self bounds]);
     
