@@ -43,6 +43,7 @@
     view.borderWidth = 1;
     view.borderDashPattern = @[@2, @2];
     view.delegate = canvas;
+    view.drawingCanvas = self;
 
     return view;
 }

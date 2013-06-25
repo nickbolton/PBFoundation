@@ -26,10 +26,13 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 
 @property (nonatomic) NSPoint mouseDownPoint;
 @property (nonatomic) NSRect boundingRect;
+@property (nonatomic) NSRect mouseDownStartingRect;
 @property (nonatomic) PBPResizeType resizeType;
 @property (nonatomic) NSPoint selectedViewAnchor;
 @property (nonatomic) NSRect selectedViewMouseDownFrame;
 @property (nonatomic) BOOL didMove;
+@property (nonatomic) BOOL didResize;
+@property (nonatomic) BOOL didCreate;
 @property (nonatomic) BOOL moving;
 
 - (PBResizableView *)mouseInteractingViewInCanvas:(PBDrawingCanvas *)canvas;
@@ -40,6 +43,7 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
                           inCanvas:(PBDrawingCanvas *)canvas;
 - (void)setCursorForResizeType;
 - (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas;
+- (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas forView:(NSView *)selectedView;
 - (void)resizeSelectedViewAtPoint:(NSPoint)point
                          inCanvas:(PBDrawingCanvas *)canvas;
 

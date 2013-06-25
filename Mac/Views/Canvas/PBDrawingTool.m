@@ -108,6 +108,10 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
           atPoint:(NSPoint)point
          inCanvas:(PBDrawingCanvas *)canvas {
     self.mouseDownPoint = [canvas roundedPoint:point];
+    self.didMove = NO;
+    self.didResize = NO;
+    self.moving = NO;
+    self.didCreate = NO;
 }
 
 - (void)mouseUp:(PBClickableView *)view
@@ -150,6 +154,10 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     NSView *selectedView =
     [self mouseInteractingViewInCanvas:canvas];
 
+}
+
+- (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas forView:(NSView *)selectedView {
+    
     switch (_resizeType) {
         case PBPResizeTypeUp:
             _selectedViewAnchor =
@@ -211,10 +219,10 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // up-left
     frame =
-    NSMakeRect(NSMinX(view.frame) - detectSize,
+    NSMakeRect(NSMinX(view.frame),
                NSMaxY(view.frame) - detectSize,
-               detectSize*2.0f,
-               detectSize*2.0f);
+               detectSize,
+               detectSize);
 
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeUpLeft;
@@ -226,8 +234,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     frame =
     NSMakeRect(NSMaxX(view.frame) - detectSize,
                NSMaxY(view.frame) - detectSize,
-               detectSize*2.0f,
-               detectSize*2.0f);
+               detectSize,
+               detectSize);
 
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeUpRight;
@@ -237,10 +245,10 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // down-left
     frame =
-    NSMakeRect(NSMinX(view.frame) - detectSize,
-               NSMinY(view.frame) - detectSize,
-               detectSize*2.0f,
-               detectSize*2.0f);
+    NSMakeRect(NSMinX(view.frame),
+               NSMinY(view.frame),
+               detectSize,
+               detectSize);
 
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeDownLeft;
@@ -251,9 +259,9 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     // down-right
     frame =
     NSMakeRect(NSMaxX(view.frame) - detectSize,
-               NSMinY(view.frame) - detectSize,
-               detectSize*2.0f,
-               detectSize*2.0f);
+               NSMinY(view.frame),
+               detectSize,
+               detectSize);
 
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeDownRight;
@@ -263,10 +271,10 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // left
     frame =
-    NSMakeRect(NSMinX(view.frame) - detectSize,
-               NSMinY(view.frame) - detectSize,
-               detectSize*2.0f,
-               NSHeight(view.frame) + detectSize*2.0f);
+    NSMakeRect(NSMinX(view.frame),
+               NSMinY(view.frame),
+               detectSize,
+               NSHeight(view.frame));
 
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeLeft;
@@ -277,9 +285,9 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     // right
     frame =
     NSMakeRect(NSMaxX(view.frame) - detectSize,
-               NSMinY(view.frame) - detectSize,
-               detectSize*2.0f,
-               NSHeight(view.frame) + detectSize*2.0f);
+               NSMinY(view.frame),
+               detectSize,
+               NSHeight(view.frame));
 
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeRight;
@@ -289,10 +297,10 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // up
     frame =
-    NSMakeRect(NSMinX(view.frame) - detectSize,
+    NSMakeRect(NSMinX(view.frame),
                NSMaxY(view.frame) - detectSize,
-               NSWidth(view.frame) +  detectSize*2.0f,
-               detectSize*2.0f);
+               NSWidth(view.frame),
+               detectSize);
 
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeUp;
@@ -302,10 +310,10 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // down
     frame =
-    NSMakeRect(NSMinX(view.frame) - detectSize,
-               NSMinY(view.frame) - detectSize,
-               NSWidth(view.frame) +  detectSize*2.0f,
-               detectSize*2.0f);
+    NSMakeRect(NSMinX(view.frame),
+               NSMinY(view.frame),
+               NSWidth(view.frame),
+               detectSize);
 
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeDown;

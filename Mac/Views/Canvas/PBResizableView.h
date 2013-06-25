@@ -26,5 +26,10 @@
 @property (nonatomic) NSInteger borderDashPhase;
 @property (nonatomic) NSInteger borderWidth;
 @property (nonatomic) NSInteger tag;
+@property (nonatomic, getter = isShowingInfo) BOOL showingInfo;
+@property (nonatomic, getter = isUpdating) BOOL updating;
+@property (nonatomic, weak) PBDrawingCanvas *drawingCanvas;
+
+- (void)setFrameAnimated:(NSRect)frame;
 
 @end

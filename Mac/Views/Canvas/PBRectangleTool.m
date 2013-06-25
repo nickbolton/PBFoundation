@@ -37,13 +37,18 @@
 
     point.x = roundf(point.x);
     point.y = roundf(point.y);
-
-    self.didMove = NO;
-    self.moving = NO;
     
     PBResizableView *selectedView = [canvas viewAtPoint:point];
 
+    canvas.showingInfo = YES;
+
     if (selectedView != nil) {
+
+        self.mouseDownStartingRect = selectedView.frame;
+
+        [self
+         determineSelectedViewAnchorPoint:canvas
+         forView:selectedView];
 
         if ([NSEvent isCurrentModifiersExactly:NSCommandKeyMask]) {
 
@@ -71,6 +76,9 @@
             self.moving = YES;
         }
 
+        canvas.resizingView.showingInfo = YES;
+        canvas.resizingView.updating = YES;
+
         if ([NSEvent isCurrentModifiersExactly:NSAlternateKeyMask]) {
             self.resizeType = PBPResizeTypeNone;
         }
@@ -82,11 +90,14 @@
     frame.origin = point;
 
     canvas.resizingView = [canvas createRectangle:frame];
+    canvas.resizingView.showingInfo = YES;
+    canvas.resizingView.updating = YES;
 
     [canvas selectView:canvas.resizingView deselectCurrent:YES];
 
+    self.didCreate = YES;
     self.resizeType = PBPResizeTypeDownRight;
-    [self determineSelectedViewAnchorPoint:canvas];
+    [self determineSelectedViewAnchorPoint:canvas forView:canvas.resizingView];
     
     self.selectedViewMouseDownFrame = canvas.resizingView.frame;
     
@@ -105,6 +116,16 @@
         [canvas deleteViews:@[canvas.resizingView]];
         return;
     }
+
+    if (self.didCreate == NO &&
+        self.didResize &&
+        canvas.resizingView != nil &&
+        NSEqualRects(self.mouseDownStartingRect, canvas.resizingView.frame) == NO) {
+
+        [[canvas.undoManager prepareWithInvocationTarget:canvas]
+         resizeViewAt:canvas.resizingView.frame toFrame:self.mouseDownStartingRect];
+        [canvas.undoManager setActionName:PBLoc(@"Resize Rectangle")];
+    }
     
     if (self.didMove == NO && [NSEvent isCurrentModifiersExactly:NSCommandKeyMask] == NO) {
         if (canvas.resizingView != nil) {
@@ -117,6 +138,9 @@
         }
     }
 
+    canvas.showingInfo = NO;
+    canvas.resizingView.showingInfo = NO;
+    canvas.resizingView.updating = NO;
     canvas.resizingView = nil;
 
     for (PBResizableView *selectedView in canvas.selectedViews) {
@@ -140,9 +164,11 @@
 
     if (self.resizeType != PBPResizeTypeNone) {
 
-        PBResizableView *selectedView = canvas.selectedViews.lastObject;
+        self.didResize = YES;
 
-        [canvas selectView:selectedView deselectCurrent:YES];
+        if ([canvas isViewSelected:canvas.resizingView] == NO) {
+            [canvas selectView:canvas.resizingView deselectCurrent:YES];
+        }
         [self resizeSelectedViewAtPoint:point inCanvas:canvas];
         return;
     }

@@ -67,6 +67,7 @@ typedef NS_ENUM(NSInteger, PBGuidePosition) {
 @property (nonatomic, strong) PBResizableView *resizingView;
 @property (nonatomic, readonly) NSMutableDictionary *mouseDownSelectedViewOrigins;
 @property (nonatomic, strong) NSColor *backgroundColor;
+@property (nonatomic, getter = isShowingInfo) BOOL showingInfo;
 
 - (NSPoint)roundedPoint:(NSPoint)point;
 - (NSRect)roundedRect:(NSRect)rect;
@@ -75,6 +76,7 @@ typedef NS_ENUM(NSInteger, PBGuidePosition) {
 - (PBResizableView *)viewAtPoint:(NSPoint)point;
 - (void)selectView:(PBResizableView *)view deselectCurrent:(BOOL)deselectCurrent;
 - (void)deselectView:(PBResizableView *)view;
+- (void)resizeViewAt:(NSRect)frame toFrame:(NSRect)toFrame;
 
 - (PBResizableView *)createRectangle:(NSRect)frame;
 - (NSArray *)createRectangles:(NSArray *)frames;
@@ -84,5 +86,7 @@ typedef NS_ENUM(NSInteger, PBGuidePosition) {
 - (NSString *)viewKey:(NSView *)view;
 - (void)selectOnlyViewsInRect:(NSRect)rect;
 - (void)updateGuides;
+- (BOOL)isViewSelected:(PBResizableView *)view;
+- (void)setInfoValue:(NSString *)value;
 
 @end

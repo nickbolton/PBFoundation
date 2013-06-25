@@ -10,9 +10,114 @@
 #import "PBGuideView.h"
 
 @interface PBResizableView()
+
+@property (nonatomic, strong) NSTextField *infoLabel;
+@property (nonatomic, strong) NSTrackingArea *trackingArea;
+
 @end
 
 @implementation PBResizableView
+
+- (id)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (id)initWithFrame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (void)commonInit {
+
+    self.infoLabel = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    [_infoLabel setBezeled:NO];
+    [_infoLabel setDrawsBackground:NO];
+    [_infoLabel setEditable:NO];
+    [_infoLabel setSelectable:NO];
+    _infoLabel.alphaValue = 0.0f;
+    _infoLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    _infoLabel.textColor = [NSColor whiteColor];
+
+    [self addSubview:_infoLabel];
+
+    [NSLayoutConstraint horizontallyCenterView:_infoLabel];
+    [NSLayoutConstraint verticallyCenterView:_infoLabel];
+}
+
+- (void)startMouseTracking {
+    if (_trackingArea == nil) {
+
+        int opts = (NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways);
+        self.trackingArea =
+        [[NSTrackingArea alloc]
+         initWithRect:self.bounds
+         options:opts
+         owner:self
+         userInfo:nil];
+        [self addTrackingArea:_trackingArea];
+    }
+}
+
+- (void)setAlphaValue:(CGFloat)viewAlpha {
+
+    if (viewAlpha > 0.0f) {
+        [self startMouseTracking];
+    } else {
+        [self stopMouseTracking];
+    }
+}
+
+- (void)stopMouseTracking {
+    [self removeTrackingArea:_trackingArea];
+    self.trackingArea = nil;
+}
+
+- (void)mouseEntered:(NSEvent *)event {
+    self.showingInfo = YES;
+    _drawingCanvas.showingInfo = YES;
+}
+
+- (void)mouseExited:(NSEvent *)event {
+    if (_updating == NO) {
+        self.showingInfo = NO;
+        _drawingCanvas.showingInfo = NO;
+    }
+}
+
+- (void)setShowingInfo:(BOOL)showingInfo {
+    _showingInfo = showingInfo;
+
+    CGFloat alpha = showingInfo ? 1.0f : 0.0f;
+
+    [self updateInfo];
+
+    [PBAnimator
+     animateWithDuration:.3f
+     timingFunction:PB_EASE_OUT
+     animation:^{
+         _infoLabel.animator.alphaValue = alpha;
+     }];
+}
+
+- (void)updateInfo {
+
+    if (_showingInfo) {
+
+        _infoLabel.stringValue =
+        [NSString stringWithFormat:@"(%.0f, %.0f)",
+         NSWidth(self.frame), NSHeight(self.frame)];
+
+        [_infoLabel sizeToFit];
+        [_drawingCanvas setInfoValue:_infoLabel.stringValue];
+    }
+}
 
 - (NSSize)roundedSize:(NSSize)size {
     return NSMakeSize(roundf(size.width), roundf(size.height));
@@ -31,11 +136,13 @@
 
     [super setFrame:frameRect];
 
-    if (changed) {
-        if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
-            [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
-        }
+    if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
+        [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
     }
+
+    [self updateInfo];
+    [self stopMouseTracking];
+    [self startMouseTracking];
 }
 
 - (void)setFrameOrigin:(NSPoint)newOrigin {
@@ -46,11 +153,11 @@
 
     [super setFrameOrigin:newOrigin];
 
-    if (changed) {
-        if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
-            [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
-        }
+    if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
+        [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
     }
+
+    [self updateInfo];
 }
 
 - (void)setFrameSize:(NSSize)newSize {
@@ -61,11 +168,23 @@
 
     [super setFrameSize:newSize];
 
-    if (changed) {
-        if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
-            [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
-        }
+    if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
+        [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
     }
+
+    [self updateInfo];
+}
+
+- (void)setFrameAnimated:(NSRect)frame {
+
+    [PBAnimator
+     animateWithDuration:.3f
+     timingFunction:PB_EASE_INOUT
+     animation:^{
+         self.animator.frame = frame;
+     } completion:^{
+         [self updateInfo];
+     }];
 }
 
 #pragma mark - Drawing

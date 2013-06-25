@@ -42,6 +42,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 @property (nonatomic, strong) NSMutableDictionary *guideReferenceViews;
 @property (nonatomic, strong) NSTrackingArea *trackingArea;
 @property (nonatomic, strong) id<PBDrawingTool> drawingTool;
+@property (nonatomic, strong) NSTextField *infoLabel;
 
 @end
 
@@ -94,6 +95,20 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     [self
      sortSubviewsUsingFunction:PBDrawingCanvasViewsComparator context:(__bridge void *)(self)];
+
+    self.infoLabel = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    [_infoLabel setBezeled:NO];
+    [_infoLabel setDrawsBackground:NO];
+    [_infoLabel setEditable:NO];
+    [_infoLabel setSelectable:NO];
+    _infoLabel.alphaValue = 0.0f;
+    _infoLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    _infoLabel.textColor = [NSColor whiteColor];
+
+    [self addSubview:_infoLabel];
+
+    [NSLayoutConstraint alignToRight:_infoLabel withPadding:10.0f];
+    [NSLayoutConstraint alignToBottom:_infoLabel withPadding:10.0f];
 }
 
 - (void)awakeFromNib {
@@ -229,6 +244,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     PBResizableView *view = [[PBResizableView alloc] initWithFrame:frame];
     view.backgroundColor = _toolColor;
     view.delegate = self;
+    view.drawingCanvas = self;
 
     [self.undoManager
      registerUndoWithTarget:self
@@ -252,6 +268,8 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         PBResizableView *view = [[PBResizableView alloc] initWithFrame:frame];
         view.backgroundColor = _toolColor;
         view.delegate = self;
+        view.drawingCanvas = self;
+        view.alphaValue = 0.0f;
 
         [views addObject:view];
         [self selectView:view deselectCurrent:NO];
@@ -272,6 +290,16 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
      selector:@selector(deleteViews:)
      object:views];
     [self.undoManager setActionName:actionName];
+
+    [PBAnimator
+     animateWithDuration:.3f
+     timingFunction:PB_EASE_OUT
+     animation:^{
+
+         for (NSView *view in views) {
+             view.animator.alphaValue = 1.0f;
+         }
+     }];
 
     return views;
 }
@@ -297,11 +325,12 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         actionName = PBLoc(@"Restore Rectangles");
     }
 
-    [self.undoManager
-     registerUndoWithTarget:self
-     selector:@selector(createRectangles:)
-     object:frames];
+    [[self.undoManager prepareWithInvocationTarget:self]
+     createRectangles:frames];
+
     [self.undoManager setActionName:actionName];
+
+    [self removeAllGuides];
 
     [PBAnimator
      animateWithDuration:PB_WINDOW_ANIMATION_DURATION
@@ -410,6 +439,10 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     }
 }
 
+- (BOOL)isViewSelected:(PBResizableView *)view {
+    return [_selectedViews containsObject:view];
+}
+
 - (void)selectView:(PBResizableView *)view
    deselectCurrent:(BOOL)deselectCurrent {
 
@@ -455,6 +488,24 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     }
 }
 
+- (void)resizeViewAt:(NSRect)frame toFrame:(NSRect)toFrame {
+
+    for (PBResizableView *view in _toolViews) {
+        if (NSEqualRects(view.frame, frame)) {
+
+            NSRect oldFrame = view.frame;
+
+            [view setFrameAnimated:toFrame];
+
+            [[self.undoManager prepareWithInvocationTarget:self]
+             resizeViewAt:toFrame toFrame:oldFrame];
+            [self.undoManager setActionName:PBLoc(@"Resize Rectangle")];
+
+            break;
+        }
+    }
+}
+
 - (NSString *)viewKey:(NSView *)view {
     return [NSString stringWithFormat:@"%p", view];
 }
@@ -483,16 +534,54 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     return roundedRect;
 }
 
+- (void)moveSelectedRulers:(NSPoint)offset {
+
+    for (PBResizableView *selectedView in _selectedViews) {
+
+        NSString *viewKey = [self viewKey:selectedView];
+
+        NSRect frame = NSOffsetRect(selectedView.frame, offset.x, offset.y);
+        selectedView.frame = frame;
+    }
+}
+
+#pragma mark - Info Label
+
+- (void)setInfoValue:(NSString *)value {
+
+    if (_showingInfo) {
+        _infoLabel.stringValue = value;
+        [_infoLabel sizeToFit];
+    }
+}
+
+- (void)setShowingInfo:(BOOL)showingInfo {
+    _showingInfo = showingInfo;
+
+    CGFloat alpha = showingInfo ? 1.0f : 0.0f;
+
+    [PBAnimator
+     animateWithDuration:.3f
+     timingFunction:PB_EASE_OUT
+     animation:^{
+         _infoLabel.animator.alphaValue = alpha;
+     }];
+}
+
 #pragma mark - Guides
 
 - (void)viewDidMove:(PBResizableView *)view {
 
     NSDictionary *referenceViews = [_guideReferenceViews copy];
 
+    NSView *selectedView = _selectedViews.firstObject;
+
     for (NSNumber *positionType in referenceViews) {
 
         if (view == _guideReferenceViews[positionType]) {
-            [self attachGuideToView:view atPosition:positionType.integerValue];
+
+            PBGuideView *guideView = _guideViews[positionType];
+            guideView.frame = [self guideFrameForView:view atPosition:positionType.integerValue];
         }
     }
 }
@@ -571,6 +660,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         PBGuideView *guideView = _guideViews[@(guidePosition)];
         guideView.frame = [self guideFrameForView:view atPosition:guidePosition];
 
+        NSLog(@"frame: %@", NSStringFromRect(guideView.frame));
         _guideReferenceViews[@(guidePosition)] = view;
 
         [self addSubview:guideView positioned:NSWindowAbove relativeTo:nil];
@@ -581,6 +671,9 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     [self removeAllGuides];
 
     if (_showSelectionGuides) {
+
+        NSView *selectedView = _selectedViews.firstObject;
+
         PBResizableView *topMostView =
         [self selectedViewAtFarthestPosition:PBGuidePositionTop];
         [self attachGuideToView:topMostView atPosition:PBGuidePositionTop];
@@ -680,8 +773,15 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
 - (void)handleKeyEvent:(NSEvent *)event {
     
-    NSLog(@"keyCode: %d", event.keyCode);
-    
+//    NSLog(@"keyCode: %d, modifiers: %d", event.keyCode, event.modifierFlags);
+
+    NSInteger movementMultiplier = 1;
+
+    if ([event isModifiersExactly:NSShiftKeyMask] ||
+        [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+        movementMultiplier = 10;
+    }
+
     switch (event.keyCode) {
         case kVK_Delete:
             
@@ -697,12 +797,22 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
             }
             break;
             
+        case kVK_LeftArrow:
+            [self moveSelectedRulers:NSMakePoint(-1.0f * movementMultiplier, 0.0f)];
+            break;
+
+        case kVK_RightArrow:
+            [self moveSelectedRulers:NSMakePoint(1.0f * movementMultiplier, 0.0f)];
+            break;
+
         case kVK_UpArrow:
+            [self moveSelectedRulers:NSMakePoint(0.0f, 1.0f * movementMultiplier)];
             break;
-            
+
         case kVK_DownArrow:
+            [self moveSelectedRulers:NSMakePoint(0.0f, -1.0f * movementMultiplier)];
             break;
-            
+
         case kVK_Tab:
             
             if ([event isModifiersExactly:0]) {
