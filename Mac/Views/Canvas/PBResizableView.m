@@ -54,7 +54,7 @@
 - (void)startMouseTracking {
     if (_trackingArea == nil) {
 
-        int opts = (NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways);
+        int opts = (NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways | NSTrackingMouseMoved);
         self.trackingArea =
         [[NSTrackingArea alloc]
          initWithRect:self.bounds
@@ -91,12 +91,23 @@
     }
 }
 
+- (void)mouseMoved:(NSEvent *)event {
+    if (_updating == NO && _showingInfo == NO) {
+        self.showingInfo = YES;
+    }
+}
+
 - (void)setShowingInfo:(BOOL)showingInfo {
+
+    BOOL changed = _showingInfo != showingInfo;
+    
     _showingInfo = showingInfo;
 
     CGFloat alpha = showingInfo ? 1.0f : 0.0f;
 
-    [self updateInfo];
+    if (changed) {
+        [self updateInfo];
+    }
 
     [PBAnimator
      animateWithDuration:.3f
