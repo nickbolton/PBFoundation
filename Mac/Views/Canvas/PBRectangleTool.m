@@ -112,7 +112,8 @@
 
     [super mouseUp:view atPoint:point inCanvas:canvas];
 
-    if (NSEqualSizes(NSZeroSize, canvas.resizingView.frame.size)) {
+    if (canvas.resizingView != nil &&
+        NSEqualSizes(NSZeroSize, canvas.resizingView.frame.size)) {
         [canvas deleteViews:@[canvas.resizingView]];
         return;
     }
