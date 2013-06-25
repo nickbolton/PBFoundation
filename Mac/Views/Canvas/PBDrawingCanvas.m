@@ -42,7 +42,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 @property (nonatomic, strong) NSMutableDictionary *guideReferenceViews;
 @property (nonatomic, strong) NSTrackingArea *trackingArea;
 @property (nonatomic, strong) id<PBDrawingTool> drawingTool;
-@property (nonatomic, strong) NSTextField *infoLabel;
+@property (nonatomic, readwrite) NSTextField *infoLabel;
 
 @end
 

@@ -59,6 +59,7 @@ typedef NS_ENUM(NSInteger, PBGuidePosition) {
 @property (nonatomic) NSColor *toolBorderColor;
 @property (nonatomic) NSInteger toolBorderWidth;
 @property (nonatomic) BOOL showSelectionGuides;
+@property (nonatomic, readonly) NSTextField *infoLabel;
 
 // private
 
