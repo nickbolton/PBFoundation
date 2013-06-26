@@ -48,6 +48,9 @@ typedef NS_ENUM(NSInteger, PBGuidePosition) {
                      dirtyRect:(NSRect)dirtyRect;
 - (void)drawForegroundInCanvas:(PBDrawingCanvas *)canvas
                      dirtyRect:(NSRect)dirtyRect;
+- (NSDictionary *)trackingRectsForMouseEvents;
+- (void)mouseEnteredTrackingRect:(NSRect)rect rectIdentifier:(NSString *)rectIdentifier;
+- (void)mouseExitedTrackingRect:(NSRect)rect rectIdentifier:(NSString *)rectIdentifier;
 
 @end
 
@@ -60,6 +63,12 @@ typedef NS_ENUM(NSInteger, PBGuidePosition) {
 @property (nonatomic) NSInteger toolBorderWidth;
 @property (nonatomic) BOOL showSelectionGuides;
 @property (nonatomic, readonly) NSTextField *infoLabel;
+@property (nonatomic, strong) NSImage *leftSpacerImage;
+@property (nonatomic, strong) NSImage *rightSpacerImage;
+@property (nonatomic, strong) NSImage *upSpacerImage;
+@property (nonatomic, strong) NSImage *downSpacerImage;
+@property (nonatomic, strong) NSImage *verticalGuideImage;
+@property (nonatomic, strong) NSImage *horizontalGuideImage;
 
 // private
 

@@ -13,6 +13,10 @@
 
 @property (nonatomic, strong) NSTextField *infoLabel;
 @property (nonatomic, strong) NSTrackingArea *trackingArea;
+@property (nonatomic, strong) NSLayoutConstraint *bottomSpace;
+@property (nonatomic, strong) NSLayoutConstraint *leftSpace;
+@property (nonatomic, strong) NSLayoutConstraint *width;
+@property (nonatomic, strong) NSLayoutConstraint *height;
 
 @end
 
@@ -44,11 +48,36 @@
     _infoLabel.alphaValue = 0.0f;
     _infoLabel.translatesAutoresizingMaskIntoConstraints = NO;
     _infoLabel.textColor = [NSColor whiteColor];
+    _infoLabel.font = [NSFont fontWithName:@"HelveticaNeue" size:17.0f];
 
     [self addSubview:_infoLabel];
 
     [NSLayoutConstraint horizontallyCenterView:_infoLabel];
     [NSLayoutConstraint verticallyCenterView:_infoLabel];
+}
+
+- (void)setupConstraints {
+    self.translatesAutoresizingMaskIntoConstraints = NO;
+
+    if (_width == nil) {
+        self.width =
+        [NSLayoutConstraint addWidthConstraint:NSWidth(self.frame) toView:self];
+    }
+
+    if (_height == nil) {
+        self.height =
+        [NSLayoutConstraint addHeightConstraint:NSHeight(self.frame) toView:self];
+    }
+
+    if (_bottomSpace == nil) {
+        self.bottomSpace =
+        [NSLayoutConstraint alignToBottom:self withPadding:NSMinY(self.frame)];
+    }
+
+    if (_leftSpace == nil) {
+        self.leftSpace =
+        [NSLayoutConstraint alignToLeft:self withPadding:NSMinX(self.frame)];
+    }
 }
 
 - (void)startMouseTracking {
@@ -114,6 +143,21 @@
      timingFunction:PB_EASE_OUT
      animation:^{
          _infoLabel.animator.alphaValue = alpha;
+         _topSpacerView.animator.alphaValue = alpha;
+
+         if (_closestBottomView == nil) {
+             _bottomSpacerView.animator.alphaValue = alpha;
+         } else {
+             _bottomSpacerView.animator.alphaValue = 0.0f;
+         }
+
+         _leftSpacerView.animator.alphaValue = alpha;
+
+         if (_closestRightView == nil) {
+             _rightSpacerView.animator.alphaValue = alpha;
+         } else {
+             _rightSpacerView.animator.alphaValue = 0.0f;
+         }
      }];
 }
 
@@ -139,6 +183,9 @@
 }
 
 - (void)setFrame:(NSRect)frameRect {
+
+    NSLog(@"%s frame: %@", __PRETTY_FUNCTION__, NSStringFromRect(frameRect));
+    NSLog(@"%s constraints: %@", __PRETTY_FUNCTION__, self.constraints);
 
     frameRect.origin = [self roundedPoint:frameRect.origin];
     frameRect.size = [self roundedSize:frameRect.size];
@@ -186,16 +233,29 @@
     [self updateInfo];
 }
 
-- (void)setFrameAnimated:(NSRect)frame {
+- (void)setViewFrame:(NSRect)frame animated:(BOOL)animated {
 
-    [PBAnimator
-     animateWithDuration:.3f
-     timingFunction:PB_EASE_INOUT
-     animation:^{
-         self.animator.frame = frame;
-     } completion:^{
-         [self updateInfo];
-     }];
+    if (animated) {
+
+        [NSAnimationContext beginGrouping];
+        NSAnimationContext.currentContext.duration = .3f;
+        NSAnimationContext.currentContext.completionHandler = nil;
+
+        [_bottomSpace.animator setConstant:NSMinY(frame)];
+        [_leftSpace.animator setConstant:NSMinX(frame)];
+        [_width.animator setConstant:NSWidth(frame)];
+        [_height.animator setConstant:NSHeight(frame)];
+
+        [NSAnimationContext endGrouping];
+
+    } else {
+
+        _bottomSpace.constant = NSMinY(frame);
+        _leftSpace.constant = NSMinX(frame);
+        _width.constant = NSWidth(frame);
+        _height.constant = NSHeight(frame);
+        [self setNeedsLayout:YES];
+    }
 }
 
 #pragma mark - Drawing

@@ -10,6 +10,7 @@
 #import "PBDrawingCanvas.h"
 
 @class PBResizableView;
+@class PBGuideView;
 
 @protocol PBResizableViewDelegate <PBAcceptsFirstViewDelegate>
 
@@ -29,7 +30,17 @@
 @property (nonatomic, getter = isShowingInfo) BOOL showingInfo;
 @property (nonatomic, getter = isUpdating) BOOL updating;
 @property (nonatomic, weak) PBDrawingCanvas *drawingCanvas;
+@property (nonatomic) NSEdgeInsets edgeDistances;
+@property (nonatomic, weak) PBGuideView *topSpacerView;
+@property (nonatomic, weak) PBGuideView *bottomSpacerView;
+@property (nonatomic, weak) PBGuideView *leftSpacerView;
+@property (nonatomic, weak) PBGuideView *rightSpacerView;
+@property (nonatomic, weak) NSView *closestTopView;
+@property (nonatomic, weak) NSView *closestBottomView;
+@property (nonatomic, weak) NSView *closestLeftView;
+@property (nonatomic, weak) NSView *closestRightView;
 
-- (void)setFrameAnimated:(NSRect)frame;
+- (void)setupConstraints;
+- (void)setViewFrame:(NSRect)frame animated:(BOOL)animated;
 
 @end

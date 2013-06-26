@@ -11,6 +11,7 @@
 #import "PBRectangleTool.h"
 #import "PBSelectionTool.h"
 #import "PBGuideView.h"
+#import "PBSpacerView.h"
 #import <Carbon/Carbon.h>
 
 static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView * view2, void * context) {
@@ -39,10 +40,13 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 @property (nonatomic, readwrite) NSMutableArray *toolViews;
 @property (nonatomic, readwrite) NSMutableDictionary *mouseDownSelectedViewOrigins;
 @property (nonatomic, strong) NSMutableDictionary *guideViews;
+@property (nonatomic, strong) NSMutableArray *spacerViews;
 @property (nonatomic, strong) NSMutableDictionary *guideReferenceViews;
 @property (nonatomic, strong) NSTrackingArea *trackingArea;
 @property (nonatomic, strong) id<PBDrawingTool> drawingTool;
 @property (nonatomic, readwrite) NSTextField *infoLabel;
+@property (nonatomic, strong) NSMutableDictionary *toolTrackingRects;
+@property (nonatomic, strong) NSMutableArray *toolTrackingRectTags;
 
 @end
 
@@ -68,8 +72,11 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 - (void)commonInit {
     self.selectedViews = [NSMutableArray array];
     self.toolViews = [NSMutableArray array];
+    self.spacerViews = [NSMutableArray array];
     self.delegate = self;
     self.mouseDownSelectedViewOrigins = [NSMutableDictionary dictionary];
+    self.toolTrackingRects = [NSMutableDictionary dictionary];
+    self.toolTrackingRectTags = [NSMutableArray array];
     self.guideViews = [NSMutableDictionary dictionary];
     self.guideReferenceViews = [NSMutableDictionary dictionary];
     self.toolColor = [NSColor greenColor];
@@ -109,6 +116,18 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     [NSLayoutConstraint alignToRight:_infoLabel withPadding:10.0f];
     [NSLayoutConstraint alignToBottom:_infoLabel withPadding:10.0f];
+
+    self.leftSpacerImage = [NSImage imageNamed:@"arrowLeft"];
+    self.rightSpacerImage = [NSImage imageNamed:@"arrowRight"];
+    self.upSpacerImage = [NSImage imageNamed:@"arrowUp"];
+    self.downSpacerImage = [NSImage imageNamed:@"arrowDown"];
+
+    [PBSpacerView setUpSpacerImage:_upSpacerImage];
+    [PBSpacerView setDownSpacerImage:_downSpacerImage];
+    [PBSpacerView setLeftSpacerImage:_leftSpacerImage];
+    [PBSpacerView setRightSpacerImage:_rightSpacerImage];
+    [PBGuideView setHorizontalImage:_horizontalGuideImage];
+    [PBGuideView setVerticalImage:_verticalGuideImage];
 }
 
 - (void)awakeFromNib {
@@ -252,6 +271,9 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
      object:@[view]];
     [self.undoManager setActionName:PBLoc(@"Delete Rectangle")];
 
+    [self setupTrackingRects];
+    [self calculateEdgeDistances];
+
     return view;
 }
 
@@ -274,6 +296,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         [views addObject:view];
         [self selectView:view deselectCurrent:NO];
         [self addSubview:view];
+        [view setupConstraints];
         [_toolViews addObject:view];
     }
 
@@ -300,6 +323,9 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
              view.animator.alphaValue = 1.0f;
          }
      }];
+
+    [self setupTrackingRects];
+    [self calculateEdgeDistances];
 
     return views;
 }
@@ -354,6 +380,8 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
          [self retagViews];
          [self showGuides];
+         [self setupTrackingRects];
+         [self calculateEdgeDistances];
      }];
 }
 
@@ -383,12 +411,15 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
          owner:self
          userInfo:nil];
         [self addTrackingArea:_trackingArea];
+        [self setupTrackingRects];
     }
 }
 
 - (void)stopMouseTracking {
     [self removeTrackingArea:_trackingArea];
     self.trackingArea = nil;
+
+    [self removeAllToolTrackingRects];
 }
 
 - (NSPoint)windowLocationOfMouse {
@@ -396,18 +427,6 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     return
     [self.window convertScreenToBase:mouseLocation];
-}
-
-- (void)mouseEntered:(NSEvent *)event {
-}
-
-- (void)mouseExited:(NSEvent *)event {
-}
-
-- (void)mouseMoved:(NSEvent *)event {
-
-    NSPoint windowLocation = [self windowLocationOfMouse];
-    [_drawingTool mouseMovedToPoint:windowLocation inCanvas:self];
 }
 
 - (PBResizableView *)viewAtPoint:(NSPoint)point {
@@ -454,20 +473,24 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         }
     }
 
-    [_selectedViews addObject:view];
+    if (view != nil) {
 
-    view.backgroundColor = _toolSelectedColor;
-    view.borderWidth = _toolBorderWidth;
-    view.borderColor = _toolBorderColor;
+        [_selectedViews addObject:view];
 
-    [self addSubview:view];
-    [_toolViews removeObject:view];
-    [_toolViews addObject:view];
+        view.backgroundColor = _toolSelectedColor;
+        view.borderWidth = _toolBorderWidth;
+        view.borderColor = _toolBorderColor;
 
-    NSString *viewKey = [self viewKey:view];
+        [self addSubview:view];
+        [view setupConstraints];
+        [_toolViews removeObject:view];
+        [_toolViews addObject:view];
 
-    _mouseDownSelectedViewOrigins[viewKey] =
-    [NSValue valueWithPoint:view.frame.origin];
+        NSString *viewKey = [self viewKey:view];
+
+        _mouseDownSelectedViewOrigins[viewKey] =
+        [NSValue valueWithPoint:view.frame.origin];
+    }
 
     [self showGuides];
 }
@@ -495,7 +518,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
             NSRect oldFrame = view.frame;
 
-            [view setFrameAnimated:toFrame];
+            [view setViewFrame:toFrame animated:YES];
 
             [[self.undoManager prepareWithInvocationTarget:self]
              resizeViewAt:toFrame toFrame:oldFrame];
@@ -541,8 +564,376 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         NSString *viewKey = [self viewKey:selectedView];
 
         NSRect frame = NSOffsetRect(selectedView.frame, offset.x, offset.y);
-        selectedView.frame = frame;
+
+        [selectedView setViewFrame:frame animated:NO];
     }
+}
+
+#pragma mark - Edge Calculations
+
+- (void)calculateEdgeDistances {
+
+    if (_toolViews.count == 0) return;
+
+    for (NSView *view in _spacerViews) {
+        [view removeFromSuperview];
+    }
+    
+    [_spacerViews removeAllObjects];
+
+    for (PBResizableView *view in _toolViews) {
+        view.closestTopView = nil;
+        view.closestBottomView = nil;
+        view.closestLeftView = nil;
+        view.closestRightView = nil;
+        view.topSpacerView = nil;
+        view.bottomSpacerView = nil;
+        view.leftSpacerView = nil;
+        view.rightSpacerView = nil;
+        view.edgeDistances =
+        NSEdgeInsetsMake(MAXFLOAT, MAXFLOAT, MAXFLOAT, MAXFLOAT);
+    }
+
+    if (_toolViews.count == 1) {
+
+        PBResizableView *view1 = _toolViews.lastObject;
+        [self setDistancesToWindowEdges:view1];
+    }
+
+    for (NSInteger i = 0; i < _toolViews.count - 1; i++) {
+
+        PBResizableView *view1 = _toolViews[i];
+
+        [self setDistancesToWindowEdges:view1];
+
+        for (NSInteger j = i + 1; j < _toolViews.count; j++) {
+
+            PBResizableView *view2 = _toolViews[j];
+
+            [self setDistancesToWindowEdges:view2];
+
+            // check the top of view1
+
+            NSRect rectToTop = [self rectToTopOfWindow:view1];
+
+            NSRect intersectingRect =
+            NSIntersectionRect(rectToTop, view2.frame);
+
+            if (NSEqualRects(intersectingRect, NSZeroRect) == NO) {
+
+                CGFloat distance = NSMinY(view2.frame) - NSMaxY(view1.frame);
+
+                if (distance >= 0.0f && distance < view1.edgeDistances.top) {
+
+                    NSEdgeInsets edgeDistances = view1.edgeDistances;
+                    edgeDistances.top = distance;
+                    view1.edgeDistances = edgeDistances;
+                    view1.closestTopView = view2;
+
+                    edgeDistances = view2.edgeDistances;
+                    edgeDistances.bottom = distance;
+                    view2.edgeDistances = edgeDistances;
+                    view2.closestBottomView = view1;
+                }
+            }
+
+            // check the bottom of view1
+
+            NSRect rectToBottom = [self rectToBottomOfWindow:view1];
+
+            intersectingRect =
+            NSIntersectionRect(rectToBottom, view2.frame);
+
+            if (NSEqualRects(intersectingRect, NSZeroRect) == NO) {
+
+                CGFloat distance = NSMinY(view1.frame) - NSMaxY(view2.frame);
+
+                if (distance >= 0.0f && distance < view1.edgeDistances.bottom) {
+
+                    NSEdgeInsets edgeDistances = view1.edgeDistances;
+                    edgeDistances.bottom = distance;
+                    view1.edgeDistances = edgeDistances;
+                    view1.closestBottomView = view2;
+
+                    edgeDistances = view2.edgeDistances;
+                    edgeDistances.top = distance;
+                    view2.edgeDistances = edgeDistances;
+                    view2.closestTopView = view1;
+                }
+            }
+
+            // check the left of view1
+
+            NSRect rectToLeft = [self rectToLeftOfWindow:view1];
+
+            intersectingRect =
+            NSIntersectionRect(rectToLeft, view2.frame);
+
+            if (NSEqualRects(intersectingRect, NSZeroRect) == NO) {
+
+                CGFloat distance = NSMinX(view1.frame) - NSMaxX(view2.frame);
+
+                if (distance >= 0.0f && distance < view1.edgeDistances.left) {
+
+                    NSEdgeInsets edgeDistances = view1.edgeDistances;
+                    edgeDistances.left = distance;
+                    view1.edgeDistances = edgeDistances;
+                    view1.closestLeftView = view2;
+
+                    edgeDistances = view2.edgeDistances;
+                    edgeDistances.right = distance;
+                    view2.edgeDistances = edgeDistances;
+                    view2.closestRightView = view1;
+                }
+            }
+
+            // check the right of view1
+
+            NSRect rectToRight = [self rectToRightOfWindow:view1];
+
+            intersectingRect =
+            NSIntersectionRect(rectToRight, view2.frame);
+
+            if (NSEqualRects(intersectingRect, NSZeroRect) == NO) {
+
+                CGFloat distance = NSMinX(view2.frame) - NSMaxX(view1.frame);
+
+                if (distance >= 0.0f && distance < view1.edgeDistances.right) {
+
+                    NSEdgeInsets edgeDistances = view1.edgeDistances;
+                    edgeDistances.right = distance;
+                    view1.edgeDistances = edgeDistances;
+                    view1.closestRightView = view2;
+
+                    edgeDistances = view2.edgeDistances;
+                    edgeDistances.left = distance;
+                    view2.edgeDistances = edgeDistances;
+                    view2.closestLeftView = view1;
+                }
+            }
+        }
+    }
+
+    for (PBResizableView *view in _toolViews) {
+//        NSLog(@"view: %@ - %f, %f, %f, %f",
+//              NSStringFromRect(view.frame),
+//              view.edgeDistances.top,
+//              view.edgeDistances.left,
+//              view.edgeDistances.bottom,
+//              view.edgeDistances.right);
+
+        PBSpacerView *spacerView;
+
+//        NSTextField *spacerLabel =
+//        [self
+//         spacerTextField:view.edgeDistances.top
+//         textAlignment:NSCenterTextAlignment];
+//        [self alignSpacer:spacerLabel toTopOfView:view];
+//        view.topSpacerView = spacerLabel;
+
+//        spacerLabel =
+//        [self
+//         spacerTextField:view.edgeDistances.bottom
+//         textAlignment:NSCenterTextAlignment];
+//        [self alignSpacer:spacerLabel toBottomOfView:view];
+//        view.bottomSpacerView = spacerLabel;
+//        spacerLabel.alphaValue = view.closestBottomView == nil ? 1.0f : 0.0f;
+
+//        spacerView =
+//        [[PBSpacerView alloc]
+//         initWithLeftView:view.closestLeftView
+//         rightView:view
+//         value:view.edgeDistances.left];
+//        [self addSubview:spacerView];
+//        [_spacerViews addObject:spacerView];
+//        [spacerView alignToViews];
+//        view.leftSpacerView = spacerView;
+
+//        guideView = [self horizontalSpacerView:view.edgeDistances.right leftView:<#(NSView *)#> rightView:<#(NSView *)#>:view.edgeDistances.right];
+//        [self alignSpacer:guideView toRightOfView:view];
+//        view.rightSpacerView = guideView;
+//        guideView.alphaValue = view.closestRightView == nil ? 1.0f : 0.0f;
+    }
+}
+
+- (void)alignSpacer:(NSView *)spacerView toTopOfView:(NSView *)view {
+
+    NSLayoutConstraint *alignToHorizontalCenter =
+    [NSLayoutConstraint
+     constraintWithItem:spacerView
+     attribute:NSLayoutAttributeCenterX
+     relatedBy:NSLayoutRelationEqual
+     toItem:view
+     attribute:NSLayoutAttributeCenterX
+     multiplier:1.0f
+     constant:0.0f];
+
+    NSLayoutConstraint *verticalSpace =
+    [NSLayoutConstraint
+     constraintWithItem:spacerView
+     attribute:NSLayoutAttributeBottom
+     relatedBy:NSLayoutRelationEqual
+     toItem:view
+     attribute:NSLayoutAttributeTop
+     multiplier:1.0f
+     constant:0.0f];
+
+    [self addConstraint:alignToHorizontalCenter];
+    [self addConstraint:verticalSpace];
+}
+
+- (void)alignSpacer:(NSView *)spacerView toBottomOfView:(NSView *)view {
+
+    NSLayoutConstraint *alignToHorizontalCenter =
+    [NSLayoutConstraint
+     constraintWithItem:spacerView
+     attribute:NSLayoutAttributeCenterX
+     relatedBy:NSLayoutRelationEqual
+     toItem:view
+     attribute:NSLayoutAttributeCenterX
+     multiplier:1.0f
+     constant:0.0f];
+
+    NSLayoutConstraint *verticalSpace =
+    [NSLayoutConstraint
+     constraintWithItem:spacerView
+     attribute:NSLayoutAttributeTop
+     relatedBy:NSLayoutRelationEqual
+     toItem:view
+     attribute:NSLayoutAttributeBottom
+     multiplier:1.0f
+     constant:0.0f];
+
+    [self addConstraint:alignToHorizontalCenter];
+    [self addConstraint:verticalSpace];
+
+}
+
+- (void)alignSpacer:(NSView *)spacerView toLeftOfView:(NSView *)view {
+
+    NSLayoutConstraint *alignToVerticalCenter =
+    [NSLayoutConstraint
+     constraintWithItem:spacerView
+     attribute:NSLayoutAttributeCenterY
+     relatedBy:NSLayoutRelationEqual
+     toItem:view
+     attribute:NSLayoutAttributeCenterY
+     multiplier:1.0f
+     constant:0.0f];
+
+    NSLayoutConstraint *horizontalSpace =
+    [NSLayoutConstraint
+     constraintWithItem:spacerView
+     attribute:NSLayoutAttributeRight
+     relatedBy:NSLayoutRelationEqual
+     toItem:view
+     attribute:NSLayoutAttributeLeft
+     multiplier:1.0f
+     constant:0.0f];
+
+    [self addConstraint:alignToVerticalCenter];
+    [self addConstraint:horizontalSpace];
+}
+
+- (void)alignSpacer:(NSView *)spacerView toRightOfView:(NSView *)view {
+
+    NSLayoutConstraint *alignToVerticalCenter =
+    [NSLayoutConstraint
+     constraintWithItem:spacerView
+     attribute:NSLayoutAttributeCenterY
+     relatedBy:NSLayoutRelationEqual
+     toItem:view
+     attribute:NSLayoutAttributeCenterY
+     multiplier:1.0f
+     constant:0.0f];
+
+    NSLayoutConstraint *horizontalSpace =
+    [NSLayoutConstraint
+     constraintWithItem:spacerView
+     attribute:NSLayoutAttributeLeft
+     relatedBy:NSLayoutRelationEqual
+     toItem:view
+     attribute:NSLayoutAttributeRight
+     multiplier:1.0f
+     constant:0.0f];
+
+    [self addConstraint:alignToVerticalCenter];
+    [self addConstraint:horizontalSpace];
+}
+
+- (PBGuideView *)horizontalSpacerView:(CGFloat)value
+                             leftView:(NSView *)leftView
+                            rightView:(NSView *)rightView {
+
+    CGFloat height =
+    MAX(_leftSpacerImage.size.height, _rightSpacerImage.size.height);
+
+    NSRect frame = NSMakeRect(0.0f, 0.0f, value, height);
+
+    PBSpacerView *spacerView = [[NSView alloc] initWithFrame:frame];
+
+    PBGuideView *guideView = [self guideForPosition:PBGuidePositionTop];
+    guideView.frame = frame;
+    guideView.translatesAutoresizingMaskIntoConstraints = NO;
+
+    [self addSubview:guideView];
+    [_spacerViews addObject:guideView];
+
+    [NSLayoutConstraint addWidthConstraint:value toView:guideView];
+    [NSLayoutConstraint addHeightConstraint:1.0f toView:guideView];
+
+    return guideView;
+}
+
+- (NSRect)rectToTopOfWindow:(PBResizableView *)view {
+    return
+    NSMakeRect(NSMinX(view.frame),
+               NSMaxY(view.frame),
+               NSWidth(view.frame),
+               view.edgeDistances.top);
+}
+
+- (NSRect)rectToBottomOfWindow:(PBResizableView *)view {
+    return
+    NSMakeRect(NSMinX(view.frame),
+               0.0f,
+               NSWidth(view.frame),
+               view.edgeDistances.bottom);
+}
+
+- (NSRect)rectToLeftOfWindow:(PBResizableView *)view {
+    return
+    NSMakeRect(0.0f,
+               NSMinY(view.frame),
+               view.edgeDistances.left,
+               NSHeight(view.frame));
+}
+
+- (NSRect)rectToRightOfWindow:(PBResizableView *)view {
+    return
+    NSMakeRect(NSMaxX(view.frame),
+               NSMinY(view.frame),
+               view.edgeDistances.right,
+               NSHeight(view.frame));
+}
+
+- (void)setDistancesToWindowEdges:(PBResizableView *)view {
+
+//    CGFloat top, CGFloat left, CGFloat bottom, CGFloat right
+
+    CGFloat top = MIN(view.edgeDistances.top,
+                      NSHeight(view.window.frame) - NSMaxY(view.frame));
+
+    CGFloat left = MIN(view.edgeDistances.left,
+                       NSMinX(view.frame));
+
+    CGFloat bottom = MIN(view.edgeDistances.bottom,
+                         NSMinY(view.frame));
+
+    CGFloat right = MIN(view.edgeDistances.right,
+                      NSWidth(view.window.frame) - NSMaxX(view.frame));
+
+    view.edgeDistances = NSEdgeInsetsMake(top, left, bottom, right);
 }
 
 #pragma mark - Info Label
@@ -584,11 +975,15 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
             guideView.frame = [self guideFrameForView:view atPosition:positionType.integerValue];
         }
     }
+
+    [self setupTrackingRects];
+    [self calculateEdgeDistances];
 }
 
 - (PBGuideView *)guideForPosition:(PBGuidePosition)guidePosition {
 
     PBGuideView *view = [[PBGuideView alloc] initWithFrame:NSZeroRect];
+    view.translatesAutoresizingMaskIntoConstraints = NO;
 
     view.vertical =
     guidePosition == PBGuidePositionLeft ||
@@ -660,7 +1055,6 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         PBGuideView *guideView = _guideViews[@(guidePosition)];
         guideView.frame = [self guideFrameForView:view atPosition:guidePosition];
 
-        NSLog(@"frame: %@", NSStringFromRect(guideView.frame));
         _guideReferenceViews[@(guidePosition)] = view;
 
         [self addSubview:guideView positioned:NSWindowAbove relativeTo:nil];
@@ -739,6 +1133,92 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     }
     
     return result;
+}
+
+#pragma mark - Tracking Rects
+
+- (void)removeAllToolTrackingRects {
+
+    NSPoint mouseLocation = [self windowLocationOfMouse];
+
+    for (NSNumber *rectTag in _toolTrackingRectTags) {
+        [self removeTrackingRect:rectTag.integerValue];
+    }
+    for (NSString *identifier in _toolTrackingRects) {
+
+        NSValue *rectValue = _toolTrackingRects[identifier];
+        if (NSPointInRect(mouseLocation, rectValue.rectValue)) {
+            [_drawingTool
+             mouseExitedTrackingRect:rectValue.rectValue
+             rectIdentifier:identifier];
+        }
+    }
+    [_toolTrackingRectTags removeAllObjects];
+    [_toolTrackingRects removeAllObjects];
+}
+
+- (void)setupTrackingRects {
+
+    [self removeAllToolTrackingRects];
+    
+    NSDictionary *rects =
+    [_drawingTool trackingRectsForMouseEvents];
+
+    NSPoint mouseLocation = [self windowLocationOfMouse];
+
+    for (NSString *identifier in rects) {
+
+        NSValue *rectValue = rects[identifier];
+
+        NSTrackingRectTag rectTag =
+        [self
+         addTrackingRect:rectValue.rectValue
+         owner:self
+         userData:(__bridge void *)(identifier)
+         assumeInside:YES];
+
+        [_toolTrackingRectTags addObject:@(rectTag)];
+        _toolTrackingRects[identifier] = rectValue;
+
+        if (NSPointInRect(mouseLocation, rectValue.rectValue)) {
+            [_drawingTool
+             mouseEnteredTrackingRect:rectValue.rectValue
+             rectIdentifier:identifier];
+        }
+    }
+}
+
+- (void)mouseEntered:(NSEvent *)event {
+
+    NSString *rectIdentifier = event.userData;
+
+    if (rectIdentifier != nil) {
+
+        NSValue *rectValue = _toolTrackingRects[rectIdentifier];
+
+        [_drawingTool
+         mouseEnteredTrackingRect:rectValue.rectValue
+         rectIdentifier:rectIdentifier];
+    }
+}
+
+- (void)mouseExited:(NSEvent *)event {
+
+    NSString *rectIdentifier = event.userData;
+
+    if (rectIdentifier != nil) {
+
+        NSValue *rectValue = _toolTrackingRects[rectIdentifier];
+
+        [_drawingTool
+         mouseExitedTrackingRect:rectValue.rectValue
+         rectIdentifier:rectIdentifier];
+    }
+}
+
+- (void)mouseMoved:(NSEvent *)event {
+    NSPoint windowLocation = [self windowLocationOfMouse];
+    [_drawingTool mouseMovedToPoint:windowLocation inCanvas:self];
 }
 
 #pragma mark - PBClickableViewDelegate Conformance

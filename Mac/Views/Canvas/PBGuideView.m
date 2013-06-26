@@ -8,6 +8,9 @@
 
 #import "PBGuideView.h"
 
+static NSImage *PBGuideViewHorizontalImage = nil;
+static NSImage *PBGuideViewVerticalImage = nil;
+
 @interface PBGuideView()
 
 - (void)drawVertical:(NSRect)frame;
@@ -15,6 +18,29 @@
 @end
 
 @implementation PBGuideView
+
++ (void)setHorizontalImage:(NSImage *)image {
+    PBGuideViewHorizontalImage = image;
+}
+
++ (void)setVerticalImage:(NSImage *)image {
+    PBGuideViewVerticalImage = image;
+}
+
++ (NSImage *)horizontalImage {
+    if (PBGuideViewHorizontalImage == nil) {
+        PBGuideViewHorizontalImage = [NSImage imageNamed:@"guideHorizontal"];
+    }
+    return PBGuideViewHorizontalImage;
+
+}
+
++ (NSImage *)verticalImage {
+    if (PBGuideViewVerticalImage == nil) {
+        PBGuideViewVerticalImage = [NSImage imageNamed:@"guideVertical"];
+    }
+    return PBGuideViewVerticalImage;
+}
 
 - (id)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
@@ -33,8 +59,6 @@
 }
 
 - (void)commonInit {
-    self.horizontalImage = [NSImage imageNamed:@"guideHorizontal.png"];
-    self.verticalImage = [NSImage imageNamed:@"guideVertical.png"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -51,7 +75,7 @@
     NSGraphicsContext *currentContext = [NSGraphicsContext currentContext];
     [currentContext saveGraphicsState];
 
-    NSColor *fillColor = [NSColor colorWithPatternImage:_horizontalImage];
+    NSColor *fillColor = [NSColor colorWithPatternImage:[PBGuideView horizontalImage]];
     [fillColor set];
     NSRectFill([self bounds]);
     
@@ -63,7 +87,7 @@
     NSGraphicsContext *currentContext = [NSGraphicsContext currentContext];
     [currentContext saveGraphicsState];
     
-    NSColor *fillColor = [NSColor colorWithPatternImage:_verticalImage];
+    NSColor *fillColor = [NSColor colorWithPatternImage:[PBGuideView verticalImage]];
     [fillColor set];
     NSRectFill([self bounds]);
     

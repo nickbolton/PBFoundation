@@ -151,7 +151,7 @@
             [canvas addSubview:_selectionView positioned:NSWindowAbove relativeTo:nil];
 
         } else {
-            self.selectionView.frame = self.boundingRect;
+            [self.selectionView setViewFrame:self.boundingRect animated:NO];
         }
     }
 

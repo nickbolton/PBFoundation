@@ -10,8 +10,9 @@
 
 @interface PBGuideView : NSView
 
++ (void)setHorizontalImage:(NSImage *)image;
++ (void)setVerticalImage:(NSImage *)image;
+
 @property (nonatomic, getter = isVertical) BOOL vertical;
-@property (nonatomic, strong) NSImage *horizontalImage;
-@property (nonatomic, strong) NSImage *verticalImage;
 
 @end

@@ -63,6 +63,16 @@
 
                 self.moving = YES;
             }
+        } else if ([NSEvent isCurrentModifiersExactly:NSAlternateKeyMask]) {
+
+            [self
+             createRectangle:selectedView.frame
+             deselectCurrent:YES
+             resizeType:PBPResizeTypeNone
+             inCanvas:canvas];
+
+            self.moving = YES;
+
         } else {
 
             if ([canvas.selectedViews containsObject:selectedView] == NO) {
@@ -89,20 +99,32 @@
     NSRect frame = NSZeroRect;
     frame.origin = point;
 
+    [self
+     createRectangle:frame
+     deselectCurrent:YES
+     resizeType:PBPResizeTypeDownRight
+     inCanvas:canvas];
+}
+
+- (void)createRectangle:(NSRect)frame
+        deselectCurrent:(BOOL)deselectCurrent
+             resizeType:(PBPResizeType)resizeType
+               inCanvas:(PBDrawingCanvas *)canvas {
+
     canvas.resizingView = [canvas createRectangle:frame];
     canvas.resizingView.showingInfo = YES;
     canvas.resizingView.updating = YES;
 
-    [canvas selectView:canvas.resizingView deselectCurrent:YES];
+    [canvas selectView:canvas.resizingView deselectCurrent:deselectCurrent];
 
     self.didCreate = YES;
-    self.resizeType = PBPResizeTypeDownRight;
+    self.resizeType = resizeType;
     [self determineSelectedViewAnchorPoint:canvas forView:canvas.resizingView];
-    
+
     self.selectedViewMouseDownFrame = canvas.resizingView.frame;
-    
-    self.selectedViewAnchor = point;
-    
+
+    self.selectedViewAnchor = frame.origin;
+
     [canvas retagViews];
 }
 
@@ -167,9 +189,7 @@
 
         self.didResize = YES;
 
-        if ([canvas isViewSelected:canvas.resizingView] == NO) {
-            [canvas selectView:canvas.resizingView deselectCurrent:YES];
-        }
+        [canvas selectView:canvas.resizingView deselectCurrent:YES];
         [self resizeSelectedViewAtPoint:point inCanvas:canvas];
         return;
     }
@@ -192,7 +212,7 @@
             frame.origin.x = mouseDownSelectedViewOrigin.x + xDelta;
             frame.origin.y = mouseDownSelectedViewOrigin.y + yDelta;
 
-            selectedView.frame = frame;
+            [selectedView setViewFrame:frame animated:NO];
         }
     }
 }

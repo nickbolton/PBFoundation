@@ -615,8 +615,29 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
         default:
             break;
     }
-    
-    canvas.resizingView.frame = frame;
+
+    [canvas.resizingView setViewFrame:frame animated:NO];
+}
+
+#pragma mark - Mouse Tracking
+
+- (NSDictionary *)trackingRectsForMouseEvents {
+
+    // returns dictionary of identifiers -> NSValue (NSRect)
+//    return
+//    @{
+//      @"id" : [NSValue valueWithRect:NSMakeRect(0.0f, 0.0f, 100.0f, 100.0f)],
+//      };
+
+    return nil;
+}
+
+- (void)mouseEnteredTrackingRect:(NSRect)rect
+                  rectIdentifier:(NSString *)rectIdentifier {
+}
+
+- (void)mouseExitedTrackingRect:(NSRect)rect
+                 rectIdentifier:(NSString *)rectIdentifier {
 }
 
 @end
