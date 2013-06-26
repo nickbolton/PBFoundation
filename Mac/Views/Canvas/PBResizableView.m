@@ -71,7 +71,7 @@
 
     if (_bottomSpace == nil) {
         self.bottomSpace =
-        [NSLayoutConstraint alignToBottom:self withPadding:NSMinY(self.frame)];
+        [NSLayoutConstraint alignToBottom:self withPadding:-NSMinY(self.frame)];
     }
 
     if (_leftSpace == nil) {
@@ -184,8 +184,9 @@
 
 - (void)setFrame:(NSRect)frameRect {
 
-    NSLog(@"%s frame: %@", __PRETTY_FUNCTION__, NSStringFromRect(frameRect));
-    NSLog(@"%s constraints: %@", __PRETTY_FUNCTION__, self.constraints);
+//    NSLog(@"%s frame: %@", __PRETTY_FUNCTION__, NSStringFromRect(frameRect));
+//    NSLog(@"%s constraints: %@", __PRETTY_FUNCTION__, self.constraints);
+//    NSLog(@"%s super.constraints: %@", __PRETTY_FUNCTION__, self.superview.constraints);
 
     frameRect.origin = [self roundedPoint:frameRect.origin];
     frameRect.size = [self roundedSize:frameRect.size];
@@ -241,7 +242,7 @@
         NSAnimationContext.currentContext.duration = .3f;
         NSAnimationContext.currentContext.completionHandler = nil;
 
-        [_bottomSpace.animator setConstant:NSMinY(frame)];
+        [_bottomSpace.animator setConstant:-NSMinY(frame)];
         [_leftSpace.animator setConstant:NSMinX(frame)];
         [_width.animator setConstant:NSWidth(frame)];
         [_height.animator setConstant:NSHeight(frame)];
@@ -250,7 +251,7 @@
 
     } else {
 
-        _bottomSpace.constant = NSMinY(frame);
+        _bottomSpace.constant = -NSMinY(frame);
         _leftSpace.constant = NSMinX(frame);
         _width.constant = NSWidth(frame);
         _height.constant = NSHeight(frame);
