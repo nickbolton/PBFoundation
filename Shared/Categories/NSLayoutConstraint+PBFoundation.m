@@ -243,7 +243,7 @@
      toItem:view.superview
      attribute:NSLayoutAttributeTop
      multiplier:1.0f
-     constant:-padding];
+     constant:padding];
     [view.superview addConstraint:constraint];
     return constraint;
 }
@@ -297,7 +297,7 @@
      toItem:view.superview
      attribute:NSLayoutAttributeRight
      multiplier:1.0f
-     constant:-padding];
+     constant:padding];
     [view.superview addConstraint:constraint];
     return constraint;
 }
