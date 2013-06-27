@@ -43,7 +43,7 @@
     view.borderWidth = 1;
     view.borderDashPattern = @[@2, @2];
     view.delegate = canvas;
-    view.drawingCanvas = self;
+    view.drawingCanvas = canvas;
 
     return view;
 }
@@ -140,7 +140,7 @@
 
         NSRect frame = [self movedRectAtPoint:point inCanvas:canvas];
 
-        _selectionView.frame = frame;
+        [_selectionView setViewFrame:frame animated:NO];
         self.boundingRect = frame;
 
     } else {
@@ -149,6 +149,7 @@
             self.selectionView =
             [self createRectangle:self.boundingRect inCanvas:canvas];
             [canvas addSubview:_selectionView positioned:NSWindowAbove relativeTo:nil];
+            [_selectionView setupConstraints];
 
         } else {
             [self.selectionView setViewFrame:self.boundingRect animated:NO];

@@ -450,7 +450,8 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     [self deselectAllContainers];
 
-    for (PBResizableView *view in _toolViews) {
+    NSArray *toolViews = [_toolViews copy];
+    for (PBResizableView *view in toolViews) {
 
         if (NSContainsRect(rect, view.frame)) {
             [self selectView:view deselectCurrent:NO];

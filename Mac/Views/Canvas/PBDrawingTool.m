@@ -154,6 +154,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     NSView *selectedView =
     [self mouseInteractingViewInCanvas:canvas];
 
+    [self determineSelectedViewAnchorPoint:canvas forView:selectedView];
 }
 
 - (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas forView:(NSView *)selectedView {

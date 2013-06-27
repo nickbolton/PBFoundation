@@ -235,7 +235,7 @@
 }
 
 - (void)setViewFrame:(NSRect)frame animated:(BOOL)animated {
-
+    
     if (animated) {
 
         [NSAnimationContext beginGrouping];
