@@ -23,6 +23,18 @@ typedef NS_ENUM(NSInteger, PBGuidePosition) {
     PBGuidePositionBottom,
 };
 
+typedef NS_ENUM(NSInteger, PBPResizeType) {
+
+    PBPResizeTypeNone = 0,
+    PBPResizeTypeUp,
+    PBPResizeTypeDown,
+    PBPResizeTypeLeft,
+    PBPResizeTypeRight,
+    PBPResizeTypeUpLeft,
+    PBPResizeTypeUpRight,
+    PBPResizeTypeDownLeft,
+    PBPResizeTypeDownRight,
+};
 
 @class PBDrawingCanvas;
 @class PBResizableView;
@@ -31,6 +43,7 @@ typedef NS_ENUM(NSInteger, PBGuidePosition) {
 
 @property (nonatomic) NSPoint mouseDownPoint;
 @property (nonatomic) NSRect boundingRect;
+@property (nonatomic) PBPResizeType resizeType;
 
 - (void)cleanup;
 - (BOOL)shouldDeselectView:(PBResizableView *)view;
@@ -98,5 +111,6 @@ typedef NS_ENUM(NSInteger, PBGuidePosition) {
 - (void)updateGuides;
 - (BOOL)isViewSelected:(PBResizableView *)view;
 - (void)setInfoValue:(NSString *)value;
+- (void)updateInfoLabel:(PBResizableView *)view;
 
 @end

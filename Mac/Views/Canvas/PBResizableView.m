@@ -7,12 +7,12 @@
 //
 
 #import "PBResizableView.h"
-#import "PBGuideView.h"
+#import "PBSpacerView.h"
 
 @interface PBResizableView()
 
-@property (nonatomic, strong) NSTextField *infoLabel;
-@property (nonatomic, strong) NSTrackingArea *trackingArea;
+@property (nonatomic, readwrite) NSTextField *infoLabel;
+//@property (nonatomic, strong) NSTrackingArea *trackingArea;
 @property (nonatomic, strong) NSLayoutConstraint *bottomSpace;
 @property (nonatomic, strong) NSLayoutConstraint *leftSpace;
 @property (nonatomic, strong) NSLayoutConstraint *width;
@@ -41,10 +41,11 @@
 - (void)commonInit {
 
     self.infoLabel = [[NSTextField alloc] initWithFrame:NSZeroRect];
-    [_infoLabel setBezeled:NO];
-    [_infoLabel setDrawsBackground:NO];
-    [_infoLabel setEditable:NO];
-    [_infoLabel setSelectable:NO];
+    _infoLabel.bezeled = NO;
+    _infoLabel.drawsBackground = NO;
+//    _infoLabel.backgroundColor = [NSColor redColor];
+    _infoLabel.editable = NO;
+    _infoLabel.selectable = NO;
     _infoLabel.alphaValue = 0.0f;
     _infoLabel.translatesAutoresizingMaskIntoConstraints = NO;
     _infoLabel.textColor = [NSColor whiteColor];
@@ -53,7 +54,7 @@
     [self addSubview:_infoLabel];
 
     [NSLayoutConstraint horizontallyCenterView:_infoLabel];
-    [NSLayoutConstraint verticallyCenterView:_infoLabel];
+    [NSLayoutConstraint verticallyCenterView:_infoLabel padding:-3.0f];
 }
 
 - (void)setupConstraints {
@@ -80,51 +81,49 @@
     }
 }
 
-- (void)startMouseTracking {
-    if (_trackingArea == nil) {
+//- (void)startMouseTracking {
+//    if (_trackingArea == nil) {
+//
+//        int opts = (NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways | NSTrackingMouseMoved);
+//        self.trackingArea =
+//        [[NSTrackingArea alloc]
+//         initWithRect:self.bounds
+//         options:opts
+//         owner:self
+//         userInfo:nil];
+//        [self addTrackingArea:_trackingArea];
+//    }
+//}
 
-        int opts = (NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways | NSTrackingMouseMoved);
-        self.trackingArea =
-        [[NSTrackingArea alloc]
-         initWithRect:self.bounds
-         options:opts
-         owner:self
-         userInfo:nil];
-        [self addTrackingArea:_trackingArea];
-    }
-}
+//- (void)setAlphaValue:(CGFloat)viewAlpha {
+//
+//    if (viewAlpha > 0.0f) {
+//        [self startMouseTracking];
+//    } else {
+//        [self stopMouseTracking];
+//    }
+//}
 
-- (void)setAlphaValue:(CGFloat)viewAlpha {
-
-    if (viewAlpha > 0.0f) {
-        [self startMouseTracking];
-    } else {
-        [self stopMouseTracking];
-    }
-}
-
-- (void)stopMouseTracking {
-    [self removeTrackingArea:_trackingArea];
-    self.trackingArea = nil;
-}
-
-- (void)mouseEntered:(NSEvent *)event {
-    self.showingInfo = YES;
-    _drawingCanvas.showingInfo = YES;
-}
-
-- (void)mouseExited:(NSEvent *)event {
-    if (_updating == NO) {
-        self.showingInfo = NO;
-        _drawingCanvas.showingInfo = NO;
-    }
-}
-
-- (void)mouseMoved:(NSEvent *)event {
-    if (_updating == NO && _showingInfo == NO) {
-        self.showingInfo = YES;
-    }
-}
+//- (void)stopMouseTracking {
+//    [self removeTrackingArea:_trackingArea];
+//    self.trackingArea = nil;
+//}
+//
+//- (void)mouseEntered:(NSEvent *)event {
+//    self.showingInfo = YES;
+//}
+//
+//- (void)mouseExited:(NSEvent *)event {
+//    if (_updating == NO) {
+//        self.showingInfo = NO;
+//    }
+//}
+//
+//- (void)mouseMoved:(NSEvent *)event {
+//    if (_updating == NO && _showingInfo == NO) {
+//        self.showingInfo = YES;
+//    }
+//}
 
 - (void)setShowingInfo:(BOOL)showingInfo {
 
@@ -132,17 +131,41 @@
     
     _showingInfo = showingInfo;
 
-    CGFloat alpha = showingInfo ? 1.0f : 0.0f;
-
     if (changed) {
         [self updateInfo];
     }
+}
+
+- (void)updateInfo {
+
+    _infoLabel.stringValue =
+    [NSString stringWithFormat:@"(%.0f, %.0f)",
+     NSWidth(self.frame), NSHeight(self.frame)];
+
+    [_infoLabel sizeToFit];
+    [_drawingCanvas setInfoValue:_infoLabel.stringValue];
+
+    [self updateTopSpacerView];
+    [self updateBottomSpacerView];
+    [self updateLeftSpacerView];
+    [self updateRightSpacerView];
+
+    _showingInfoLabel =
+    NSWidth(self.frame) > NSWidth(_infoLabel.frame) &&
+    NSHeight(self.frame) > NSHeight(_infoLabel.frame);
+
+    CGFloat alpha = _showingInfo ? 1.0f : 0.0f;
+    CGFloat infoAlpha = _showingInfo && _showingInfoLabel ? 1.0f : 0.0f;
+
+    _infoLabel.alphaValue = infoAlpha;
+
+    [_drawingCanvas updateInfoLabel:self];
 
     [PBAnimator
      animateWithDuration:.3f
      timingFunction:PB_EASE_OUT
      animation:^{
-         _infoLabel.animator.alphaValue = alpha;
+
          _topSpacerView.animator.alphaValue = alpha;
 
          if (_closestBottomView == nil) {
@@ -161,16 +184,42 @@
      }];
 }
 
-- (void)updateInfo {
+- (void)updateTopSpacerView {
+}
 
-    if (_showingInfo) {
+- (void)updateBottomSpacerView {
 
-        _infoLabel.stringValue =
-        [NSString stringWithFormat:@"(%.0f, %.0f)",
-         NSWidth(self.frame), NSHeight(self.frame)];
+    if (_closestBottomView == nil) {
 
-        [_infoLabel sizeToFit];
-        [_drawingCanvas setInfoValue:_infoLabel.stringValue];
+    } else {
+    }
+}
+
+- (void)updateLeftSpacerView {
+
+    NSRect frame = _leftSpacerView.frame;
+
+    CGFloat yPos;
+    CGFloat width;
+
+    if (_closestLeftView != nil) {
+
+    } else {
+
+        yPos = NSMidY(self.frame) - (NSHeight(frame) / 2.0f);
+
+        frame.origin.y = yPos;
+        frame.size.width = NSMinX(self.frame);
+    }
+
+    _leftSpacerView.frame = frame;
+    [_leftSpacerView updateWidth];
+}
+
+- (void)updateRightSpacerView {
+
+    if (_closestRightView == nil) {
+    } else {
     }
 }
 
@@ -200,8 +249,8 @@
     }
 
     [self updateInfo];
-    [self stopMouseTracking];
-    [self startMouseTracking];
+//    [self stopMouseTracking];
+//    [self startMouseTracking];
 }
 
 - (void)setFrameOrigin:(NSPoint)newOrigin {

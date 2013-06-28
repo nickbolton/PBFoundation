@@ -10,7 +10,7 @@
 #import "PBDrawingCanvas.h"
 
 @class PBResizableView;
-@class PBGuideView;
+@class PBSpacerView;
 
 @protocol PBResizableViewDelegate <PBAcceptsFirstViewDelegate>
 
@@ -28,17 +28,19 @@
 @property (nonatomic) NSInteger borderWidth;
 @property (nonatomic) NSInteger tag;
 @property (nonatomic, getter = isShowingInfo) BOOL showingInfo;
+@property (nonatomic, getter = isShowingInfoLabel) BOOL showingInfoLabel;
 @property (nonatomic, getter = isUpdating) BOOL updating;
 @property (nonatomic, weak) PBDrawingCanvas *drawingCanvas;
 @property (nonatomic) NSEdgeInsets edgeDistances;
-@property (nonatomic, weak) PBGuideView *topSpacerView;
-@property (nonatomic, weak) PBGuideView *bottomSpacerView;
-@property (nonatomic, weak) PBGuideView *leftSpacerView;
-@property (nonatomic, weak) PBGuideView *rightSpacerView;
+@property (nonatomic, weak) PBSpacerView *topSpacerView;
+@property (nonatomic, weak) PBSpacerView *bottomSpacerView;
+@property (nonatomic, weak) PBSpacerView *leftSpacerView;
+@property (nonatomic, weak) PBSpacerView *rightSpacerView;
 @property (nonatomic, weak) NSView *closestTopView;
 @property (nonatomic, weak) NSView *closestBottomView;
 @property (nonatomic, weak) NSView *closestLeftView;
 @property (nonatomic, weak) NSView *closestRightView;
+@property (nonatomic, readonly) NSTextField *infoLabel;
 
 - (void)setupConstraints;
 - (void)setViewFrame:(NSRect)frame animated:(BOOL)animated;

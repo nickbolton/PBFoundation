@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @class PBGuideView;
+@class PBResizeableView;
 
 @interface PBSpacerView : NSView
 
@@ -25,9 +26,10 @@
            bottomView:(PBGuideView *)bottomView
                 value:(CGFloat)value;
 
-@property (nonatomic, readonly) PBGuideView *view1;
-@property (nonatomic, readonly) PBGuideView *view2;
+@property (nonatomic, readonly) PBResizeableView *view1;
+@property (nonatomic, readonly) PBResizeableView *view2;
 
-- (void)alignToViews;
+- (void)updateWidth;
+- (void)updateHeight;
 
 @end

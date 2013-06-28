@@ -158,6 +158,14 @@
 #else
 + (NSLayoutConstraint *)horizontallyCenterView:(NSView *)view {
 #endif
+    return [self horizontallyCenterView:view padding:0.0f];
+}
+
+#if TARGET_OS_IPHONE
++ (NSLayoutConstraint *)horizontallyCenterView:(UIView *)view padding:(CGFloat)padding {
+#else
++ (NSLayoutConstraint *)horizontallyCenterView:(NSView *)view padding:(CGFloat)padding {
+#endif
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
      constraintWithItem:view
@@ -166,7 +174,7 @@
      toItem:view.superview
      attribute:NSLayoutAttributeCenterX
      multiplier:1.0f
-     constant:0.0f];
+     constant:padding];
     [view.superview addConstraint:constraint];
     return constraint;
 }
@@ -176,6 +184,15 @@
 #else
 + (NSLayoutConstraint *)verticallyCenterView:(NSView *)view {
 #endif
+    [self verticallyCenterView:view padding:0.0f];
+}
+
+#if TARGET_OS_IPHONE
++ (NSLayoutConstraint *)verticallyCenterView:(UIView *)view padding:(CGFloat)padding {
+#else
++ (NSLayoutConstraint *)verticallyCenterView:(NSView *)view padding:(CGFloat)padding {
+#endif
+
     NSLayoutConstraint *constraint =
     [NSLayoutConstraint
      constraintWithItem:view
@@ -184,7 +201,7 @@
      toItem:view.superview
      attribute:NSLayoutAttributeCenterY
      multiplier:1.0f
-     constant:0.0f];
+     constant:padding];
     [view.superview addConstraint:constraint];
     return constraint;
 }
@@ -299,6 +316,42 @@
      multiplier:1.0f
      constant:padding];
     [view.superview addConstraint:constraint];
+    return constraint;
+}
+
+#if TARGET_OS_IPHONE
++ (NSLayoutConstraint *)verticallySpaceTopView:(UIView *)topView toBottomView:(UIView *)bottomView withPadding:(CGFloat)padding {
+#else
++ (NSLayoutConstraint *)verticallySpaceTopView:(NSView *)topView toBottomView:(NSView *)bottomView withPadding:(CGFloat)padding {
+#endif
+    NSLayoutConstraint *constraint =
+    [NSLayoutConstraint
+     constraintWithItem:topView
+     attribute:NSLayoutAttributeBottom
+     relatedBy:NSLayoutRelationEqual
+     toItem:bottomView
+     attribute:NSLayoutAttributeTop
+     multiplier:1.0f
+     constant:padding];
+    [topView.superview addConstraint:constraint];
+    return constraint;
+}
+
+#if TARGET_OS_IPHONE
++ (NSLayoutConstraint *)horizontallySpaceLeftView:(UIView *)leftView toRightView:(UIView *)rightView withPadding:(CGFloat)padding {
+#else
++ (NSLayoutConstraint *)horizontallySpaceLeftView:(NSView *)leftView toRightView:(NSView *)rightView withPadding:(CGFloat)padding {
+#endif
+    NSLayoutConstraint *constraint =
+    [NSLayoutConstraint
+     constraintWithItem:leftView
+     attribute:NSLayoutAttributeRight
+     relatedBy:NSLayoutRelationEqual
+     toItem:rightView
+     attribute:NSLayoutAttributeLeft
+     multiplier:1.0f
+     constant:padding];
+    [leftView.superview addConstraint:constraint];
     return constraint;
 }
 

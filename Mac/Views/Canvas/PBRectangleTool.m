@@ -40,8 +40,6 @@
     
     PBResizableView *selectedView = [canvas viewAtPoint:point];
 
-    canvas.showingInfo = YES;
-
     if (selectedView != nil) {
 
         self.mouseDownStartingRect = selectedView.frame;
@@ -161,8 +159,9 @@
         }
     }
 
-    canvas.showingInfo = NO;
-    canvas.resizingView.showingInfo = NO;
+//    BOOL showInfo = NSPointInRect(point, canvas.resizingView.frame);
+
+//    canvas.resizingView.showingInfo = showInfo;
     canvas.resizingView.updating = NO;
     canvas.resizingView = nil;
 

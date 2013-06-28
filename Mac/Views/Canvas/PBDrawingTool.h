@@ -9,19 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "PBDrawingCanvas.h"
 
-typedef NS_ENUM(NSInteger, PBPResizeType) {
-
-    PBPResizeTypeNone = 0,
-    PBPResizeTypeUp,
-    PBPResizeTypeDown,
-    PBPResizeTypeLeft,
-    PBPResizeTypeRight,
-    PBPResizeTypeUpLeft,
-    PBPResizeTypeUpRight,
-    PBPResizeTypeDownLeft,
-    PBPResizeTypeDownRight,
-};
-
 @interface PBDrawingTool : NSObject <PBDrawingTool>
 
 @property (nonatomic) NSPoint mouseDownPoint;

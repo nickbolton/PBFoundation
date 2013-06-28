@@ -47,6 +47,8 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 @property (nonatomic, readwrite) NSTextField *infoLabel;
 @property (nonatomic, strong) NSMutableDictionary *toolTrackingRects;
 @property (nonatomic, strong) NSMutableArray *toolTrackingRectTags;
+@property (nonatomic, strong) NSLayoutConstraint *infoLabelLeftSpace;
+@property (nonatomic, strong) NSLayoutConstraint *infoLabelBottomSpace;
 
 @end
 
@@ -84,18 +86,6 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     self.toolBorderColor = [NSColor blackColor];
     _toolBorderWidth = 1;
 
-    _guideViews[@(PBGuidePositionTop)] =
-    [self guideForPosition:PBGuidePositionTop];
-
-    _guideViews[@(PBGuidePositionBottom)] =
-    [self guideForPosition:PBGuidePositionBottom];
-
-    _guideViews[@(PBGuidePositionLeft)] =
-    [self guideForPosition:PBGuidePositionLeft];
-
-    _guideViews[@(PBGuidePositionRight)] =
-    [self guideForPosition:PBGuidePositionRight];
-
     for (NSView *view in _guideViews.allValues) {
         [self addSubview:view positioned:NSWindowAbove relativeTo:nil];
     }
@@ -114,8 +104,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     [self addSubview:_infoLabel];
 
-    [NSLayoutConstraint alignToRight:_infoLabel withPadding:10.0f];
-    [NSLayoutConstraint alignToBottom:_infoLabel withPadding:10.0f];
+    [self updateInfoLabel:_resizingView];
 
     self.leftSpacerImage = [NSImage imageNamed:@"arrowLeft"];
     self.rightSpacerImage = [NSImage imageNamed:@"arrowRight"];
@@ -161,7 +150,21 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 - (void)setShowSelectionGuides:(BOOL)showSelectionGuides {
     _showSelectionGuides = showSelectionGuides;
 
-    [self showGuides];
+    if (showSelectionGuides) {
+        _guideViews[@(PBGuidePositionTop)] =
+        [self guideForPosition:PBGuidePositionTop];
+
+        _guideViews[@(PBGuidePositionBottom)] =
+        [self guideForPosition:PBGuidePositionBottom];
+
+        _guideViews[@(PBGuidePositionLeft)] =
+        [self guideForPosition:PBGuidePositionLeft];
+
+        _guideViews[@(PBGuidePositionRight)] =
+        [self guideForPosition:PBGuidePositionRight];
+        
+        [self showGuides];
+    }
 }
 
 - (void)setToolType:(PBDrawingCanvasToolType)toolType {
@@ -470,13 +473,17 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
         NSArray *selectedViews = [_selectedViews copy];
         for (PBResizableView *selectedView in selectedViews) {
-            [self deselectView:selectedView];
+            if (selectedView != view) {
+                [self deselectView:selectedView];
+            }
         }
     }
 
     if (view != nil) {
 
-        [_selectedViews addObject:view];
+        if ([_selectedViews containsObject:view] == NO) {
+            [_selectedViews addObject:view];
+        }
 
         view.backgroundColor = _toolSelectedColor;
         view.borderWidth = _toolBorderWidth;
@@ -491,6 +498,10 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
         _mouseDownSelectedViewOrigins[viewKey] =
         [NSValue valueWithPoint:view.frame.origin];
+
+        if (_selectedViews.count == 1) {
+            view.showingInfo = YES;
+        }
     }
 
     [self showGuides];
@@ -502,6 +513,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         NSString *viewKey = [self viewKey:view];
         [_mouseDownSelectedViewOrigins removeObjectForKey:viewKey];
 
+        view.showingInfo = NO;
         view.backgroundColor = _toolColor;
         view.borderWidth = 0;
         view.borderColor = nil;
@@ -562,11 +574,14 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     for (PBResizableView *selectedView in _selectedViews) {
 
-        NSString *viewKey = [self viewKey:selectedView];
-
         NSRect frame = NSOffsetRect(selectedView.frame, offset.x, offset.y);
 
         [selectedView setViewFrame:frame animated:NO];
+
+        NSString *viewKey = [self viewKey:selectedView];
+
+        _mouseDownSelectedViewOrigins[viewKey] =
+        [NSValue valueWithPoint:frame.origin];
     }
 }
 
@@ -740,15 +755,14 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 //        view.bottomSpacerView = spacerLabel;
 //        spacerLabel.alphaValue = view.closestBottomView == nil ? 1.0f : 0.0f;
 
-//        spacerView =
-//        [[PBSpacerView alloc]
-//         initWithLeftView:view.closestLeftView
-//         rightView:view
-//         value:view.edgeDistances.left];
-//        [self addSubview:spacerView];
-//        [_spacerViews addObject:spacerView];
-//        [spacerView alignToViews];
-//        view.leftSpacerView = spacerView;
+        spacerView =
+        [[PBSpacerView alloc]
+         initWithLeftView:view.closestLeftView
+         rightView:view
+         value:view.edgeDistances.left];
+        [self addSubview:spacerView];
+        [_spacerViews addObject:spacerView];
+        view.leftSpacerView = spacerView;
 
 //        guideView = [self horizontalSpacerView:view.edgeDistances.right leftView:<#(NSView *)#> rightView:<#(NSView *)#>:view.edgeDistances.right];
 //        [self alignSpacer:guideView toRightOfView:view];
@@ -951,13 +965,35 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     _showingInfo = showingInfo;
 
     CGFloat alpha = showingInfo ? 1.0f : 0.0f;
+    _infoLabel.alphaValue = alpha;
+}
 
-    [PBAnimator
-     animateWithDuration:.3f
-     timingFunction:PB_EASE_OUT
-     animation:^{
-         _infoLabel.animator.alphaValue = alpha;
-     }];
+- (void)updateInfoLabel:(PBResizableView *)view {
+
+    NSPoint mouseLocation = [self windowLocationOfMouse];
+
+    self.showingInfo =
+    NSEqualSizes(NSZeroSize, view.frame.size) == NO &&
+    view.isShowingInfoLabel == NO;
+
+    CGFloat left = NSMaxX(view.frame) + 5.0f;
+    CGFloat bottom = NSMidY(view.frame) - 8.0f;
+
+    if (_infoLabelLeftSpace == nil) {
+        self.infoLabelLeftSpace =
+        [NSLayoutConstraint
+         alignToLeft:_infoLabel
+         withPadding:left];
+
+        self.infoLabelBottomSpace =
+        [NSLayoutConstraint
+         alignToBottom:_infoLabel
+         withPadding:-bottom];
+    } else {
+
+        _infoLabelLeftSpace.constant = left;
+        _infoLabelBottomSpace.constant = -bottom;
+    }
 }
 
 #pragma mark - Guides
@@ -982,7 +1018,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 }
 
 - (PBGuideView *)guideForPosition:(PBGuidePosition)guidePosition {
-
+    
     PBGuideView *view = [[PBGuideView alloc] initWithFrame:NSZeroRect];
     view.translatesAutoresizingMaskIntoConstraints = NO;
 
@@ -1052,18 +1088,21 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 - (void)attachGuideToView:(PBResizableView *)view
                atPosition:(PBGuidePosition)guidePosition {
 
+    PBGuideView *guideView = _guideViews[@(guidePosition)];
+
     if (view != nil) {
-        PBGuideView *guideView = _guideViews[@(guidePosition)];
         guideView.frame = [self guideFrameForView:view atPosition:guidePosition];
+        guideView.alphaValue = 1.0f;
 
         _guideReferenceViews[@(guidePosition)] = view;
 
         [self addSubview:guideView positioned:NSWindowAbove relativeTo:nil];
+    } else {
+        guideView.alphaValue = 0.0f;
     }
 }
 
 - (void)showGuides {
-    [self removeAllGuides];
 
     if (_showSelectionGuides) {
 

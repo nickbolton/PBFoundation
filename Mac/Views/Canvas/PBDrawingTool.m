@@ -618,6 +618,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     }
 
     [canvas.resizingView setViewFrame:frame animated:NO];
+    [canvas updateInfoLabel:canvas.resizingView];
 }
 
 #pragma mark - Mouse Tracking
