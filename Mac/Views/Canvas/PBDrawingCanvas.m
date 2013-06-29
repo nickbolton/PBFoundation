@@ -367,12 +367,20 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
      animation:^{
 
          for (PBResizableView *view in targetViews) {
-             [[view animator] setAlphaValue:0.0f];
+             view.animator.alphaValue = 0.0f;
+             view.topSpacerView.animator.alphaValue = 0.0f;
+             view.bottomSpacerView.animator.alphaValue = 0.0f;
+             view.leftSpacerView.animator.alphaValue = 0.0f;
+             view.rightSpacerView.animator.alphaValue = 0.0f;
          }
 
      } completion:^{
 
          for (PBResizableView *view in targetViews) {
+             [view.topSpacerView removeFromSuperview];
+             [view.bottomSpacerView removeFromSuperview];
+             [view.leftSpacerView removeFromSuperview];
+             [view.rightSpacerView removeFromSuperview];
              [view removeFromSuperview];
          }
 
@@ -740,20 +748,24 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
         PBSpacerView *spacerView;
 
-//        NSTextField *spacerLabel =
-//        [self
-//         spacerTextField:view.edgeDistances.top
-//         textAlignment:NSCenterTextAlignment];
-//        [self alignSpacer:spacerLabel toTopOfView:view];
-//        view.topSpacerView = spacerLabel;
+        spacerView =
+        [[PBSpacerView alloc]
+         initWithTopView:view.closestTopView
+         bottomView:view
+         value:view.edgeDistances.top];
+        [self addSubview:spacerView];
+        [_spacerViews addObject:spacerView];
+        view.topSpacerView = spacerView;
+        spacerView.alphaValue = view.closestBottomView == nil ? 1.0f : 0.0f;
 
-//        spacerLabel =
-//        [self
-//         spacerTextField:view.edgeDistances.bottom
-//         textAlignment:NSCenterTextAlignment];
-//        [self alignSpacer:spacerLabel toBottomOfView:view];
-//        view.bottomSpacerView = spacerLabel;
-//        spacerLabel.alphaValue = view.closestBottomView == nil ? 1.0f : 0.0f;
+        spacerView =
+        [[PBSpacerView alloc]
+         initWithTopView:view
+         bottomView:view.closestBottomView
+         value:view.edgeDistances.bottom];
+        [self addSubview:spacerView];
+        [_spacerViews addObject:spacerView];
+        view.bottomSpacerView = spacerView;
 
         spacerView =
         [[PBSpacerView alloc]
@@ -764,10 +776,15 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         [_spacerViews addObject:spacerView];
         view.leftSpacerView = spacerView;
 
-//        guideView = [self horizontalSpacerView:view.edgeDistances.right leftView:<#(NSView *)#> rightView:<#(NSView *)#>:view.edgeDistances.right];
-//        [self alignSpacer:guideView toRightOfView:view];
-//        view.rightSpacerView = guideView;
-//        guideView.alphaValue = view.closestRightView == nil ? 1.0f : 0.0f;
+        spacerView =
+        [[PBSpacerView alloc]
+         initWithLeftView:view
+         rightView:view.closestRightView
+         value:view.edgeDistances.right];
+        [self addSubview:spacerView];
+        [_spacerViews addObject:spacerView];
+        view.rightSpacerView = spacerView;
+        spacerView.alphaValue = view.closestLeftView == nil ? 1.0f : 0.0f;
     }
 }
 

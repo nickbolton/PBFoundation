@@ -82,6 +82,13 @@ static NSImage *PBSpacerViewRightImage = nil;
     return PBSpacerViewRightImage;
 }
 
+- (void)commonInit:(CGFloat)value {
+    self.value = value;
+    self.translatesAutoresizingMaskIntoConstraints = NO;
+    self.constraints = [NSMutableArray array];
+    [self buildValueTextField];
+}
+
 - (PBGuideView *)buildGuideView:(NSRect)frame {
     PBGuideView *view = [[PBGuideView alloc] initWithFrame:frame];
     view.translatesAutoresizingMaskIntoConstraints = NO;
@@ -216,10 +223,8 @@ static NSImage *PBSpacerViewRightImage = nil;
     if (self != nil) {
         self.view1 = leftView;
         self.view2 = rightView;
-        self.value = value;
-        self.constraints = [NSMutableArray array];
-        self.translatesAutoresizingMaskIntoConstraints = NO;
-        [self buildValueTextField];
+        [self commonInit:value];
+        [self initializeHorizontal];
         [self tearDownSubviews];
     }
 
@@ -262,7 +267,6 @@ static NSImage *PBSpacerViewRightImage = nil;
 
     _guideView2Size.constant = width;
     [_guideView2 setNeedsLayout:YES];
-
 }
 
 - (void)initializeHorizontal {
@@ -303,12 +307,12 @@ static NSImage *PBSpacerViewRightImage = nil;
 
     self.guideView1Size =
     [NSLayoutConstraint
-     addWidthConstraint:NSWidth(_guideView1.frame)
+     addWidthConstraint:MAX(0.0f, NSWidth(_guideView1.frame))
      toView:_guideView1];
 
     self.guideView2Size =
     [NSLayoutConstraint
-     addWidthConstraint:NSWidth(_guideView2.frame)
+     addWidthConstraint:MAX(0.0f, NSWidth(_guideView2.frame))
      toView:_guideView2];
 }
 
@@ -387,36 +391,64 @@ static NSImage *PBSpacerViewRightImage = nil;
            bottomView:(PBGuideView *)bottomView
                 value:(CGFloat)value {
 
-    CGFloat height =
-    MAX([PBSpacerView leftSpacerImage].size.height,
-        [PBSpacerView rightSpacerImage].size.height);
+    CGFloat width =
+    MAX([PBSpacerView upSpacerImage].size.width,
+        [PBSpacerView downSpacerImage].size.width);
 
-    NSRect frame = NSMakeRect(0.0f, 0.0f, value, height);
+    width = MAX(width, 33.0f);
+
+    NSRect frame = NSMakeRect(0.0f, 0.0f, width, value);
 
     self = [super initWithFrame:frame];
 
     if (self != nil) {
         self.view1 = topView;
         self.view2 = bottomView;
-        self.value = value;
-        self.translatesAutoresizingMaskIntoConstraints = NO;
+        [self commonInit:value];
         [self initializeVertical];
-        [self buildValueTextField];
         [self tearDownSubviews];
     }
 
     return self;
-
 }
 
 - (void)addVerticalSpacerConstraints {
 }
 
 - (CGFloat)guideHeight {
-    return 0.0f;
+
+    NSImage *upArrowImage = [PBSpacerView upSpacerImage];
+    NSImage *downArrowImage = [PBSpacerView downSpacerImage];
+
+    return
+    (NSHeight(self.frame) - upArrowImage.size.height - downArrowImage.size.height) / 2.0f;
 }
 
 - (void)updateHeight {
+
+    [self updateValueTextField];
+
+    CGFloat height = [self guideHeight];
+
+    if (height <= 0.0f) {
+        [self tearDownSubviews];
+        return;
+    }
+
+    if (_guideView1 == nil) {
+        if (_vertical) {
+            [self initializeVertical];
+        } else {
+            [self initializeHorizontal];
+        }
+        [self addSpacerConstraints];
+    }
+
+    _guideView1Size.constant = height;
+    [_guideView1 setNeedsLayout:YES];
+
+    _guideView2Size.constant = height;
+    [_guideView2 setNeedsLayout:YES];
 }
 
 - (void)buildUpArrowImageView {
@@ -429,34 +461,94 @@ static NSImage *PBSpacerViewRightImage = nil;
     [self buildArrowImageView:[PBSpacerView downSpacerImage]];
 }
 
+- (PBGuideView *)buildBottomGuideView {
+
+    NSImage *downArrowImage = [PBSpacerView downSpacerImage];
+
+    CGFloat height = [self guideHeight];
+
+    NSRect frame =
+    NSMakeRect((NSWidth(self.frame) - 1.0f) / 2.0f,
+               downArrowImage.size.height,
+               1.0f,
+               height);
+
+    PBGuideView *guideView = [self buildGuideView:frame];
+    guideView.autoresizingMask = NSViewWidthSizable;
+    guideView.vertical = YES;
+
+    [self addSubview:guideView];
+
+    return guideView;
+}
+
+- (PBGuideView *)buildTopGuideView {
+
+    NSImage *downArrowImage = [PBSpacerView leftSpacerImage];
+
+    CGFloat height = [self guideHeight];
+
+    NSRect frame =
+    NSMakeRect((NSWidth(self.frame) - 1.0f) / 2.0f,
+               height + downArrowImage.size.width,
+               1.0f,
+               height);
+
+    PBGuideView *guideView = [self buildGuideView:frame];
+    guideView.autoresizingMask = NSViewWidthSizable;
+    guideView.vertical = YES;
+
+    guideView.frame = frame;
+    [self addSubview:guideView];
+    
+    return guideView;
+}
+
 - (void)initializeVertical {
 
     _vertical = YES;
 
-    NSRect frame =
-    NSMakeRect((NSWidth(self.frame) - 1.0f) / 2.0f,
-               0.0f,
-               1.0f,
-               _value);
+    self.guideView1 = [self buildBottomGuideView];
+    self.guideView2 = [self buildTopGuideView];
 
-    PBGuideView *guideView = [self buildGuideView:frame];
-    guideView.frame = frame;
-    guideView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self buildDownArrowImageView];
+    [self buildUpArrowImageView];
+    [self addSubview:_valueTextField];
 
-    [self addSubview:guideView];
+    NSArray *constraints =
+    [NSLayoutConstraint
+     constraintsWithVisualFormat:@"V:|[_arrowImageView1(downArrowHeight)][_guideView1(>=0)][_guideView2(>=0)][_arrowImageView2(upArrowHeight)]|"
+     options:0
+     metrics:
+     @{
+       @"downArrowHeight" : @([PBSpacerView downSpacerImage].size.height),
+       @"upArrowHeight" : @([PBSpacerView upSpacerImage].size.height),
+       }
+     views:NSDictionaryOfVariableBindings(_arrowImageView1, _guideView1, _guideView2, _arrowImageView2)];
+    [self addConstraints:constraints];
+    [_constraints addObjectsFromArray:constraints];
 
-    [NSLayoutConstraint addHeightConstraint:1.0f toView:guideView];
-    [NSLayoutConstraint expandHeightToSuperview:guideView];
-    [NSLayoutConstraint horizontallyCenterView:guideView];
+    NSLayoutConstraint *centeredY =
+    [NSLayoutConstraint
+     constraintWithItem:_valueTextField
+     attribute:NSLayoutAttributeCenterY
+     relatedBy:NSLayoutRelationEqual
+     toItem:self
+     attribute:NSLayoutAttributeCenterY
+     multiplier:1.0f
+     constant:0.0f];
+    [self addConstraint:centeredY];
+    [_constraints addObject:centeredY];
 
-    NSImage *upArrowImage = [PBSpacerView upSpacerImage];
-    NSImage *downArrowImage = [PBSpacerView downSpacerImage];
+    self.guideView1Size =
+    [NSLayoutConstraint
+     addHeightConstraint:MAX(0.0f, NSHeight(_guideView1.frame))
+     toView:_guideView1];
 
-    CGFloat width =
-    MAX(upArrowImage.size.width, downArrowImage.size.width);
-
-    [NSLayoutConstraint addWidthConstraint:width toView:self];
-    
+    self.guideView2Size =
+    [NSLayoutConstraint
+     addHeightConstraint:MAX(0.0f, NSHeight(_guideView2.frame))
+     toView:_guideView2];
 }
 
 #pragma mark - 

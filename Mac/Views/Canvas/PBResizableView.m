@@ -185,14 +185,46 @@
 }
 
 - (void)updateTopSpacerView {
+
+    NSRect frame = _topSpacerView.frame;
+
+    CGFloat xPos;
+    CGFloat height;
+
+    if (_closestTopView != nil) {
+
+    } else {
+
+        xPos = NSMidX(self.frame) - (NSWidth(frame) / 2.0f);
+
+        frame.origin.y = NSMaxY(self.frame);
+        frame.origin.x = xPos;
+        frame.size.height = NSHeight(self.superview.frame) - NSMaxY(self.frame);
+    }
+
+    _topSpacerView.frame = frame;
+    [_topSpacerView updateHeight];
 }
 
 - (void)updateBottomSpacerView {
 
-    if (_closestBottomView == nil) {
+    NSRect frame = _bottomSpacerView.frame;
+
+    CGFloat xPos;
+    CGFloat height;
+
+    if (_closestBottomView != nil) {
 
     } else {
+
+        xPos = NSMidX(self.frame) - (NSWidth(frame) / 2.0f);
+
+        frame.origin.x = xPos;
+        frame.size.height = NSMinY(self.frame);
     }
+
+    _bottomSpacerView.frame = frame;
+    [_bottomSpacerView updateHeight];
 }
 
 - (void)updateLeftSpacerView {
@@ -218,9 +250,24 @@
 
 - (void)updateRightSpacerView {
 
-    if (_closestRightView == nil) {
+    NSRect frame = _rightSpacerView.frame;
+
+    CGFloat yPos;
+    CGFloat width;
+
+    if (_closestRightView != nil) {
+
     } else {
+
+        yPos = NSMidY(self.frame) - (NSHeight(frame) / 2.0f);
+
+        frame.origin.x = NSMaxX(self.frame);
+        frame.origin.y = yPos;
+        frame.size.width = NSWidth(self.superview.frame) - NSMaxX(self.frame);
     }
+
+    _rightSpacerView.frame = frame;
+    [_rightSpacerView updateWidth];
 }
 
 - (NSSize)roundedSize:(NSSize)size {
