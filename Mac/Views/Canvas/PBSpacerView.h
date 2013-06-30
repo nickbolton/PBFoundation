@@ -13,11 +13,6 @@
 
 @interface PBSpacerView : NSView
 
-+ (void)setUpSpacerImage:(NSImage *)image;
-+ (void)setDownSpacerImage:(NSImage *)image;
-+ (void)setLeftSpacerImage:(NSImage *)image;
-+ (void)setRightSpacerImage:(NSImage *)image;
-
 - (id)initWithLeftView:(PBGuideView *)leftView
              rightView:(PBGuideView *)rightView
                  value:(CGFloat)value;
@@ -28,8 +23,8 @@
 
 @property (nonatomic, readonly) PBResizeableView *view1;
 @property (nonatomic, readonly) PBResizeableView *view2;
+@property (nonatomic, strong) NSColor *spacerColor;
 
-- (void)updateWidth;
-- (void)updateHeight;
+- (void)updateSize;
 
 @end

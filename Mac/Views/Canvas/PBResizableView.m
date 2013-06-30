@@ -203,7 +203,7 @@
     }
 
     _topSpacerView.frame = frame;
-    [_topSpacerView updateHeight];
+    [_topSpacerView updateSize];
 }
 
 - (void)updateBottomSpacerView {
@@ -224,7 +224,7 @@
     }
 
     _bottomSpacerView.frame = frame;
-    [_bottomSpacerView updateHeight];
+    [_bottomSpacerView updateSize];
 }
 
 - (void)updateLeftSpacerView {
@@ -245,7 +245,7 @@
     }
 
     _leftSpacerView.frame = frame;
-    [_leftSpacerView updateWidth];
+    [_leftSpacerView updateSize];
 }
 
 - (void)updateRightSpacerView {
@@ -267,7 +267,7 @@
     }
 
     _rightSpacerView.frame = frame;
-    [_rightSpacerView updateWidth];
+    [_rightSpacerView updateSize];
 }
 
 - (NSSize)roundedSize:(NSSize)size {

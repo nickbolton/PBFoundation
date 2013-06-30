@@ -106,15 +106,6 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     [self updateInfoLabel:_resizingView];
 
-    self.leftSpacerImage = [NSImage imageNamed:@"arrowLeft"];
-    self.rightSpacerImage = [NSImage imageNamed:@"arrowRight"];
-    self.upSpacerImage = [NSImage imageNamed:@"arrowUp"];
-    self.downSpacerImage = [NSImage imageNamed:@"arrowDown"];
-
-    [PBSpacerView setUpSpacerImage:_upSpacerImage];
-    [PBSpacerView setDownSpacerImage:_downSpacerImage];
-    [PBSpacerView setLeftSpacerImage:_leftSpacerImage];
-    [PBSpacerView setRightSpacerImage:_rightSpacerImage];
     [PBGuideView setHorizontalImage:_horizontalGuideImage];
     [PBGuideView setVerticalImage:_verticalGuideImage];
 }
@@ -891,30 +882,6 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     [self addConstraint:alignToVerticalCenter];
     [self addConstraint:horizontalSpace];
-}
-
-- (PBGuideView *)horizontalSpacerView:(CGFloat)value
-                             leftView:(NSView *)leftView
-                            rightView:(NSView *)rightView {
-
-    CGFloat height =
-    MAX(_leftSpacerImage.size.height, _rightSpacerImage.size.height);
-
-    NSRect frame = NSMakeRect(0.0f, 0.0f, value, height);
-
-    PBSpacerView *spacerView = [[NSView alloc] initWithFrame:frame];
-
-    PBGuideView *guideView = [self guideForPosition:PBGuidePositionTop];
-    guideView.frame = frame;
-    guideView.translatesAutoresizingMaskIntoConstraints = NO;
-
-    [self addSubview:guideView];
-    [_spacerViews addObject:guideView];
-
-    [NSLayoutConstraint addWidthConstraint:value toView:guideView];
-    [NSLayoutConstraint addHeightConstraint:1.0f toView:guideView];
-
-    return guideView;
 }
 
 - (NSRect)rectToTopOfWindow:(PBResizableView *)view {

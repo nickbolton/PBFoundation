@@ -76,10 +76,6 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 @property (nonatomic) NSInteger toolBorderWidth;
 @property (nonatomic) BOOL showSelectionGuides;
 @property (nonatomic, readonly) NSTextField *infoLabel;
-@property (nonatomic, strong) NSImage *leftSpacerImage;
-@property (nonatomic, strong) NSImage *rightSpacerImage;
-@property (nonatomic, strong) NSImage *upSpacerImage;
-@property (nonatomic, strong) NSImage *downSpacerImage;
 @property (nonatomic, strong) NSImage *verticalGuideImage;
 @property (nonatomic, strong) NSImage *horizontalGuideImage;
 

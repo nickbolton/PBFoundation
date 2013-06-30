@@ -10,11 +10,6 @@
 #import "PBGuideView.h"
 #import "PBDrawingCanvas.h"
 
-static NSImage *PBSpacerViewUpImage = nil;
-static NSImage *PBSpacerViewDownImage = nil;
-static NSImage *PBSpacerViewLeftImage = nil;
-static NSImage *PBSpacerViewRightImage = nil;
-
 @interface PBSpacerView() {
 
     BOOL _vertical;
@@ -22,14 +17,6 @@ static NSImage *PBSpacerViewRightImage = nil;
 
 @property (nonatomic, readwrite) PBResizeableView *view1;
 @property (nonatomic, readwrite) PBResizeableView *view2;
-@property (nonatomic, strong) PBGuideView *guideView1;
-@property (nonatomic, strong) PBGuideView *guideView2;
-@property (nonatomic, strong) NSTextField *valueTextField;
-@property (nonatomic, strong) NSImageView *arrowImageView1;
-@property (nonatomic, strong) NSImageView *arrowImageView2;
-@property (nonatomic, strong) NSLayoutConstraint *guideView1Size;
-@property (nonatomic, strong) NSLayoutConstraint *guideView2Size;
-@property (nonatomic, strong) NSLayoutConstraint *valueTextFieldWidth;
 @property (nonatomic, strong) NSMutableArray *constraints;
 
 @property (nonatomic) CGFloat value;
@@ -38,55 +25,11 @@ static NSImage *PBSpacerViewRightImage = nil;
 
 @implementation PBSpacerView
 
-+ (void)setUpSpacerImage:(NSImage *)image {
-    PBSpacerViewUpImage = image;
-}
-
-+ (void)setDownSpacerImage:(NSImage *)image {
-    PBSpacerViewDownImage = image;
-}
-
-+ (void)setLeftSpacerImage:(NSImage *)image {
-    PBSpacerViewLeftImage = image;
-}
-
-+ (void)setRightSpacerImage:(NSImage *)image {
-    PBSpacerViewRightImage = image;
-}
-
-+ (NSImage *)upSpacerImage {
-    if (PBSpacerViewUpImage == nil) {
-        PBSpacerViewUpImage = [NSImage imageNamed:@"arrowUp"];
-    }
-    return PBSpacerViewUpImage;
-}
-
-+ (NSImage *)downSpacerImage {
-    if (PBSpacerViewDownImage == nil) {
-        PBSpacerViewDownImage = [NSImage imageNamed:@"arrowDown"];
-    }
-    return PBSpacerViewDownImage;
-}
-
-+ (NSImage *)leftSpacerImage {
-    if (PBSpacerViewLeftImage == nil) {
-        PBSpacerViewLeftImage = [NSImage imageNamed:@"arrowLeft"];
-    }
-    return PBSpacerViewLeftImage;
-}
-
-+ (NSImage *)rightSpacerImage {
-    if (PBSpacerViewRightImage == nil) {
-        PBSpacerViewRightImage = [NSImage imageNamed:@"arrowRight"];
-    }
-    return PBSpacerViewRightImage;
-}
-
 - (void)commonInit:(CGFloat)value {
     self.value = value;
     self.translatesAutoresizingMaskIntoConstraints = NO;
     self.constraints = [NSMutableArray array];
-    [self buildValueTextField];
+    self.spacerColor = [NSColor redColor];
 }
 
 - (PBGuideView *)buildGuideView:(NSRect)frame {
@@ -96,98 +39,59 @@ static NSImage *PBSpacerViewRightImage = nil;
     return view;
 }
 
-- (void)addSpacerConstraints {
-
-    if (_vertical) {
-        [self addVerticalSpacerConstraints];
-    } else {
-        [self addHorizontalSpacerConstraints];
-    }
-}
-
 - (void)removeAllConstraints {
 
     [self removeConstraints:_constraints];
     [self.superview removeConstraints:_constraints];
-    [_guideView1 removeConstraint:_guideView1Size];
-    [_guideView2 removeConstraint:_guideView2Size];
-    [_valueTextField removeConstraint:_valueTextFieldWidth];
-    [_valueTextField removeConstraints:_constraints];
     [_constraints removeAllObjects];
 }
 
-- (void)tearDownSubviews {
-    [self removeAllConstraints];
-    [_guideView1 removeFromSuperview];
-    [_guideView2 removeFromSuperview];
-    [_arrowImageView1 removeFromSuperview];
-    [_arrowImageView2 removeFromSuperview];
-    [_valueTextField removeFromSuperview];
-    self.guideView1 = nil;
-    self.guideView2 = nil;
-    self.guideView1Size = nil;
-    self.guideView2Size = nil;
-    self.valueTextFieldWidth = nil;
-    self.arrowImageView1 = nil;
-    self.arrowImageView2 = nil;
-}
-
-- (void)buildValueTextField {
-
-    if (_valueTextField == nil) {
-
-        NSRect frame = NSZeroRect;
-
-        self.valueTextField = [[NSTextField alloc] initWithFrame:frame];
-        _valueTextField.bezeled = NO;
-        _valueTextField.drawsBackground = YES;
-        _valueTextField.backgroundColor = [NSColor blackColor];
-        _valueTextField.editable = NO;
-        _valueTextField.selectable = NO;
-        _valueTextField.translatesAutoresizingMaskIntoConstraints = NO;
-        _valueTextField.textColor = [NSColor whiteColor];
-        _valueTextField.font = [NSFont fontWithName:@"HelveticaNeue" size:13.0f];
+- (void)updateSize {
+    if (_vertical) {
+        [self updateHeight];
+    } else {
+        [self updateWidth];
     }
-    [self addSubview:_valueTextField];
 }
-
-- (void)updateValueTextField {
-
-    NSString *text = [NSString stringWithFormat:@"%.0f", _value];
-
-    NSSize size =
-    [text sizeWithAttributes:
-     @{
-       NSFontAttributeName : _valueTextField.font,
-     }];
-
-    _valueTextField.stringValue = text;
-    [_valueTextField sizeToFit];
-
-//    if (_valueTextFieldWidth == nil) {
-//
-//        self.valueTextFieldWidth =
-//        [NSLayoutConstraint
-//         addWidthConstraint:size.width
-//         toView:_valueTextField];
-//
-//    } else {
-//
-//        self.valueTextFieldWidth.constant = size.width;
-//    }
-//
-//    [self setNeedsLayout:YES];
-}
-
 #pragma mark - Horizontal
 
-- (void)addHorizontalSpacerConstraints {
+- (id)initWithLeftView:(PBGuideView *)leftView
+             rightView:(PBGuideView *)rightView
+                 value:(CGFloat)value {
+
+    NSRect frame = NSMakeRect(0.0f, 0.0f, value, 5.0f);
+
+    self = [super initWithFrame:frame];
+
+    if (self != nil) {
+        self.view1 = leftView;
+        self.view2 = rightView;
+        [self commonInit:value];
+        [self initializeHorizontal];
+    }
+
+    return self;
+}
+
+- (void)updateWidth {
+
+    CGFloat width = NSWidth(self.frame);
+
+    if (width <= 0.0f) {
+        [self removeAllConstraints];
+        return;
+    }
+}
+
+- (void)initializeHorizontal {
+
+    _vertical = NO;
 
     if (_view1 != nil) {
 
         NSArray *constraints =
         [NSLayoutConstraint
-         constraintsWithVisualFormat:@"H:[_view1]-(0)-[self]"
+         constraintsWithVisualFormat:@"H:[_view1][self]"
          options:0
          metrics:nil
          views:NSDictionaryOfVariableBindings(_view1, self)];
@@ -199,7 +103,7 @@ static NSImage *PBSpacerViewRightImage = nil;
 
         NSArray *constraints =
         [NSLayoutConstraint
-         constraintsWithVisualFormat:@"H:[self]-(0)-[_view2]"
+         constraintsWithVisualFormat:@"H:[self][_view2]"
          options:0
          metrics:nil
          views:NSDictionaryOfVariableBindings(_view2, self)];
@@ -208,196 +112,13 @@ static NSImage *PBSpacerViewRightImage = nil;
     }
 }
 
-- (id)initWithLeftView:(PBGuideView *)leftView
-             rightView:(PBGuideView *)rightView
-                 value:(CGFloat)value {
-
-    CGFloat height =
-    MAX([PBSpacerView leftSpacerImage].size.height,
-        [PBSpacerView rightSpacerImage].size.height);
-
-    NSRect frame = NSMakeRect(0.0f, 0.0f, value, height);
-
-    self = [super initWithFrame:frame];
-
-    if (self != nil) {
-        self.view1 = leftView;
-        self.view2 = rightView;
-        [self commonInit:value];
-        [self initializeHorizontal];
-        [self tearDownSubviews];
-    }
-
-    return self;
-}
-
-- (CGFloat)guideWidth {
-
-    NSImage *leftArrowImage = [PBSpacerView leftSpacerImage];
-    NSImage *rightArrowImage = [PBSpacerView rightSpacerImage];
-
-    return
-    (NSWidth(self.frame) - leftArrowImage.size.width - rightArrowImage.size.width) / 2.0f;
-}
-
-- (void)updateWidth {
-
-    [self updateValueTextField];
-
-    CGFloat width = [self guideWidth];
-
-    if (width <= 0.0f) {
-        [self tearDownSubviews];
-        return;
-    }
-
-    if (_guideView1 == nil) {
-        if (_vertical) {
-            [self initializeVertical];
-        } else {
-            [self initializeHorizontal];
-        }
-        [self addSpacerConstraints];
-    }
-
-//    self.alphaValue = 1.0f;
-
-    _guideView1Size.constant = width;
-    [_guideView1 setNeedsLayout:YES];
-
-    _guideView2Size.constant = width;
-    [_guideView2 setNeedsLayout:YES];
-}
-
-- (void)initializeHorizontal {
-
-    _vertical = NO;
-
-    self.guideView1 = [self buildLeftGuideView];
-    self.guideView2 = [self buildRightGuideView];
-
-    [self buildLeftArrowImageView];
-    [self buildRightArrowImageView];
-    [self addSubview:_valueTextField];
-
-    NSArray *constraints =
-    [NSLayoutConstraint
-     constraintsWithVisualFormat:@"H:|[_arrowImageView1(leftArrowWidth)][_guideView1(>=0)][_guideView2(>=0)][_arrowImageView2(rightArrowWidth)]|"
-     options:0
-     metrics:
-     @{
-       @"leftArrowWidth" : @([PBSpacerView leftSpacerImage].size.width),
-       @"rightArrowWidth" : @([PBSpacerView rightSpacerImage].size.width),
-       }
-     views:NSDictionaryOfVariableBindings(_arrowImageView1, _guideView1, _guideView2, _arrowImageView2)];
-    [self addConstraints:constraints];
-    [_constraints addObjectsFromArray:constraints];
-
-    NSLayoutConstraint *centeredX =
-    [NSLayoutConstraint
-     constraintWithItem:_valueTextField
-     attribute:NSLayoutAttributeCenterX
-     relatedBy:NSLayoutRelationEqual
-     toItem:self
-     attribute:NSLayoutAttributeCenterX
-     multiplier:1.0f
-     constant:0.0f];
-    [self addConstraint:centeredX];
-    [_constraints addObject:centeredX];
-
-    self.guideView1Size =
-    [NSLayoutConstraint
-     addWidthConstraint:MAX(0.0f, NSWidth(_guideView1.frame))
-     toView:_guideView1];
-
-    self.guideView2Size =
-    [NSLayoutConstraint
-     addWidthConstraint:MAX(0.0f, NSWidth(_guideView2.frame))
-     toView:_guideView2];
-}
-
-- (NSImageView *)buildArrowImageView:(NSImage *)arrowImage {
-
-    NSRect frame = NSZeroRect;
-    frame.size = arrowImage.size;
-
-    NSImageView *imageView = [[NSImageView alloc] initWithFrame:frame];
-    imageView.imageScaling = NSScaleNone;
-    imageView.image = arrowImage;
-    imageView.translatesAutoresizingMaskIntoConstraints = NO;
-
-    [self addSubview:imageView];
-
-    [NSLayoutConstraint addWidthConstraint:NSWidth(frame) toView:imageView];
-    [NSLayoutConstraint addHeightConstraint:NSHeight(frame) toView:imageView];
-
-    return imageView;
-}
-
-- (void)buildLeftArrowImageView {
-    self.arrowImageView1 =
-    [self buildArrowImageView:[PBSpacerView leftSpacerImage]];
-}
-
-- (void)buildRightArrowImageView {
-    self.arrowImageView2 =
-    [self buildArrowImageView:[PBSpacerView rightSpacerImage]];
-}
-
-- (PBGuideView *)buildLeftGuideView {
-
-    NSImage *leftArrowImage = [PBSpacerView leftSpacerImage];
-    
-    CGFloat width = [self guideWidth];
-
-    NSRect frame =
-    NSMakeRect(leftArrowImage.size.width,
-               (NSHeight(self.frame) - 1.0f) / 2.0f,
-               width,
-               1.0f);
-
-    PBGuideView *guideView = [self buildGuideView:frame];
-    guideView.autoresizingMask = NSViewWidthSizable;
-    
-    [self addSubview:guideView];
-
-    return guideView;
-}
-
-- (PBGuideView *)buildRightGuideView {
-
-    NSImage *leftArrowImage = [PBSpacerView leftSpacerImage];
-
-    CGFloat width = [self guideWidth];
-
-    NSRect frame =
-    NSMakeRect(width + leftArrowImage.size.width,
-               (NSHeight(self.frame) - 1.0f) / 2.0f,
-               width,
-               1.0f);
-
-    PBGuideView *guideView = [self buildGuideView:frame];
-    guideView.autoresizingMask = NSViewWidthSizable;
-
-    guideView.frame = frame;
-    [self addSubview:guideView];
-
-    return guideView;
-}
-
 #pragma mark - Vertical
 
 - (id)initWithTopView:(PBGuideView *)topView
            bottomView:(PBGuideView *)bottomView
                 value:(CGFloat)value {
 
-    CGFloat width =
-    MAX([PBSpacerView upSpacerImage].size.width,
-        [PBSpacerView downSpacerImage].size.width);
-
-    width = MAX(width, 33.0f);
-
-    NSRect frame = NSMakeRect(0.0f, 0.0f, width, value);
+    NSRect frame = NSMakeRect(0.0f, 0.0f, 5.0f, value);
 
     self = [super initWithFrame:frame];
 
@@ -406,149 +127,48 @@ static NSImage *PBSpacerViewRightImage = nil;
         self.view2 = bottomView;
         [self commonInit:value];
         [self initializeVertical];
-        [self tearDownSubviews];
     }
 
     return self;
 }
 
-- (void)addVerticalSpacerConstraints {
-}
-
-- (CGFloat)guideHeight {
-
-    NSImage *upArrowImage = [PBSpacerView upSpacerImage];
-    NSImage *downArrowImage = [PBSpacerView downSpacerImage];
-
-    return
-    (NSHeight(self.frame) - upArrowImage.size.height - downArrowImage.size.height) / 2.0f;
-}
-
 - (void)updateHeight {
 
-    [self updateValueTextField];
-
-    CGFloat height = [self guideHeight];
+    CGFloat height = NSHeight(self.frame);
 
     if (height <= 0.0f) {
-        [self tearDownSubviews];
+        [self removeAllConstraints];
         return;
     }
-
-    if (_guideView1 == nil) {
-        if (_vertical) {
-            [self initializeVertical];
-        } else {
-            [self initializeHorizontal];
-        }
-        [self addSpacerConstraints];
-    }
-
-    _guideView1Size.constant = height;
-    [_guideView1 setNeedsLayout:YES];
-
-    _guideView2Size.constant = height;
-    [_guideView2 setNeedsLayout:YES];
-}
-
-- (void)buildUpArrowImageView {
-    self.arrowImageView1 =
-    [self buildArrowImageView:[PBSpacerView upSpacerImage]];
-}
-
-- (void)buildDownArrowImageView {
-    self.arrowImageView2 =
-    [self buildArrowImageView:[PBSpacerView downSpacerImage]];
-}
-
-- (PBGuideView *)buildBottomGuideView {
-
-    NSImage *downArrowImage = [PBSpacerView downSpacerImage];
-
-    CGFloat height = [self guideHeight];
-
-    NSRect frame =
-    NSMakeRect((NSWidth(self.frame) - 1.0f) / 2.0f,
-               downArrowImage.size.height,
-               1.0f,
-               height);
-
-    PBGuideView *guideView = [self buildGuideView:frame];
-    guideView.autoresizingMask = NSViewWidthSizable;
-    guideView.vertical = YES;
-
-    [self addSubview:guideView];
-
-    return guideView;
-}
-
-- (PBGuideView *)buildTopGuideView {
-
-    NSImage *downArrowImage = [PBSpacerView leftSpacerImage];
-
-    CGFloat height = [self guideHeight];
-
-    NSRect frame =
-    NSMakeRect((NSWidth(self.frame) - 1.0f) / 2.0f,
-               height + downArrowImage.size.width,
-               1.0f,
-               height);
-
-    PBGuideView *guideView = [self buildGuideView:frame];
-    guideView.autoresizingMask = NSViewWidthSizable;
-    guideView.vertical = YES;
-
-    guideView.frame = frame;
-    [self addSubview:guideView];
-    
-    return guideView;
 }
 
 - (void)initializeVertical {
 
     _vertical = YES;
 
-    self.guideView1 = [self buildBottomGuideView];
-    self.guideView2 = [self buildTopGuideView];
+    if (_view1 != nil) {
 
-    [self buildDownArrowImageView];
-    [self buildUpArrowImageView];
-    [self addSubview:_valueTextField];
+        NSArray *constraints =
+        [NSLayoutConstraint
+         constraintsWithVisualFormat:@"V:[_view1][self]"
+         options:0
+         metrics:nil
+         views:NSDictionaryOfVariableBindings(_view1, self)];
+        [self.superview addConstraints:constraints];
+        [_constraints addObjectsFromArray:constraints];
+    }
 
-    NSArray *constraints =
-    [NSLayoutConstraint
-     constraintsWithVisualFormat:@"V:|[_arrowImageView1(downArrowHeight)][_guideView1(>=0)][_guideView2(>=0)][_arrowImageView2(upArrowHeight)]|"
-     options:0
-     metrics:
-     @{
-       @"downArrowHeight" : @([PBSpacerView downSpacerImage].size.height),
-       @"upArrowHeight" : @([PBSpacerView upSpacerImage].size.height),
-       }
-     views:NSDictionaryOfVariableBindings(_arrowImageView1, _guideView1, _guideView2, _arrowImageView2)];
-    [self addConstraints:constraints];
-    [_constraints addObjectsFromArray:constraints];
+    if (_view2 != nil) {
 
-    NSLayoutConstraint *centeredY =
-    [NSLayoutConstraint
-     constraintWithItem:_valueTextField
-     attribute:NSLayoutAttributeCenterY
-     relatedBy:NSLayoutRelationEqual
-     toItem:self
-     attribute:NSLayoutAttributeCenterY
-     multiplier:1.0f
-     constant:0.0f];
-    [self addConstraint:centeredY];
-    [_constraints addObject:centeredY];
-
-    self.guideView1Size =
-    [NSLayoutConstraint
-     addHeightConstraint:MAX(0.0f, NSHeight(_guideView1.frame))
-     toView:_guideView1];
-
-    self.guideView2Size =
-    [NSLayoutConstraint
-     addHeightConstraint:MAX(0.0f, NSHeight(_guideView2.frame))
-     toView:_guideView2];
+        NSArray *constraints =
+        [NSLayoutConstraint
+         constraintsWithVisualFormat:@"V:[self][_view2]"
+         options:0
+         metrics:nil
+         views:NSDictionaryOfVariableBindings(_view2, self)];
+        [self.superview addConstraints:constraints];
+        [_constraints addObjectsFromArray:constraints];
+    }
 }
 
 #pragma mark - 
@@ -564,13 +184,72 @@ static NSImage *PBSpacerViewRightImage = nil;
     }
 }
 
-//- (void)drawRect:(NSRect)dirtyRect {
-//
-//    [[NSColor redColor] setFill];
-//    NSRectFillUsingOperation(dirtyRect, NSCompositeSourceOver);
-//
-//    [super drawRect:dirtyRect];
-//}
+- (void)drawRect:(NSRect)dirtyRect {
+
+    NSRect frame;
+    NSPoint point1, point2;
+
+    [_spacerColor setStroke];
+
+    if (_vertical) {
+
+        // draw bottom line
+
+        frame = NSMakeRect(0.0f, 0.0f, NSWidth(self.bounds), 1.0f);
+        frame = NSIntersectionRect(frame, dirtyRect);
+        point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMinY(frame)));
+        point2 = NSMakePoint(roundf(NSMaxX(frame)), roundf(NSMinY(frame)));
+
+        [NSBezierPath strokeLineFromPoint:point1 toPoint:point2];
+
+        // draw vertical line
+
+        frame = NSMakeRect(NSMidX(self.bounds), 0.0f, 1.0f, NSHeight(self.bounds));
+        frame = NSIntersectionRect(frame, dirtyRect);
+        point1 = NSMakePoint(roundf(NSMidX(frame) - 1.0f), roundf(NSMinY(frame)));
+        point2 = NSMakePoint(roundf(NSMidX(frame) - 1.0f), roundf(NSMaxY(frame)));
+
+        [NSBezierPath strokeLineFromPoint:point1 toPoint:point2];
+
+        // draw top line
+
+        frame = NSMakeRect(0.0f, NSHeight(self.bounds)-1.0f, NSWidth(self.bounds), 1.0f);
+        frame = NSIntersectionRect(frame, dirtyRect);
+        point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMinY(frame)));
+        point2 = NSMakePoint(roundf(NSMaxX(frame)), roundf(NSMaxY(frame)));
+
+        [NSBezierPath strokeLineFromPoint:point1 toPoint:point2];
+
+    } else {
+
+        // draw left line
+
+        frame = NSMakeRect(0.0f, 0.0f, 1.0f, NSHeight(self.bounds));
+        frame = NSIntersectionRect(frame, dirtyRect);
+        point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMinY(frame)));
+        point2 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMaxY(frame)));
+
+        [NSBezierPath strokeLineFromPoint:point1 toPoint:point2];
+
+        // draw horizontal line
+
+        frame = NSMakeRect(0.0f, NSMidY(self.bounds), NSWidth(self.bounds), 1.0f);
+        frame = NSIntersectionRect(frame, dirtyRect);
+        point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMidY(frame) - 1.0f));
+        point2 = NSMakePoint(roundf(NSMaxX(frame)), roundf(NSMidY(frame) - 1.0f));
+
+        [NSBezierPath strokeLineFromPoint:point1 toPoint:point2];
+
+        // draw right line
+
+        frame = NSMakeRect(NSWidth(self.bounds)-1.0f, 0.0f, 1.0f, NSHeight(self.bounds));
+        frame = NSIntersectionRect(frame, dirtyRect);
+        point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMinY(frame)));
+        point2 = NSMakePoint(roundf(NSMaxX(frame)), roundf(NSMaxY(frame)));
+
+        [NSBezierPath strokeLineFromPoint:point1 toPoint:point2];
+    }
+}
 
 @end
 
