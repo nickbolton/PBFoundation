@@ -185,7 +185,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 //    _scrollView.hasVerticalRuler = YES;
     _scrollView.autoresizingMask = NSViewWidthSizable|NSViewHeightSizable;
 
-    _scrollView.backgroundColor = [NSColor grayColor];
+    _scrollView.backgroundColor = _scrollViewBackgroundColor;
 
     NSView *documentView = [[NSView alloc] initWithFrame:self.bounds];
     documentView.wantsLayer = YES;
@@ -225,6 +225,11 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 - (void)setBackgroundColor:(NSColor *)backgroundColor {
     _backgroundColor = backgroundColor;
     [_scrollView.documentView layer].backgroundColor = backgroundColor.CGColor;
+}
+
+- (void)setScrollViewBackgroundColor:(NSColor *)scrollViewBackgroundColor {
+    _scrollViewBackgroundColor = scrollViewBackgroundColor;
+    _scrollView.backgroundColor = scrollViewBackgroundColor;
 }
 
 - (NSDictionary *)dataSourceViews {

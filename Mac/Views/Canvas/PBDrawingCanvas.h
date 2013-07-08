@@ -96,6 +96,7 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 @property (nonatomic, strong) PBResizableView *resizingView;
 @property (nonatomic, readonly) NSMutableDictionary *mouseDownSelectedViewOrigins;
 @property (nonatomic, strong) NSColor *backgroundColor;
+@property (nonatomic, strong) NSColor *scrollViewBackgroundColor;
 @property (nonatomic, getter = isShowingInfo) BOOL showingInfo;
 @property (nonatomic, readonly) NSScrollView *scrollView;
 
