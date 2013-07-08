@@ -16,6 +16,17 @@
 
 @implementation PBRectangleTool
 
+- (void)determineResizeTypeForView:(PBResizableView *)view
+                           atPoint:(NSPoint)point
+                          inCanvas:(PBDrawingCanvas *)canvas {
+
+    if (view.backgroundImage != nil) {
+        self.resizeType = PBPResizeTypeNone;
+    } else {
+        [super determineResizeTypeForView:view atPoint:point inCanvas:canvas];
+    }
+}
+
 - (void)mouseMovedToPoint:(NSPoint)point inCanvas:(PBDrawingCanvas *)canvas {
 
     NSView *view = [canvas viewAtPoint:point];
@@ -167,15 +178,11 @@
 
     for (PBResizableView *selectedView in canvas.selectedViews) {
 
-        NSString *viewKey = [canvas viewKey:selectedView];
-
-        canvas.mouseDownSelectedViewOrigins[viewKey] =
+        canvas.mouseDownSelectedViewOrigins[selectedView.key] =
         [NSValue valueWithPoint:selectedView.frame.origin];
     }
 
     self.moving = NO;
-
-    [canvas updateGuides];
 }
 
 - (void)mouseDragged:(PBClickableView *)view
@@ -197,21 +204,22 @@
 
         self.didMove = YES;
 
-        CGFloat xDelta = point.x - self.mouseDownPoint.x;
-        CGFloat yDelta = point.y - self.mouseDownPoint.y;
+        CGFloat xDelta = roundf(point.x - self.mouseDownPoint.x);
+        CGFloat yDelta = roundf(point.y - self.mouseDownPoint.y);
 
         for (PBResizableView *selectedView in canvas.selectedViews) {
 
-            NSString *viewKey = [canvas viewKey:selectedView];
-
             NSPoint mouseDownSelectedViewOrigin =
-            [canvas.mouseDownSelectedViewOrigins[viewKey] pointValue];
+            [canvas.mouseDownSelectedViewOrigins[selectedView.key] pointValue];
 
             NSRect frame = selectedView.frame;
             frame.origin.x = mouseDownSelectedViewOrigin.x + xDelta;
             frame.origin.y = mouseDownSelectedViewOrigin.y + yDelta;
 
-            [selectedView setViewFrame:frame animated:NO];
+            [selectedView
+             setViewFrame:frame
+             withContainerFrame:[canvas.scrollView.documentView frame]
+             animate:NO];
         }
     }
 }

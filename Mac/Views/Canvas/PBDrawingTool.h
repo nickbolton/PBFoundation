@@ -25,12 +25,12 @@
 - (PBResizableView *)mouseInteractingViewInCanvas:(PBDrawingCanvas *)canvas;
 
 // private
-- (void)determineResizeTypeForView:(NSView *)view
+- (void)determineResizeTypeForView:(PBResizableView *)view
                            atPoint:(NSPoint)point
                           inCanvas:(PBDrawingCanvas *)canvas;
 - (void)setCursorForResizeType;
 - (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas;
-- (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas forView:(NSView *)selectedView;
+- (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas forView:(PBResizableView *)selectedView;
 - (void)resizeSelectedViewAtPoint:(NSPoint)point
                          inCanvas:(PBDrawingCanvas *)canvas;
 

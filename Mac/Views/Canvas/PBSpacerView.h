@@ -6,12 +6,20 @@
 //
 //
 
-#import <Cocoa/Cocoa.h>
+#import "PBAcceptsFirstView.h"
 
 @class PBGuideView;
-@class PBResizeableView;
+@class PBResizableView;
+@class PBSpacerView;
 
-@interface PBSpacerView : NSView
+@protocol PBSpacerProtocol <PBAcceptsFirstViewDelegate>
+
+@optional
+- (void)spacerViewClicked:(PBSpacerView *)spacerView;
+
+@end
+
+@interface PBSpacerView : PBAcceptsFirstView
 
 - (id)initWithLeftView:(PBGuideView *)leftView
              rightView:(PBGuideView *)rightView
@@ -21,10 +29,21 @@
            bottomView:(PBGuideView *)bottomView
                 value:(CGFloat)value;
 
-@property (nonatomic, readonly) PBResizeableView *view1;
-@property (nonatomic, readonly) PBResizeableView *view2;
+@property (nonatomic, strong) PBResizableView *view1;
+@property (nonatomic, strong) PBResizableView *view2;
 @property (nonatomic, strong) NSColor *spacerColor;
+@property (nonatomic, strong) NSColor *constrainingSpacerColor;
+@property (nonatomic, getter = isConstraining) BOOL constraining;
+@property (nonatomic) CGFloat value;
+@property (nonatomic) CGFloat scale;
 
-- (void)updateSize;
+- (void)updateValue:(CGFloat)value
+            forView:(PBResizableView *)view
+       andViewFrame:(NSRect)viewFrame
+            animate:(BOOL)animate;
+
+- (NSDictionary *)dataSource;
+- (void)updateFromDataSource:(NSDictionary *)dataSource;
+- (PBSpacerView *)overlappingSpacerView;
 
 @end

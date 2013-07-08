@@ -79,7 +79,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     PBResizableView *result = nil;
     CGFloat minDistance = MAXFLOAT;
 
-    NSPoint mouseLocation = [canvas windowLocationOfMouse];
+    NSPoint mouseLocation = [canvas mouseLocationInDocument];
 
     for (PBResizableView *view in canvas.toolViews) {
 
@@ -98,6 +98,9 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 }
 
 - (void)cleanup {
+}
+
+- (void)rotate {
 }
 
 - (BOOL)shouldDeselectView:(PBResizableView *)view {
@@ -124,6 +127,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     CGFloat maxY = MAX(self.mouseDownPoint.y, point.y);
 
     self.boundingRect = NSMakeRect(minX, minY, maxX - minX, maxY - minY);
+    self.resizeType = PBPResizeTypeNone;
 }
 
 - (void)mouseDragged:(PBClickableView *)view
@@ -157,7 +161,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     [self determineSelectedViewAnchorPoint:canvas forView:selectedView];
 }
 
-- (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas forView:(NSView *)selectedView {
+- (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas forView:(PBResizableView *)selectedView {
     
     switch (_resizeType) {
         case PBPResizeTypeUp:
@@ -205,11 +209,12 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     }
 }
 
-- (void)determineResizeTypeForView:(NSView *)view
+- (void)determineResizeTypeForView:(PBResizableView *)view
                            atPoint:(NSPoint)point
                           inCanvas:(PBDrawingCanvas *)canvas {
 
-    static CGFloat detectSize = 10.0f;
+    CGFloat detectSize = 10.0f * canvas.scaleFactor;
+    CGFloat padding = 1.0f * canvas.scaleFactor;
 
     if ([NSEvent isCurrentModifiersExactly:NSAlternateKeyMask]) {
         _resizeType = PBPResizeTypeNone;
@@ -220,8 +225,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // up-left
     frame =
-    NSMakeRect(NSMinX(view.frame),
-               NSMaxY(view.frame) - detectSize,
+    NSMakeRect(NSMinX(view.frame) + padding,
+               NSMaxY(view.frame) - padding - detectSize,
                detectSize,
                detectSize);
 
@@ -233,8 +238,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // up-right
     frame =
-    NSMakeRect(NSMaxX(view.frame) - detectSize,
-               NSMaxY(view.frame) - detectSize,
+    NSMakeRect(NSMaxX(view.frame) - detectSize - padding,
+               NSMaxY(view.frame) - detectSize - padding,
                detectSize,
                detectSize);
 
@@ -246,8 +251,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // down-left
     frame =
-    NSMakeRect(NSMinX(view.frame),
-               NSMinY(view.frame),
+    NSMakeRect(NSMinX(view.frame) + padding,
+               NSMinY(view.frame) + padding,
                detectSize,
                detectSize);
 
@@ -259,8 +264,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // down-right
     frame =
-    NSMakeRect(NSMaxX(view.frame) - detectSize,
-               NSMinY(view.frame),
+    NSMakeRect(NSMaxX(view.frame) - detectSize - padding,
+               NSMinY(view.frame) + padding,
                detectSize,
                detectSize);
 
@@ -272,8 +277,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // left
     frame =
-    NSMakeRect(NSMinX(view.frame),
-               NSMinY(view.frame),
+    NSMakeRect(NSMinX(view.frame) + padding,
+               NSMinY(view.frame) + padding,
                detectSize,
                NSHeight(view.frame));
 
@@ -285,8 +290,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // right
     frame =
-    NSMakeRect(NSMaxX(view.frame) - detectSize,
-               NSMinY(view.frame),
+    NSMakeRect(NSMaxX(view.frame) - detectSize - padding,
+               NSMinY(view.frame) + padding,
                detectSize,
                NSHeight(view.frame));
 
@@ -298,8 +303,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // up
     frame =
-    NSMakeRect(NSMinX(view.frame),
-               NSMaxY(view.frame) - detectSize,
+    NSMakeRect(NSMinX(view.frame) + padding,
+               NSMaxY(view.frame) - detectSize - padding,
                NSWidth(view.frame),
                detectSize);
 
@@ -311,8 +316,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     // down
     frame =
-    NSMakeRect(NSMinX(view.frame),
-               NSMinY(view.frame),
+    NSMakeRect(NSMinX(view.frame) + padding,
+               NSMinY(view.frame) + padding,
                NSWidth(view.frame),
                detectSize);
 
@@ -378,12 +383,15 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     NSRect frame = canvas.resizingView.frame;
 
-    NSPoint mouseLocation = [canvas windowLocationOfMouse];
+    NSPoint mouseLocation = [canvas mouseLocationInDocument];
+
+    BOOL nonZeroRect = NSEqualRects(frame, NSZeroRect) == NO;
+    CGFloat xOffset, yOffset;
 
     switch (_resizeType) {
         case PBPResizeTypeUp:
 
-            if (mouseLocation.y < NSMinY(_selectedViewMouseDownFrame)) {
+            if (nonZeroRect && mouseLocation.y < NSMinY(_selectedViewMouseDownFrame)) {
                 _resizeType = PBPResizeTypeDown;
 
                 _selectedViewMouseDownFrame = canvas.resizingView.frame;
@@ -393,15 +401,17 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
                 return;
             }
 
+            yOffset = NSMaxY(self.mouseDownStartingRect) - self.mouseDownPoint.y;
+
             frame.origin.y = _selectedViewAnchor.y;
-            frame.size.height = roundf(point.y - NSMinY(frame));
+            frame.size.height = roundf(point.y - NSMinY(frame) + yOffset);
             frame.size.height = MAX(minDimension, NSHeight(frame));
 
             break;
 
         case PBPResizeTypeDown:
 
-            if (mouseLocation.y > NSMaxY(_selectedViewMouseDownFrame)) {
+            if (nonZeroRect && mouseLocation.y > NSMaxY(_selectedViewMouseDownFrame)) {
                 _resizeType = PBPResizeTypeUp;
 
                 _selectedViewMouseDownFrame = canvas.resizingView.frame;
@@ -411,7 +421,9 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
                 return;
             }
 
-            frame.origin.y = point.y;
+            yOffset = NSMinY(self.mouseDownStartingRect) - self.mouseDownPoint.y;
+
+            frame.origin.y = point.y + yOffset;
             frame.size.height = roundf(_selectedViewAnchor.y - NSMinY(frame));
             frame.size.height = MAX(minDimension, NSHeight(frame));
 
@@ -419,7 +431,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
         case PBPResizeTypeLeft:
 
-            if (mouseLocation.x > NSMaxX(_selectedViewMouseDownFrame)) {
+            if (nonZeroRect && mouseLocation.x > NSMaxX(_selectedViewMouseDownFrame)) {
                 _resizeType = PBPResizeTypeRight;
 
                 _selectedViewMouseDownFrame = canvas.resizingView.frame;
@@ -437,7 +449,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
         case PBPResizeTypeRight:
 
-            if (mouseLocation.x < NSMinX(_selectedViewMouseDownFrame)) {
+            if (nonZeroRect && mouseLocation.x < NSMinX(_selectedViewMouseDownFrame)) {
                 _resizeType = PBPResizeTypeLeft;
 
                 _selectedViewMouseDownFrame = canvas.resizingView.frame;
@@ -466,7 +478,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
                 horzChanged = YES;
             }
 
-            if (vertChanged || horzChanged) {
+            if (nonZeroRect && (vertChanged || horzChanged)) {
 
                 if (vertChanged && horzChanged) {
                     _resizeType = PBPResizeTypeDownRight;
@@ -506,7 +518,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
                 horzChanged = YES;
             }
 
-            if (vertChanged || horzChanged) {
+
+            if (nonZeroRect && (vertChanged || horzChanged)) {
 
                 if (vertChanged && horzChanged) {
                     _resizeType = PBPResizeTypeDownLeft;
@@ -546,7 +559,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
                 horzChanged = YES;
             }
 
-            if (vertChanged || horzChanged) {
+            if (nonZeroRect && (vertChanged || horzChanged)) {
 
                 if (vertChanged && horzChanged) {
                     _resizeType = PBPResizeTypeUpRight;
@@ -586,8 +599,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
                 horzChanged = YES;
             }
 
-            if (vertChanged || horzChanged) {
-                
+            if (nonZeroRect && (vertChanged || horzChanged)) {
+
                 if (vertChanged && horzChanged) {
                     _resizeType = PBPResizeTypeUpLeft;
                 } else if (vertChanged) {
@@ -597,7 +610,11 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
                 }
                 
                 _selectedViewMouseDownFrame = canvas.resizingView.frame;
-                
+
+                if (NSEqualRects(_selectedViewMouseDownFrame, NSZeroRect) == NO) {
+                    return;
+                }
+
                 self.mouseDownPoint = mouseLocation;
                 [self resizeSelectedViewAtPoint:point inCanvas:canvas];
                 return;
@@ -617,7 +634,11 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
             break;
     }
 
-    [canvas.resizingView setViewFrame:frame animated:NO];
+    [canvas.resizingView
+     setViewFrame:frame
+     withContainerFrame:[canvas.scrollView.documentView frame]
+     animate:NO];
+    
     [canvas updateInfoLabel:canvas.resizingView];
 }
 

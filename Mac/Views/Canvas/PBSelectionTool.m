@@ -39,8 +39,9 @@
                             inCanvas:(PBDrawingCanvas *)canvas {
 
     PBResizableView *view = [[PBResizableView alloc] initWithFrame:frame];
-    view.borderColor = [NSColor blackColor];
+    view.borderColor = [NSColor whiteColor];
     view.borderWidth = 1;
+    view.key = [NSString timestampedGuid];
     view.borderDashPattern = @[@2, @2];
     view.delegate = canvas;
     view.drawingCanvas = canvas;
@@ -90,10 +91,8 @@
     CGFloat xDelta = point.x - self.mouseDownPoint.x;
     CGFloat yDelta = point.y - self.mouseDownPoint.y;
 
-    NSString *viewKey = [canvas viewKey:_selectionView];
-
     NSPoint mouseDownSelectedViewOrigin =
-    [canvas.mouseDownSelectedViewOrigins[viewKey] pointValue];
+    [canvas.mouseDownSelectedViewOrigins[_selectionView.key] pointValue];
 
     NSRect frame = _selectionView.frame;
     frame.origin.x = mouseDownSelectedViewOrigin.x + xDelta;
@@ -114,9 +113,7 @@
     [canvas selectOnlyViewsInRect:self.boundingRect];
 
     if (_selectionView != nil) {
-        NSString *viewKey = [canvas viewKey:_selectionView];
-
-        canvas.mouseDownSelectedViewOrigins[viewKey] =
+        canvas.mouseDownSelectedViewOrigins[_selectionView.key] =
         [NSValue valueWithPoint:_selectionView.frame.origin];
     }
 
@@ -140,7 +137,10 @@
 
         NSRect frame = [self movedRectAtPoint:point inCanvas:canvas];
 
-        [_selectionView setViewFrame:frame animated:NO];
+        [_selectionView
+         setViewFrame:frame
+         withContainerFrame:[canvas.scrollView.documentView frame]
+         animate:NO];
         self.boundingRect = frame;
 
     } else {
@@ -148,16 +148,19 @@
         if (_selectionView == nil) {
             self.selectionView =
             [self createRectangle:self.boundingRect inCanvas:canvas];
-            [canvas addSubview:_selectionView positioned:NSWindowAbove relativeTo:nil];
+            [canvas.scrollView.documentView addSubview:_selectionView positioned:NSWindowAbove relativeTo:nil];
             [_selectionView setupConstraints];
 
         } else {
-            [self.selectionView setViewFrame:self.boundingRect animated:NO];
+            [self.selectionView
+             setViewFrame:self.boundingRect
+             withContainerFrame:[canvas.scrollView.documentView frame]
+             animate:NO];
         }
     }
 
     [canvas selectOnlyViewsInRect:self.boundingRect];
-    [canvas addSubview:_selectionView positioned:NSWindowAbove relativeTo:nil];
+    [canvas.scrollView.documentView addSubview:_selectionView positioned:NSWindowAbove relativeTo:nil];
 }
 
 @end

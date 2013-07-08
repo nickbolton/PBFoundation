@@ -14,5 +14,11 @@
 + (NSColor *)colorWithRGBHex:(UInt32)hex alpha:(CGFloat)alpha;
 - (NSColor *)colorWithAlpha:(CGFloat)alpha;
 - (NSInteger)hexValue;
+- (NSColor *)contrastingColor;
+- (void)getRGBComponents:(CGFloat *)red
+                   green:(CGFloat *)green
+                    blue:(CGFloat *)blue
+                   alpha:(CGFloat *)alpha;
+
 
 @end

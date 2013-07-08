@@ -9,14 +9,17 @@
 #import "PBResizableView.h"
 #import "PBSpacerView.h"
 
-@interface PBResizableView()
+@interface PBResizableView() {
+
+    BOOL _rotating;
+}
 
 @property (nonatomic, readwrite) NSTextField *infoLabel;
+@property (nonatomic, readwrite) NSImageView *backgroundImageView;
+@property (nonatomic, strong) NSColor *previousForegroundColor;
+@property (nonatomic, strong) NSColor *previousBackgroundColor;
+
 //@property (nonatomic, strong) NSTrackingArea *trackingArea;
-@property (nonatomic, strong) NSLayoutConstraint *bottomSpace;
-@property (nonatomic, strong) NSLayoutConstraint *leftSpace;
-@property (nonatomic, strong) NSLayoutConstraint *width;
-@property (nonatomic, strong) NSLayoutConstraint *height;
 
 @end
 
@@ -38,7 +41,7 @@
     return self;
 }
 
-- (void)commonInit {
+- (void)setupInfoLabel {
 
     self.infoLabel = [[NSTextField alloc] initWithFrame:NSZeroRect];
     _infoLabel.bezeled = NO;
@@ -48,7 +51,6 @@
     _infoLabel.selectable = NO;
     _infoLabel.alphaValue = 0.0f;
     _infoLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    _infoLabel.textColor = [NSColor whiteColor];
     _infoLabel.font = [NSFont fontWithName:@"HelveticaNeue" size:17.0f];
 
     [self addSubview:_infoLabel];
@@ -57,28 +59,398 @@
     [NSLayoutConstraint verticallyCenterView:_infoLabel padding:-3.0f];
 }
 
+- (void)commonInit {
+    self.dropTargetColor = [NSColor colorWithRGBHex:0.0f alpha:.4f];
+    [self setupInfoLabel];
+    [self registerForDraggedTypes:@[NSFilenamesPboardType, NSTIFFPboardType]];
+}
+
+#pragma mark - Getters and Setters
+
+- (NSDictionary *)dataSource {
+
+    NSMutableDictionary *dataSource = [NSMutableDictionary dictionary];
+
+    NSRect frame = self.frame;
+    frame.origin.x /= _drawingCanvas.scaleFactor;
+    frame.origin.y /= _drawingCanvas.scaleFactor;
+    frame.size.width /= _drawingCanvas.scaleFactor;
+    frame.size.height /= _drawingCanvas.scaleFactor;
+
+    frame = [_drawingCanvas roundedRect:frame];
+
+    dataSource[@"frame"] = NSStringFromRect(frame);
+
+    if (_topSpacerView != nil) {
+        dataSource[@"topSpacer"] = _topSpacerView.dataSource;
+    }
+
+    if (_bottomSpacerView != nil) {
+        dataSource[@"bottomSpacer"] = _bottomSpacerView.dataSource;
+    }
+
+    if (_leftSpacerView != nil) {
+        dataSource[@"leftSpacer"] = _leftSpacerView.dataSource;
+    }
+
+    if (_rightSpacerView != nil) {
+        dataSource[@"rightSpacer"] = _rightSpacerView.dataSource;
+    }
+
+    if (_backgroundColor != nil) {
+
+        CGFloat red;
+        CGFloat green;
+        CGFloat blue;
+        CGFloat alpha;
+
+        [_backgroundColor getRGBComponents:&red green:&green blue:&blue alpha:&alpha];
+
+        dataSource[@"bgColor"] =
+        @{
+          @"r" : @(red),
+          @"g" : @(green),
+          @"b" : @(blue),
+          @"a" : @(alpha),
+        };
+    }
+
+    if (_backgroundImage) {
+        dataSource[@"backgroundImage"] = _backgroundImage;
+    }
+
+    return dataSource;
+}
+
+- (void)setBackgroundImage:(NSImage *)backgroundImage {
+    _backgroundImage = backgroundImage;
+
+    [_backgroundImageView removeFromSuperview];
+    self.backgroundImageView = nil;
+
+    if (backgroundImage != nil) {
+
+        NSPoint center = NSMakePoint(NSMidX(self.frame), NSMidY(self.frame));
+
+        NSRect frame = self.frame;
+
+        frame.size = backgroundImage.size;
+        frame.origin.x = center.x - (NSWidth(frame) / 2.0f);
+        frame.origin.y = center.y - (NSHeight(frame) / 2.0f);
+
+        self.previousBackgroundColor = _backgroundColor;
+        self.backgroundColor = nil;
+
+        self.backgroundImageView =
+        [[NSImageView alloc] initWithFrame:self.bounds];
+
+        _backgroundImageView.image = backgroundImage;
+        _backgroundImageView.imageScaling = NSImageScaleAxesIndependently;
+        _backgroundImageView.autoresizingMask =
+        NSViewWidthSizable | NSViewHeightSizable;
+
+        [self
+         addSubview:_backgroundImageView
+         positioned:NSWindowBelow
+         relativeTo:nil];
+
+        [self
+         setViewFrame:frame
+         withContainerFrame:self.superview.frame
+         animate:NO];
+
+        [_drawingCanvas updateMouseDownSelectedViewOrigin:self];
+
+    } else {
+        if (_previousBackgroundColor != nil) {
+            self.backgroundColor = _previousBackgroundColor;
+            self.previousBackgroundColor = nil;
+            [self setNeedsDisplay:YES];
+        }
+    }
+
+    [self updateInfo];
+}
+
+#pragma mark -
+
+
+- (void)validateConstraints:(PBSpacerView *)spacerView {
+
+    [spacerView setNeedsDisplay:YES];
+
+    if (spacerView == _topSpacerView) {
+
+    } else if (spacerView == _bottomSpacerView) {
+
+    } else if (spacerView == _leftSpacerView) {
+
+    } else if (spacerView == _rightSpacerView) {
+
+    }
+}
+
+- (void)updateTopSpaceConstraint:(CGFloat)value {
+
+    CGFloat distance = value - _topSpacerView.value;
+
+    if (_bottomSpacerView.isConstraining) {
+
+        if (distance > 0.0f) {
+            if (NSHeight(self.frame) - distance < 0.0f) {
+                distance += NSHeight(self.frame) - distance;
+            }
+        }
+
+        NSRect frame = self.frame;
+        frame.size.height -= distance;
+
+        [_drawingCanvas
+         resizeView:self
+         toFrame:frame
+         animate:NO];
+        [_drawingCanvas updateGuidesForView:self];
+
+    } else {
+
+        _topSpacerView.value = value;
+
+        [_drawingCanvas moveView:self offset:NSMakePoint(0.0f, -distance)];
+    }
+
+    [self updateInfo];
+}
+
+- (void)updateBottomSpaceConstraint:(CGFloat)value {
+
+    CGFloat distance = value - _bottomSpacerView.value;
+
+    if (_topSpacerView.isConstraining) {
+
+        if (distance > 0.0f) {
+            if (NSHeight(self.frame) - distance < 0.0f) {
+                distance += NSHeight(self.frame) - distance;
+            }
+        }
+
+        NSRect frame = self.frame;
+        frame.size.height -= distance;
+        frame.origin.y += distance;
+
+        [_drawingCanvas
+         resizeView:self
+         toFrame:frame
+         animate:NO];
+        [_drawingCanvas updateGuidesForView:self];
+
+    } else {
+
+        _bottomSpacerView.value = value;
+        [_drawingCanvas moveView:self offset:NSMakePoint(0.0f, distance)];
+    }
+
+    [self updateInfo];
+}
+
+- (void)updateLeftSpaceConstraint:(CGFloat)value {
+
+    CGFloat distance = value - _leftSpacerView.value;
+
+    if (_rightSpacerView.isConstraining) {
+
+        if (distance > 0.0f) {
+            if (NSWidth(self.frame) - distance < 0.0f) {
+                distance += NSWidth(self.frame) - distance;
+            }
+        }
+
+        NSRect frame = self.frame;
+        frame.size.width -= distance;
+        frame.origin.x += distance;
+
+        [_drawingCanvas
+         resizeView:self
+         toFrame:frame
+         animate:NO];
+        [_drawingCanvas updateGuidesForView:self];
+
+    } else {
+
+        _leftSpacerView.value = value;
+        [_drawingCanvas moveView:self offset:NSMakePoint(distance, 0.0f)];
+    }
+
+    [self updateInfo];
+}
+
+- (void)updateRightSpaceConstraint:(CGFloat)value {
+
+    CGFloat distance = value - _rightSpacerView.value;
+
+    if (_leftSpacerView.isConstraining) {
+
+        if (distance > 0.0f) {
+            if (NSWidth(self.frame) - distance < 0.0f) {
+                distance += NSWidth(self.frame) - distance;
+            }
+        }
+
+        NSRect frame = self.frame;
+        frame.size.width -= distance;
+
+        [_drawingCanvas
+         resizeView:self
+         toFrame:frame
+         animate:NO];
+        [_drawingCanvas updateGuidesForView:self];
+
+    } else {
+
+        _rightSpacerView.value = value;
+        [_drawingCanvas moveView:self offset:NSMakePoint(-distance, 0.0f)];
+    }
+
+    [self updateInfo];
+}
+
+- (void)updateWidthConstraint:(CGFloat)value {
+
+    NSRect frame = self.frame;
+
+    if (_rightSpacerView.isConstraining) {
+
+        frame.origin.x = NSMaxX(self.frame) - value;
+        frame.size.width = value;
+
+    } else {
+
+        frame.size.width = value;
+    }
+
+    [_drawingCanvas
+     resizeView:self
+     toFrame:frame
+     animate:NO];
+    [_drawingCanvas updateGuidesForView:self];
+
+    [self updateInfo];
+}
+
+- (void)updateHeightConstraint:(CGFloat)value {
+
+    NSRect frame = self.frame;
+
+    if (_topSpacerView.isConstraining) {
+
+        frame.origin.y = NSMaxY(self.frame) - value;
+        frame.size.height = value;
+
+    } else {
+
+        frame.size.height = value;
+    }
+
+    [_drawingCanvas
+     resizeView:self
+     toFrame:frame
+     animate:NO];
+    [_drawingCanvas updateGuidesForView:self];
+    
+    [self updateInfo];
+}
+
+- (void)willRotateWindow:(NSRect)newframe {
+
+    _rotating = YES;
+    
+    NSRect oldFrame = self.frame;
+    NSRect frame = self.frame;
+    CGFloat containerHeight = NSHeight(newframe);
+
+    if (_topSpacerView.isConstraining) {
+
+        if (_bottomSpacerView.isConstraining) {
+
+            CGFloat height =
+            containerHeight - _topSpacerView.value - _bottomSpacerView.value;
+
+            frame.origin.y =
+            containerHeight - _topSpacerView.value - height;
+
+            frame.size.height = height;
+
+            if (NSMinY(frame) < 0.0f) {
+                frame.origin.y = 0.0f;
+                frame.size.height += NSMinY(frame);
+                _bottomSpacerView.value += NSMinY(frame);
+            }
+
+            if (NSMaxY(frame) > containerHeight) {
+                frame.size.height -= NSMaxY(frame) - containerHeight;
+                _topSpacerView.value -= NSMaxY(frame) - containerHeight;
+            }
+            
+        } else {
+            
+            frame.origin.y =
+            containerHeight - _topSpacerView.value - NSHeight(frame);
+        }
+
+    } else if (_bottomSpacerView.isConstraining) {
+        frame.origin.y = _bottomSpacerView.value;
+    } else {
+        
+        // keep it at the top
+        frame.origin.y =
+        containerHeight - _topSpacerView.value - NSHeight(frame);
+    }
+
+    if (_rightSpacerView.isConstraining) {
+
+        if (_leftSpacerView.isConstraining) {
+
+            CGFloat width =
+            NSWidth(newframe) - _leftSpacerView.value - _rightSpacerView.value;
+
+            frame.origin.x = _leftSpacerView.value;
+
+            frame.size.width = width;
+
+            if (NSMinX(frame) < 0.0f) {
+                frame.origin.x = 0.0f;
+                frame.size.width += NSMinX(frame);
+                _leftSpacerView.value += NSMinX(frame);
+            }
+
+            if (NSMaxX(frame) > NSWidth(newframe)) {
+                frame.size.width -= NSMaxX(frame) - NSWidth(newframe);
+                _rightSpacerView.value -= NSMaxX(frame) - NSWidth(newframe);
+            }
+            
+        } else {
+
+            frame.origin.x = 
+            NSWidth(newframe) - _rightSpacerView.value - NSWidth(frame);
+        }
+
+    } else if (_leftSpacerView.isConstraining) {
+        frame.origin.x = _leftSpacerView.value;
+    } else {
+
+        // keep it on the left
+        frame.origin.x = _leftSpacerView.value;
+    }
+
+    [self
+     setViewFrame:frame
+     withContainerFrame:newframe
+     animate:NO];
+
+    _rotating = NO;
+}
+
 - (void)setupConstraints {
-    self.translatesAutoresizingMaskIntoConstraints = NO;
 
-    if (_width == nil) {
-        self.width =
-        [NSLayoutConstraint addWidthConstraint:NSWidth(self.frame) toView:self];
-    }
-
-    if (_height == nil) {
-        self.height =
-        [NSLayoutConstraint addHeightConstraint:NSHeight(self.frame) toView:self];
-    }
-
-    if (_bottomSpace == nil) {
-        self.bottomSpace =
-        [NSLayoutConstraint alignToBottom:self withPadding:-NSMinY(self.frame)];
-    }
-
-    if (_leftSpace == nil) {
-        self.leftSpace =
-        [NSLayoutConstraint alignToLeft:self withPadding:NSMinX(self.frame)];
-    }
 }
 
 //- (void)startMouseTracking {
@@ -125,6 +497,11 @@
 //    }
 //}
 
+- (void)setBackgroundColor:(NSColor *)backgroundColor {
+    _backgroundColor = backgroundColor;
+    [self updateInfo];
+}
+
 - (void)setShowingInfo:(BOOL)showingInfo {
 
     BOOL changed = _showingInfo != showingInfo;
@@ -138,17 +515,24 @@
 
 - (void)updateInfo {
 
+    if (_backgroundImage != nil) {
+        _infoLabel.hidden = YES;
+        _drawingCanvas.infoLabel.hidden = YES;
+        return;
+    }
+
+    _infoLabel.hidden = NO;
+    _drawingCanvas.infoLabel.hidden = NO;
+
+    _infoLabel.textColor = [_backgroundColor contrastingColor];
+
     _infoLabel.stringValue =
     [NSString stringWithFormat:@"(%.0f, %.0f)",
-     NSWidth(self.frame), NSHeight(self.frame)];
+     NSWidth(self.frame) / _drawingCanvas.scaleFactor,
+     NSHeight(self.frame) / _drawingCanvas.scaleFactor];
 
     [_infoLabel sizeToFit];
     [_drawingCanvas setInfoValue:_infoLabel.stringValue];
-
-    [self updateTopSpacerView];
-    [self updateBottomSpacerView];
-    [self updateLeftSpacerView];
-    [self updateRightSpacerView];
 
     _showingInfoLabel =
     NSWidth(self.frame) > NSWidth(_infoLabel.frame) &&
@@ -160,6 +544,11 @@
     _infoLabel.alphaValue = infoAlpha;
 
     [_drawingCanvas updateInfoLabel:self];
+}
+
+- (void)updateSpacers {
+
+    CGFloat alpha = _showingInfo ? 1.0f : 0.0f;
 
     [PBAnimator
      animateWithDuration:.3f
@@ -184,92 +573,6 @@
      }];
 }
 
-- (void)updateTopSpacerView {
-
-    NSRect frame = _topSpacerView.frame;
-
-    CGFloat xPos;
-    CGFloat height;
-
-    if (_closestTopView != nil) {
-
-    } else {
-
-        xPos = NSMidX(self.frame) - (NSWidth(frame) / 2.0f);
-
-        frame.origin.y = NSMaxY(self.frame);
-        frame.origin.x = xPos;
-        frame.size.height = NSHeight(self.superview.frame) - NSMaxY(self.frame);
-    }
-
-    _topSpacerView.frame = frame;
-    [_topSpacerView updateSize];
-}
-
-- (void)updateBottomSpacerView {
-
-    NSRect frame = _bottomSpacerView.frame;
-
-    CGFloat xPos;
-    CGFloat height;
-
-    if (_closestBottomView != nil) {
-
-    } else {
-
-        xPos = NSMidX(self.frame) - (NSWidth(frame) / 2.0f);
-
-        frame.origin.x = xPos;
-        frame.size.height = NSMinY(self.frame);
-    }
-
-    _bottomSpacerView.frame = frame;
-    [_bottomSpacerView updateSize];
-}
-
-- (void)updateLeftSpacerView {
-
-    NSRect frame = _leftSpacerView.frame;
-
-    CGFloat yPos;
-    CGFloat width;
-
-    if (_closestLeftView != nil) {
-
-    } else {
-
-        yPos = NSMidY(self.frame) - (NSHeight(frame) / 2.0f);
-
-        frame.origin.y = yPos;
-        frame.size.width = NSMinX(self.frame);
-    }
-
-    _leftSpacerView.frame = frame;
-    [_leftSpacerView updateSize];
-}
-
-- (void)updateRightSpacerView {
-
-    NSRect frame = _rightSpacerView.frame;
-
-    CGFloat yPos;
-    CGFloat width;
-
-    if (_closestRightView != nil) {
-
-    } else {
-
-        yPos = NSMidY(self.frame) - (NSHeight(frame) / 2.0f);
-
-        frame.origin.x = NSMaxX(self.frame);
-        frame.origin.y = yPos;
-        frame.size.width = NSWidth(self.superview.frame) - NSMaxX(self.frame);
-    }
-
-    _rightSpacerView.frame = frame;
-    [_rightSpacerView updateSize];
-}
-
 - (NSSize)roundedSize:(NSSize)size {
     return NSMakeSize(roundf(size.width), roundf(size.height));
 }
@@ -291,7 +594,7 @@
 
     [super setFrame:frameRect];
 
-    if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
+    if (_rotating == NO && [self.delegate respondsToSelector:@selector(viewDidMove:)]) {
         [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
     }
 
@@ -300,59 +603,288 @@
 //    [self startMouseTracking];
 }
 
-- (void)setFrameOrigin:(NSPoint)newOrigin {
+//- (void)setFrameOrigin:(NSPoint)newOrigin {
+//
+//    newOrigin = [self roundedPoint:newOrigin];
+//
+//    BOOL changed = NSEqualPoints(newOrigin, self.frame.origin);
+//
+//    [super setFrameOrigin:newOrigin];
+//
+//    if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
+//        [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
+//    }
+//
+//    [self updateInfo];
+//}
+//
+//- (void)setFrameSize:(NSSize)newSize {
+//
+//    newSize = [self roundedSize:newSize];
+//
+//    BOOL changed = NSEqualSizes(newSize, self.frame.size);
+//
+//    [super setFrameSize:newSize];
+//
+//    if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
+//        [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
+//    }
+//
+//    [self updateInfo];
+//}
 
-    newOrigin = [self roundedPoint:newOrigin];
+- (void)setViewFrame:(NSRect)frame
+  withContainerFrame:(NSRect)containerFrame
+             animate:(BOOL)animate {
 
-    BOOL changed = NSEqualPoints(newOrigin, self.frame.origin);
+//    NSLog(@"%s frame: %@", __PRETTY_FUNCTION__, NSStringFromRect(frame));
+//    NSLog(@"%s containerFrame: %@", __PRETTY_FUNCTION__, NSStringFromRect(containerFrame));
 
-    [super setFrameOrigin:newOrigin];
+    CGFloat topSpacer = 0.0f;
+    CGFloat bottomSpacer = 0.0f;
+    CGFloat leftSpacer = 0.0f;
+    CGFloat rightSpacer = 0.0f;
 
-    if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
-        [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
+    if (_rotating && _topSpacerView.isConstraining) {
+        topSpacer = _topSpacerView.value;
+    } else {
+
+        if (_closestTopView != nil) {
+            topSpacer = NSMinY(_closestTopView.frame) - NSMaxY(frame);
+        } else {
+            topSpacer = NSHeight(containerFrame) - NSMaxY(frame);
+        }
     }
 
-    [self updateInfo];
-}
+    if (_rotating && _bottomSpacerView.isConstraining) {
+        bottomSpacer = _bottomSpacerView.value;
+    } else {
 
-- (void)setFrameSize:(NSSize)newSize {
-
-    newSize = [self roundedSize:newSize];
-
-    BOOL changed = NSEqualSizes(newSize, self.frame.size);
-
-    [super setFrameSize:newSize];
-
-    if ([self.delegate respondsToSelector:@selector(viewDidMove:)]) {
-        [(id<PBResizableViewDelegate>)self.delegate viewDidMove:self];
+        if (_closestBottomView != nil) {
+            bottomSpacer = NSMinY(frame) - NSMaxY(_closestBottomView.frame);
+        } else {
+            bottomSpacer = NSMinY(frame);
+        }
     }
 
-    [self updateInfo];
-}
+    if (_rotating && _leftSpacerView.isConstraining) {
+        leftSpacer = _leftSpacerView.value;
+    } else {
+        
+        if (_closestLeftView != nil) {
+            leftSpacer = NSMinX(frame) - NSMaxX(_closestLeftView.frame);
+        } else {
+            leftSpacer = NSMinX(frame);
+        }
+    }
 
-- (void)setViewFrame:(NSRect)frame animated:(BOOL)animated {
-    
-    if (animated) {
+    if (_rotating && _rightSpacerView.isConstraining) {
+        rightSpacer = _rightSpacerView.value;
+    } else {
+
+        if (_closestRightView != nil) {
+            rightSpacer = NSMinX(_closestRightView.frame) - NSMaxX(frame);
+        } else {
+            rightSpacer = NSWidth(containerFrame) - NSMaxX(frame);
+        }
+    }
+
+    if (animate) {
 
         [NSAnimationContext beginGrouping];
         NSAnimationContext.currentContext.duration = .3f;
-        NSAnimationContext.currentContext.completionHandler = nil;
+        NSAnimationContext.currentContext.completionHandler = ^{
+        };
 
-        [_bottomSpace.animator setConstant:-NSMinY(frame)];
-        [_leftSpace.animator setConstant:NSMinX(frame)];
-        [_width.animator setConstant:NSWidth(frame)];
-        [_height.animator setConstant:NSHeight(frame)];
+        [_topSpacerView
+         updateValue:topSpacer
+         forView:self
+         andViewFrame:frame
+         animate:YES];
+        [_bottomSpacerView
+         updateValue:bottomSpacer
+         forView:self
+         andViewFrame:frame
+         animate:YES];
+        [_leftSpacerView
+         updateValue:leftSpacer
+         forView:self
+         andViewFrame:frame
+         animate:YES];
+        [_rightSpacerView
+         updateValue:rightSpacer
+         forView:self
+         andViewFrame:frame
+         animate:YES];
 
+        self.animator.frame = frame;
         [NSAnimationContext endGrouping];
 
     } else {
-
-        _bottomSpace.constant = -NSMinY(frame);
-        _leftSpace.constant = NSMinX(frame);
-        _width.constant = NSWidth(frame);
-        _height.constant = NSHeight(frame);
-        [self setNeedsLayout:YES];
+        [_topSpacerView
+         updateValue:topSpacer
+         forView:self
+         andViewFrame:frame
+         animate:NO];
+        [_bottomSpacerView
+         updateValue:bottomSpacer
+         forView:self
+         andViewFrame:frame
+         animate:NO];
+        [_leftSpacerView
+         updateValue:leftSpacer
+         forView:self
+         andViewFrame:frame
+         animate:NO];
+        [_rightSpacerView
+         updateValue:rightSpacer
+         forView:self
+         andViewFrame:frame
+         animate:NO];
+        self.frame = frame;
     }
+}
+
+#pragma mark - First Responder
+
+- (void)paste:(id)sender {
+
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSArray *items = pasteboard.pasteboardItems;
+    NSPasteboardItem *lastItem = items.lastObject;
+
+    NSArray *imageTypesAry = @[@"public.tiff"];
+
+    if ([[lastItem availableTypeFromArray:imageTypesAry] isEqualToString:@"public.tiff"]) {
+
+        NSData *imageData = [lastItem dataForType:@"public.tiff"];
+        self.backgroundImage = [[NSImage alloc] initWithData:imageData];
+    }
+}
+
+#pragma mark - Drag n Drop
+
+- (NSArray *)imageFilenamesForPasteboard:(id)sender {
+    if ([sender respondsToSelector:@selector(draggingPasteboard)] == NO) return nil;
+
+    NSPasteboard *pasteboard = [sender draggingPasteboard];
+    NSArray *imageTypesAry = @[NSFilenamesPboardType];
+
+    NSString *desiredType =
+    [pasteboard availableTypeFromArray:imageTypesAry];
+
+    if ([desiredType isEqualToString:NSFilenamesPboardType]) {
+
+        NSArray *filenames =
+        [pasteboard propertyListForType:@"NSFilenamesPboardType"];
+
+        NSMutableArray *imageFilenames = [NSMutableArray array];
+
+        for (NSString *filename in filenames) {
+
+            NSString *ext = [[filename pathExtension] lowercaseString];
+
+            if ([ext isEqualToString:@"png"]  ||
+                [ext isEqualToString:@"tiff"] ||
+                [ext isEqualToString:@"jpg"]) {
+                [imageFilenames addObject:filename];
+            }
+        }
+        
+        return imageFilenames;
+    }
+    
+    return nil;
+}
+
+- (NSDragOperation)draggingEntered:(id )sender {
+
+    if ([sender respondsToSelector:@selector(draggingPasteboard)] == NO) {
+        return NSDragOperationNone;
+    }
+
+    if ([self imageFilenamesForPasteboard:sender].count == 1) {
+
+        if ((NSDragOperationGeneric & [sender draggingSourceOperationMask]) == NSDragOperationGeneric) {
+
+            self.previousForegroundColor = _foregroundColor;
+            self.foregroundColor = self.dropTargetColor;
+            [self setNeedsDisplay:YES];
+
+            return NSDragOperationCopy;
+        }
+        
+    } else {
+
+        NSPasteboard *pasteboard = [sender draggingPasteboard];
+        NSArray *imageTypesAry = @[NSPasteboardTypeTIFF];
+
+        NSString *desiredType =
+        [pasteboard availableTypeFromArray:imageTypesAry];
+
+        if ([desiredType isEqualToString:NSPasteboardTypeTIFF]) {
+
+            self.previousForegroundColor = _foregroundColor;
+            self.foregroundColor = self.dropTargetColor;
+            [self setNeedsDisplay:YES];
+
+            return NSDragOperationCopy;
+        }
+    }
+    return NSDragOperationNone;
+}
+
+- (NSDragOperation)draggingUpdated:(id < NSDraggingInfo >)sender {
+    return NSDragOperationGeneric;
+}
+
+- (void)draggingEnded:(id < NSDraggingInfo >)sender {
+    self.foregroundColor = self.previousForegroundColor;
+    self.previousForegroundColor = nil;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)draggingExited:(id < NSDraggingInfo >)sender {
+    self.foregroundColor = self.previousForegroundColor;
+    self.previousForegroundColor = nil;
+    [self setNeedsDisplay:YES];
+}
+
+- (BOOL)prepareForDragOperation:(id )sender {
+    return YES;
+}
+
+- (BOOL)performDragOperation:(id )sender {
+    NSArray *filenames = [self imageFilenamesForPasteboard:sender];
+
+    if (filenames.count == 1) {
+        NSImage *image =
+        [[NSImage alloc] initWithContentsOfFile:filenames[0]];
+
+        self.backgroundImage = image;
+        return YES;
+    } else {
+
+        NSPasteboard *pasteboard = [sender draggingPasteboard];
+
+        NSArray *imageTypesAry = @[NSPasteboardTypeTIFF];
+
+        NSString *desiredType =
+        [pasteboard availableTypeFromArray:imageTypesAry];
+
+        if ([desiredType isEqualToString:NSPasteboardTypeTIFF]) {
+
+            NSData *imageData = [pasteboard dataForType:desiredType];
+            self.backgroundImage = [[NSImage alloc] initWithData:imageData];
+        }
+    }
+    return NO;
+}
+
+- (void)concludeDragOperation:(id )sender {
+    self.foregroundColor = self.previousForegroundColor;
+    self.previousForegroundColor = nil;
+    [self setNeedsDisplay:YES];
 }
 
 #pragma mark - Drawing
@@ -390,6 +922,11 @@
     }
 
     [super drawRect:dirtyRect];
+
+    if (_foregroundColor != nil) {
+        [_foregroundColor setFill];
+        NSRectFillUsingOperation(dirtyRect, NSCompositeSourceOver);
+    }
 }
 
 @end

@@ -63,8 +63,6 @@ static NSImage *PBGuideViewVerticalImage = nil;
 
 - (void)setFrame:(NSRect)frameRect {
     if (NSWidth(frameRect) > 0.0f && NSHeight(frameRect) > 0.0f) {
-//        NSLog(@"%s frame: %@", __PRETTY_FUNCTION__, NSStringFromRect(frameRect));
-
         [super setFrame:frameRect];
     }
 }

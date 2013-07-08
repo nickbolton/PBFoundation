@@ -21,7 +21,11 @@
 
 @interface PBResizableView : PBAcceptsFirstView
 
+@property (nonatomic, strong) NSString *key;
 @property (nonatomic, strong) NSColor *backgroundColor;
+@property (nonatomic, strong) NSColor *foregroundColor;
+@property (nonatomic, strong) NSColor *dropTargetColor;
+@property (nonatomic, strong) NSImage *backgroundImage;
 @property (nonatomic, strong) NSColor *borderColor;
 @property (nonatomic, strong) NSArray *borderDashPattern;
 @property (nonatomic) NSInteger borderDashPhase;
@@ -36,13 +40,29 @@
 @property (nonatomic, weak) PBSpacerView *bottomSpacerView;
 @property (nonatomic, weak) PBSpacerView *leftSpacerView;
 @property (nonatomic, weak) PBSpacerView *rightSpacerView;
-@property (nonatomic, weak) NSView *closestTopView;
-@property (nonatomic, weak) NSView *closestBottomView;
-@property (nonatomic, weak) NSView *closestLeftView;
-@property (nonatomic, weak) NSView *closestRightView;
+@property (nonatomic, weak) PBResizableView *closestTopView;
+@property (nonatomic, weak) PBResizableView *closestBottomView;
+@property (nonatomic, weak) PBResizableView *closestLeftView;
+@property (nonatomic, weak) PBResizableView *closestRightView;
 @property (nonatomic, readonly) NSTextField *infoLabel;
+@property (nonatomic) NSRect unscaledFrame;
 
 - (void)setupConstraints;
-- (void)setViewFrame:(NSRect)frame animated:(BOOL)animated;
+- (void)updateViewConstraints;
+- (void)willRotateWindow:(NSRect)frame;
+- (void)validateConstraints:(PBSpacerView *)spacerView;
+- (void)setViewFrame:(NSRect)frame
+  withContainerFrame:(NSRect)containerFrame
+             animate:(BOOL)animate;
+- (void)updateSpacers;
+
+- (NSDictionary *)dataSource;
+- (void)updateTopSpaceConstraint:(CGFloat)value;
+- (void)updateBottomSpaceConstraint:(CGFloat)value;
+- (void)updateLeftSpaceConstraint:(CGFloat)value;
+- (void)updateRightSpaceConstraint:(CGFloat)value;
+- (void)updateWidthConstraint:(CGFloat)value;
+- (void)updateHeightConstraint:(CGFloat)value;
+- (void)updateInfo;
 
 @end

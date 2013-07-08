@@ -7,20 +7,31 @@
 //
 
 #import "PBDrawingCanvas.h"
-#import "PBResizableView.h"
 #import "PBRectangleTool.h"
 #import "PBSelectionTool.h"
 #import "PBGuideView.h"
 #import "PBSpacerView.h"
+#import "PBResizableView.h"
 #import <Carbon/Carbon.h>
+
+NSString * const kPBDrawingCanvasSelectedViewsNotification = @"kPBDrawingCanvasSelectedViewsNotification";
+NSString * const kPBDrawingCanvasSelectedViewsKey = @"selected-views";
+NSString * const kPBDrawingCanvasResizableViewsKey = @"views";
+NSString * const kPBDrawingCanvasSelectedKey = @"selected";
+NSString * const kPBDrawingCanvasLandscapeKey = @"landscape";
+NSString * const kPBDrawingCanvasBackgroundColorKey = @"bgColor";
 
 static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView * view2, void * context) {
 
     PBDrawingCanvas *canvas = (__bridge PBDrawingCanvas *)(context);
-    
+
     if ([view1 isKindOfClass:[PBGuideView class]]) {
         return NSOrderedAscending;
     } else if ([view2 isKindOfClass:[PBGuideView class]]) {
+        return NSOrderedDescending;
+    } else if ([view1 isKindOfClass:[PBSpacerView class]]) {
+        return NSOrderedAscending;
+    } else if ([view2 isKindOfClass:[PBSpacerView class]]) {
         return NSOrderedDescending;
     } else if ([canvas.selectedViews containsObject:view1]) {
         return NSOrderedAscending;
@@ -31,11 +42,25 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     return NSOrderedSame;
 }
 
-@interface PBDrawingCanvas() <PBClickableViewDelegate> {
+typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
+
+    PBDrawingCanvasConstraintNone   = 0,
+    PBDrawingCanvasConstraintTop    = (0x1 << 0),
+    PBDrawingCanvasConstraintBottom = (0x1 << 1),
+    PBDrawingCanvasConstraintLeft   = (0x1 << 2),
+    PBDrawingCanvasConstraintRight  = (0x1 << 3),
+    PBDrawingCanvasConstraintAll    = (PBDrawingCanvasConstraintTop|
+                                       PBDrawingCanvasConstraintBottom|
+                                       PBDrawingCanvasConstraintLeft|
+                                       PBDrawingCanvasConstraintRight),
+};
+
+@interface PBDrawingCanvas() <PBClickableViewDelegate, PBSpacerProtocol> {
 
     NSInteger _lastTabbedView;
 }
 
+@property (nonatomic, readwrite) NSScrollView *scrollView;
 @property (nonatomic, readwrite) NSMutableArray *selectedViews;
 @property (nonatomic, readwrite) NSMutableArray *toolViews;
 @property (nonatomic, readwrite) NSMutableDictionary *mouseDownSelectedViewOrigins;
@@ -49,6 +74,8 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 @property (nonatomic, strong) NSMutableArray *toolTrackingRectTags;
 @property (nonatomic, strong) NSLayoutConstraint *infoLabelLeftSpace;
 @property (nonatomic, strong) NSLayoutConstraint *infoLabelBottomSpace;
+@property (nonatomic) NSRect newDocumentFrame;
+@property (nonatomic) NSSize lastDocumentSize;
 
 @end
 
@@ -71,53 +98,18 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     return self;
 }
 
-- (void)commonInit {
-    self.selectedViews = [NSMutableArray array];
-    self.toolViews = [NSMutableArray array];
-    self.spacerViews = [NSMutableArray array];
-    self.delegate = self;
-    self.mouseDownSelectedViewOrigins = [NSMutableDictionary dictionary];
-    self.toolTrackingRects = [NSMutableDictionary dictionary];
-    self.toolTrackingRectTags = [NSMutableArray array];
-    self.guideViews = [NSMutableDictionary dictionary];
-    self.guideReferenceViews = [NSMutableDictionary dictionary];
-    self.toolColor = [NSColor greenColor];
-    self.toolSelectedColor = [NSColor redColor];
-    self.toolBorderColor = [NSColor blackColor];
-    _toolBorderWidth = 1;
-
-    for (NSView *view in _guideViews.allValues) {
-        [self addSubview:view positioned:NSWindowAbove relativeTo:nil];
-    }
-
-    [self
-     sortSubviewsUsingFunction:PBDrawingCanvasViewsComparator context:(__bridge void *)(self)];
-
-    self.infoLabel = [[NSTextField alloc] initWithFrame:NSZeroRect];
-    [_infoLabel setBezeled:NO];
-    [_infoLabel setDrawsBackground:NO];
-    [_infoLabel setEditable:NO];
-    [_infoLabel setSelectable:NO];
-    _infoLabel.alphaValue = 0.0f;
-    _infoLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    _infoLabel.textColor = [NSColor whiteColor];
-
-    [self addSubview:_infoLabel];
-
-    [self updateInfoLabel:_resizingView];
-
-    [PBGuideView setHorizontalImage:_horizontalGuideImage];
-    [PBGuideView setVerticalImage:_verticalGuideImage];
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (void)awakeFromNib {
-    [super awakeFromNib];
-    [self setupNotifications];
-}
-
-#pragma mark - Private
+#pragma mark - Setup
 
 - (void)setupNotifications {
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:nil];
 
     [[NSNotificationCenter defaultCenter]
      addObserver:self
@@ -136,7 +128,255 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
      selector:@selector(windowWillClose:)
      name:NSWindowWillCloseNotification
      object:self.window];
+
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(windowDidResize:)
+     name:NSWindowDidResizeNotification
+     object:self.window];
 }
+
+- (void)commonInit {
+    _newDocumentFrame.size.width = -1.0f;
+
+    self.selectedViews = [NSMutableArray array];
+    self.toolViews = [NSMutableArray array];
+    self.spacerViews = [NSMutableArray array];
+    self.delegate = self;
+    self.mouseDownSelectedViewOrigins = [NSMutableDictionary dictionary];
+    self.toolTrackingRects = [NSMutableDictionary dictionary];
+    self.toolTrackingRectTags = [NSMutableArray array];
+    self.guideViews = [NSMutableDictionary dictionary];
+    self.guideReferenceViews = [NSMutableDictionary dictionary];
+    self.defaultToolColor = [NSColor whiteColor];
+    self.toolSelectedColor = nil;
+    self.toolUnselectedColor = [NSColor colorWithRGBHex:0 alpha:.2];
+    self.toolBorderColor = [NSColor blackColor];
+    self.lastDocumentSize = self.window.frame.size;
+    _toolBorderWidth = 1;
+    _scaleFactor = 1.0f;
+
+    [PBGuideView setHorizontalImage:_horizontalGuideImage];
+    [PBGuideView setVerticalImage:_verticalGuideImage];
+
+    [self registerForDraggedTypes:@[NSFilenamesPboardType, NSTIFFPboardType]];
+}
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+
+    [self
+     sortSubviewsUsingFunction:PBDrawingCanvasViewsComparator
+     context:(__bridge void *)(self)];
+
+    [self setupScrollView];
+    [self setupGuideViews];
+    [self setupInfoLabel];
+    [self setupNotifications];
+}
+
+- (void)setupScrollView {
+    self.scrollView = [[NSScrollView alloc] initWithFrame:self.bounds];
+    _scrollView.borderType = NSNoBorder;
+    _scrollView.hasHorizontalScroller = YES;
+    _scrollView.hasVerticalScroller = YES;
+    _scrollView.autohidesScrollers = YES;
+//    _scrollView.hasHorizontalRuler = YES;
+//    _scrollView.hasVerticalRuler = YES;
+    _scrollView.autoresizingMask = NSViewWidthSizable|NSViewHeightSizable;
+
+    _scrollView.backgroundColor = [NSColor grayColor];
+
+    NSView *documentView = [[NSView alloc] initWithFrame:self.bounds];
+    documentView.wantsLayer = YES;
+    documentView.layer.backgroundColor = _backgroundColor.CGColor;
+
+    _scrollView.documentView = documentView;
+
+    [self addSubview:_scrollView];
+}
+
+- (void)setupGuideViews {
+
+    for (NSView *view in _guideViews.allValues) {
+        [_scrollView.documentView addSubview:view positioned:NSWindowAbove relativeTo:nil];
+    }
+}
+
+- (void)setupInfoLabel {
+    
+    self.infoLabel = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    [_infoLabel setBezeled:NO];
+    [_infoLabel setDrawsBackground:NO];
+    [_infoLabel setEditable:NO];
+    [_infoLabel setSelectable:NO];
+    _infoLabel.alphaValue = 0.0f;
+    _infoLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    _infoLabel.textColor = [NSColor whiteColor];
+    _infoLabel.drawsBackground = NO;
+
+    [_scrollView.documentView addSubview:_infoLabel];
+
+    [self updateInfoLabel:_resizingView];
+}
+
+#pragma mark - Setters and Getters
+
+- (void)setBackgroundColor:(NSColor *)backgroundColor {
+    _backgroundColor = backgroundColor;
+    [_scrollView.documentView layer].backgroundColor = backgroundColor.CGColor;
+}
+
+- (NSDictionary *)dataSourceViews {
+
+    NSMutableDictionary *dataSource = [NSMutableDictionary dictionary];
+
+    NSMutableArray *views = [NSMutableArray arrayWithCapacity:_toolViews.count];
+
+    NSMutableDictionary *backgroundImages = [NSMutableDictionary dictionary];
+
+    for (PBResizableView *view in _toolViews) {
+
+        NSMutableDictionary *viewDataSource = [view.dataSource mutableCopy];
+
+        viewDataSource[kPBDrawingCanvasSelectedKey] =
+        @([_selectedViews containsObject:view]);
+
+        NSImage *backgroundImage = viewDataSource[@"backgroundImage"];
+
+        if (backgroundImage != nil) {
+
+            NSString *guid = [NSString timestampedGuid];
+            backgroundImages[guid] = backgroundImage;
+            [viewDataSource removeObjectForKey:@"backgroundImage"];
+            viewDataSource[@"backgroundImageID"] = guid;
+        }
+
+        [views addObject:viewDataSource];
+    }
+
+    CGFloat red;
+    CGFloat green;
+    CGFloat blue;
+    CGFloat alpha;
+
+    [_backgroundColor getRGBComponents:&red green:&green blue:&blue alpha:&alpha];
+
+    dataSource[kPBDrawingCanvasBackgroundColorKey] =
+    @{
+      @"r" : @(red),
+      @"g" : @(green),
+      @"b" : @(blue),
+      @"a" : @(alpha),
+      };
+
+    dataSource[kPBDrawingCanvasResizableViewsKey] = views;
+    dataSource[kPBDrawingCanvasLandscapeKey] = @(_landscape);
+
+    self.dataSourceImages = backgroundImages;
+
+    return dataSource;
+}
+
+- (void)setDataSourceViews:(NSDictionary *)dataSource {
+
+    for (NSDictionary *view in dataSource[kPBDrawingCanvasResizableViewsKey]) {
+
+        NSRect frame = NSRectFromString(view[@"frame"]);
+
+        NSDictionary *topSpacer = view[@"topSpacer"];
+        NSDictionary *bottomSpacer = view[@"bottomSpacer"];
+        NSDictionary *leftSpacer = view[@"leftSpacer"];
+        NSDictionary *rightSpacer = view[@"rightSpacer"];
+        NSDictionary *backgroundColor = view[@"bgColor"];
+
+        NSString *backgroundImageID = view[@"backgroundImageID"];
+
+        PBResizableView *resizableView = [self createRectangle:frame];
+        [self updateSpacersForView:resizableView];
+        [resizableView.topSpacerView updateFromDataSource:topSpacer];
+        [resizableView.bottomSpacerView updateFromDataSource:bottomSpacer];
+        [resizableView.leftSpacerView updateFromDataSource:leftSpacer];
+        [resizableView.rightSpacerView updateFromDataSource:rightSpacer];
+
+        if (backgroundImageID != nil) {
+            resizableView.backgroundImage = _dataSourceImages[backgroundImageID];
+        }
+
+        resizableView.backgroundColor =
+        [NSColor
+         colorWithCalibratedRed:[backgroundColor[@"r"] floatValue]
+         green:[backgroundColor[@"g"] floatValue]
+         blue:[backgroundColor[@"b"] floatValue]
+         alpha:[backgroundColor[@"a"] floatValue]];
+
+        [_scrollView.documentView addSubview:resizableView];
+        [_toolViews addObject:resizableView];
+    }
+
+    [self retagViews];
+
+    _landscape = [dataSource[kPBDrawingCanvasLandscapeKey] boolValue];
+
+    NSDictionary *bgColor = dataSource[kPBDrawingCanvasBackgroundColorKey];
+
+    self.backgroundColor =
+    [NSColor
+     colorWithCalibratedRed:[bgColor[@"r"] floatValue]
+     green:[bgColor[@"g"] floatValue]
+     blue:[bgColor[@"b"] floatValue]
+     alpha:[bgColor[@"a"] floatValue]];
+
+    NSTimeInterval delayInSeconds = .5f;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+
+        [[NSNotificationCenter defaultCenter]
+         postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+         object:self
+         userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
+    });
+}
+
+- (void)setScaleFactor:(CGFloat)scaleFactor {
+
+    CGFloat diff = scaleFactor / _scaleFactor;
+
+    _scaleFactor = scaleFactor;
+
+    NSRect frame = self.bounds;
+    frame.size.width = _scaleFactor * NSWidth(self.frame);
+    frame.size.height = _scaleFactor * NSHeight(self.frame);
+
+    [_scrollView.documentView setFrame:frame];
+
+    for (PBResizableView *view in _toolViews) {
+
+        NSRect frame = view.frame;
+        frame.origin.x *= diff;
+        frame.origin.y *= diff;
+        frame.size.width *= diff;
+        frame.size.height *= diff;
+        [self resizeView:view toFrame:frame animate:NO];
+        [view updateInfo];
+    }
+
+    [_scrollView documentVisibleRect].origin;
+    NSPoint scrollPoint;
+
+    scrollPoint.x *= diff;
+    scrollPoint.y *= diff;
+
+    scrollPoint.y += diff * NSHeight(_scrollView.frame);
+
+    [_scrollView.contentView scrollPoint:scrollPoint];
+
+    [self calculateEdgeDistances];
+    [self updateGuides];
+    [self updateTrackingAreas];
+}
+
+#pragma mark - Private
 
 - (void)setShowSelectionGuides:(BOOL)showSelectionGuides {
     _showSelectionGuides = showSelectionGuides;
@@ -198,26 +438,30 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     }
 }
 
-- (void)setToolColor:(NSColor *)toolColor {
-    _toolColor = toolColor;
+- (void)setToolSelectedColor:(NSColor *)color {
+    _toolSelectedColor = color;
 
-    for (PBResizableView *view in _toolViews) {
+    for (PBResizableView *view in _selectedViews) {
 
-        if ([_selectedViews containsObject:view] == NO) {
-            view.backgroundColor = toolColor;
+        if ([view isKindOfClass:[PBResizableView class]]) {
+            view.foregroundColor = color;
             [view setNeedsDisplay:YES];
         }
     }
 }
 
-- (void)setToolSelectedColor:(NSColor *)toolSelectedColor {
-    _toolSelectedColor = toolSelectedColor;
+- (void)setToolUnselectedColor:(NSColor *)color {
 
-    for (PBResizableView *view in _selectedViews) {
+    _toolUnselectedColor = color;
+
+    for (PBResizableView *view in _toolViews) {
 
         if ([view isKindOfClass:[PBResizableView class]]) {
-            view.backgroundColor = toolSelectedColor;
-            [view setNeedsDisplay:YES];
+
+            if ([_selectedViews containsObject:view] == NO) {
+                view.foregroundColor = color;
+                [view setNeedsDisplay:YES];
+            }
         }
     }
 }
@@ -225,7 +469,11 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 - (void)selectNextContainer {
 
     if (_lastTabbedView == 0) {
-        _lastTabbedView = ((NSView *)_selectedViews.lastObject).tag - 1;
+        if (_selectedViews.count > 0) {
+            _lastTabbedView = ((NSView *)_selectedViews.lastObject).tag - 1;
+        } else {
+            _lastTabbedView = 0;
+        }
     }
     _lastTabbedView++;
 
@@ -255,9 +503,10 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 - (PBResizableView *)createRectangle:(NSRect)frame {
 
     PBResizableView *view = [[PBResizableView alloc] initWithFrame:frame];
-    view.backgroundColor = _toolColor;
+    view.backgroundColor = _defaultToolColor;
     view.delegate = self;
     view.drawingCanvas = self;
+    view.key = [NSString timestampedGuid];
 
     [self.undoManager
      registerUndoWithTarget:self
@@ -271,6 +520,41 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     return view;
 }
 
+- (void)createRectangleWithImage:(NSImage *)image {
+
+    NSRect frame = NSZeroRect;
+    frame.size = image.size;
+
+    frame.size.width *= _scaleFactor;
+    frame.size.height *= _scaleFactor;
+
+    NSPoint scrollOrigin = _scrollView.documentVisibleRect.origin;
+
+    NSRect containerFrame = [_scrollView.documentView frame];
+
+    NSPoint center = [self mouseLocationInDocument];
+
+    frame.origin.x = center.x - ((NSWidth(frame)+scrollOrigin.x) / 2.0f);
+    frame.origin.y = center.y - ((NSHeight(frame)+scrollOrigin.x) / 2.0f);
+
+//    frame.origin.x = (NSWidth(containerFrame) - NSWidth(frame) + scrollOrigin.x) / 2.0f;
+//    frame.origin.y = (NSHeight(containerFrame) - NSHeight(frame) + scrollOrigin.y) / 2.0f;
+
+    PBResizableView *view = [self createRectangle:frame];
+    view.backgroundColor = _defaultToolColor;
+    view.delegate = self;
+    view.drawingCanvas = self;
+    view.alphaValue = 1.0f;
+    view.key = [NSString timestampedGuid];
+
+    [_scrollView.documentView addSubview:view];
+    [view setupConstraints];
+    [_toolViews addObject:view];
+    [self selectView:view deselectCurrent:YES];
+
+    view.backgroundImage = image;
+}
+
 - (NSArray *)createRectangles:(NSArray *)frames {
 
     [self deselectAllContainers];
@@ -282,14 +566,15 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         NSRect frame = frameValue.rectValue;
 
         PBResizableView *view = [[PBResizableView alloc] initWithFrame:frame];
-        view.backgroundColor = _toolColor;
+        view.backgroundColor = _defaultToolColor;
         view.delegate = self;
         view.drawingCanvas = self;
         view.alphaValue = 0.0f;
+        view.key = [NSString timestampedGuid];
 
         [views addObject:view];
         [self selectView:view deselectCurrent:NO];
-        [self addSubview:view];
+        [_scrollView.documentView addSubview:view];
         [view setupConstraints];
         [_toolViews addObject:view];
     }
@@ -320,6 +605,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     [self setupTrackingRects];
     [self calculateEdgeDistances];
+    [self retagViews];
 
     return views;
 }
@@ -365,6 +651,8 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
              view.rightSpacerView.animator.alphaValue = 0.0f;
          }
 
+         _infoLabel.animator.alphaValue = 0.0f;
+
      } completion:^{
 
          for (PBResizableView *view in targetViews) {
@@ -384,6 +672,11 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
          [self showGuides];
          [self setupTrackingRects];
          [self calculateEdgeDistances];
+
+         [[NSNotificationCenter defaultCenter]
+          postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+          object:self
+          userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
      }];
 }
 
@@ -393,6 +686,11 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     for (PBResizableView *view in toolViews) {
         [self selectView:view deselectCurrent:NO];
     }
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
 }
 
 - (void)deselectAllContainers {
@@ -400,6 +698,11 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     for (PBResizableView *view in _toolViews) {
         [self deselectView:view];
     }
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
 }
 
 - (void)startMouseTracking {
@@ -424,11 +727,23 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     [self removeAllToolTrackingRects];
 }
 
-- (NSPoint)windowLocationOfMouse {
+- (NSPoint)mouseLocationInWindow {
     NSPoint mouseLocation = [NSEvent mouseLocation];
+    return [self.window convertScreenToBase:mouseLocation];
+}
 
-    return
-    [self.window convertScreenToBase:mouseLocation];
+- (NSPoint)mouseLocationInDocument {
+    NSPoint windowLocation = [self mouseLocationInWindow];
+
+    NSPoint location =
+    [_scrollView.documentView convertPointFromBase:windowLocation];
+
+    NSPoint documentOrigin = [_scrollView documentVisibleRect].origin;
+
+    location.x += documentOrigin.x;
+    location.y += documentOrigin.y;
+
+    return location;
 }
 
 - (PBResizableView *)viewAtPoint:(NSPoint)point {
@@ -465,6 +780,11 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     return [_selectedViews containsObject:view];
 }
 
+- (void)updateMouseDownSelectedViewOrigin:(PBResizableView *)view {
+    _mouseDownSelectedViewOrigins[view.key] =
+    [NSValue valueWithPoint:view.frame.origin];
+}
+
 - (void)selectView:(PBResizableView *)view
    deselectCurrent:(BOOL)deselectCurrent {
 
@@ -480,26 +800,31 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     if (view != nil) {
 
+
         if ([_selectedViews containsObject:view] == NO) {
             [_selectedViews addObject:view];
+            view.showingInfo = YES;
+            [view
+             setViewFrame:view.frame
+             withContainerFrame:self.frame
+             animate:NO];
         }
 
-        view.backgroundColor = _toolSelectedColor;
+        view.foregroundColor = _toolSelectedColor;
         view.borderWidth = _toolBorderWidth;
         view.borderColor = _toolBorderColor;
 
-        [self addSubview:view];
+        [_scrollView.documentView addSubview:view];
         [view setupConstraints];
         [_toolViews removeObject:view];
         [_toolViews addObject:view];
+        _lastTabbedView = view.tag;
 
-        NSString *viewKey = [self viewKey:view];
-
-        _mouseDownSelectedViewOrigins[viewKey] =
+        _mouseDownSelectedViewOrigins[view.key] =
         [NSValue valueWithPoint:view.frame.origin];
 
         if (_selectedViews.count == 1) {
-            view.showingInfo = YES;
+            [self.window makeFirstResponder:view];
         }
     }
 
@@ -509,40 +834,60 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 - (void)deselectView:(PBResizableView *)view {
 
     if ([_drawingTool shouldDeselectView:view]) {
-        NSString *viewKey = [self viewKey:view];
-        [_mouseDownSelectedViewOrigins removeObjectForKey:viewKey];
+        [_mouseDownSelectedViewOrigins removeObjectForKey:view.key];
 
         view.showingInfo = NO;
-        view.backgroundColor = _toolColor;
         view.borderWidth = 0;
+        view.foregroundColor = _toolUnselectedColor;
         view.borderColor = nil;
         [view setNeedsDisplay:YES];
         [_selectedViews removeObject:view];
 
+        [view updateSpacers];
+
         [self showGuides];
+
+        [[NSNotificationCenter defaultCenter]
+         postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+         object:self
+         userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
     }
+}
+
+- (void)resizeView:(PBResizableView *)view
+           toFrame:(NSRect)toFrame
+           animate:(BOOL)animate {
+
+    NSRect oldFrame = view.frame;
+
+    [view
+     setViewFrame:toFrame
+     withContainerFrame:self.frame
+     animate:animate];
+
+    [[self.undoManager prepareWithInvocationTarget:self]
+     resizeViewAt:toFrame toFrame:oldFrame];
+    [self.undoManager setActionName:PBLoc(@"Resize Rectangle")];
+
+    if ([_selectedViews containsObject:view]) {
+        _mouseDownSelectedViewOrigins[view.key] =
+        [NSValue valueWithPoint:toFrame.origin];
+    }
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
 }
 
 - (void)resizeViewAt:(NSRect)frame toFrame:(NSRect)toFrame {
 
     for (PBResizableView *view in _toolViews) {
         if (NSEqualRects(view.frame, frame)) {
-
-            NSRect oldFrame = view.frame;
-
-            [view setViewFrame:toFrame animated:YES];
-
-            [[self.undoManager prepareWithInvocationTarget:self]
-             resizeViewAt:toFrame toFrame:oldFrame];
-            [self.undoManager setActionName:PBLoc(@"Resize Rectangle")];
-
+            [self resizeView:view toFrame:toFrame animate:YES];
             break;
         }
     }
-}
-
-- (NSString *)viewKey:(NSView *)view {
-    return [NSString stringWithFormat:@"%p", view];
 }
 
 - (void)retagViews {
@@ -550,7 +895,9 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     NSInteger tag = 1;
 
     for (PBResizableView *view in _toolViews) {
-        view.tag = tag++;
+        if ([view isKindOfClass:[PBResizableView class]]) {
+            view.tag = tag++;
+        }
     }
 }
 
@@ -569,19 +916,79 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     return roundedRect;
 }
 
-- (void)moveSelectedRulers:(NSPoint)offset {
+- (void)doMoveView:(PBResizableView *)view offset:(NSPoint)offset {
+
+    NSRect frame = NSOffsetRect(view.frame, offset.x, offset.y);
+
+    [view
+     setViewFrame:frame
+     withContainerFrame:self.frame
+     animate:NO];
+
+    _mouseDownSelectedViewOrigins[view.key] =
+    [NSValue valueWithPoint:frame.origin];
+
+}
+
+- (void)moveView:(PBResizableView *)view offset:(NSPoint)offset {
+
+    [self doMoveView:view offset:offset];
+
+    [self calculateEdgeDistances];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
+
+}
+
+- (void)moveSelectedViews:(NSPoint)offset {
 
     for (PBResizableView *selectedView in _selectedViews) {
 
-        NSRect frame = NSOffsetRect(selectedView.frame, offset.x, offset.y);
-
-        [selectedView setViewFrame:frame animated:NO];
-
-        NSString *viewKey = [self viewKey:selectedView];
-
-        _mouseDownSelectedViewOrigins[viewKey] =
-        [NSValue valueWithPoint:frame.origin];
+        [self doMoveView:selectedView offset:offset];
     }
+
+    [self calculateEdgeDistances];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
+}
+
+- (void)willResizeWindow:(NSRect)frame {
+
+    _newDocumentFrame = frame;
+
+    _newDocumentFrame.size.height -= _windowTitleHeight;
+
+    _newDocumentFrame.size.width *= _scaleFactor;
+    _newDocumentFrame.size.height *= _scaleFactor;
+
+    for (PBResizableView *view in _toolViews) {
+
+        [view willRotateWindow:_newDocumentFrame];
+    }
+
+    for (PBResizableView *selectedView in _selectedViews) {
+
+        _mouseDownSelectedViewOrigins[selectedView.key] =
+        [NSValue valueWithPoint:selectedView.frame.origin];
+    }
+
+    [self updateSpacers];
+    [self updateGuides];
+    [self setNeedsLayout:YES];
+
+    _newDocumentFrame.size.width = -1.0f;
+}
+
+- (void)willRotateWindow:(NSRect)frame {
+
+    [self willResizeWindow:frame];
+
 }
 
 #pragma mark - Edge Calculations
@@ -590,21 +997,179 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     if (_toolViews.count == 0) return;
 
-    for (NSView *view in _spacerViews) {
-        [view removeFromSuperview];
+    for (PBResizableView *view in _toolViews) {
+        view.closestTopView = nil;
+        view.closestBottomView = nil;
+        view.closestLeftView = nil;
+        view.closestRightView = nil;
+        view.edgeDistances =
+        NSEdgeInsetsMake(MAXFLOAT, MAXFLOAT, MAXFLOAT, MAXFLOAT);
+
+        [self setDistancesToWindowEdges:view];
     }
-    
-    [_spacerViews removeAllObjects];
+
+    [self updateSpacers];
+}
+
+- (void)updateSpacers {
+
+    for (PBResizableView *view in _toolViews) {
+        //        NSLog(@"view: %@ - %f, %f, %f, %f",
+        //              NSStringFromRect(view.frame),
+        //              view.edgeDistances.top,
+        //              view.edgeDistances.left,
+        //              view.edgeDistances.bottom,
+        //              view.edgeDistances.right);
+
+        [self updateSpacersForView:view];
+    }
+}
+
+- (void)updateSpacersForView:(PBResizableView *)view {
+
+    PBResizableView *oppositeView;
+    PBSpacerView *spacerView;
+    PBSpacerView *overlappingSpacerView;
+    NSNumber *alphaValue;
+
+    spacerView = view.topSpacerView;
+    oppositeView = view.closestTopView;
+
+    BOOL isSelected = [_selectedViews containsObject:view];
+
+    if (spacerView == nil) {
+        spacerView =
+        [[PBSpacerView alloc]
+         initWithTopView:oppositeView
+         bottomView:view
+         value:view.edgeDistances.top];
+        spacerView.delegate = self;
+        spacerView.constraining = YES;
+        [_scrollView.documentView addSubview:spacerView];
+        [_spacerViews addObject:spacerView];
+        view.topSpacerView = spacerView;
+    } else {
+        spacerView.view2 = oppositeView;
+        spacerView.value = view.edgeDistances.top;
+
+        overlappingSpacerView = [spacerView overlappingSpacerView];
+
+        if (overlappingSpacerView != nil) {
+            spacerView.constraining = overlappingSpacerView.constraining;
+        }
+    }
+    spacerView.scale = _scaleFactor;
+    spacerView.alphaValue = isSelected ? 1.0f : 0.0f;
+    spacerView.hidden = spacerView.alphaValue == 0.0f;
+    [spacerView setNeedsLayout:YES];
+
+    spacerView = view.bottomSpacerView;
+    oppositeView = view.closestBottomView;
+
+    if (spacerView == nil) {
+        spacerView =
+        [[PBSpacerView alloc]
+         initWithTopView:view
+         bottomView:oppositeView
+         value:view.edgeDistances.bottom];
+        spacerView.delegate = self;
+        spacerView.constraining = NO;
+        [_scrollView.documentView addSubview:spacerView];
+        [_spacerViews addObject:spacerView];
+        view.bottomSpacerView = spacerView;
+    } else {
+        spacerView.view1 = oppositeView;
+        spacerView.value = view.edgeDistances.bottom;
+
+        overlappingSpacerView = [spacerView overlappingSpacerView];
+
+        if (overlappingSpacerView != nil) {
+            spacerView.constraining = overlappingSpacerView.constraining;
+        }
+    }
+    spacerView.scale = _scaleFactor;
+    spacerView.alphaValue = isSelected && (view.closestBottomView == nil || [_selectedViews containsObject:view.closestBottomView] == NO) ? 1.0f : 0.0f;
+    spacerView.hidden = spacerView.alphaValue == 0.0f;
+    [spacerView setNeedsLayout:YES];
+
+    spacerView = view.leftSpacerView;
+    oppositeView = view.closestLeftView;
+
+    if (spacerView == nil) {
+        spacerView =
+        [[PBSpacerView alloc]
+         initWithLeftView:oppositeView
+         rightView:view
+         value:view.edgeDistances.left];
+        spacerView.delegate = self;
+        spacerView.constraining = YES;
+        [_scrollView.documentView addSubview:spacerView];
+        [_spacerViews addObject:spacerView];
+        view.leftSpacerView = spacerView;
+    } else {
+        spacerView.view1 = oppositeView;
+        spacerView.value = view.edgeDistances.left;
+
+        overlappingSpacerView = [spacerView overlappingSpacerView];
+
+        if (overlappingSpacerView != nil) {
+            spacerView.constraining = overlappingSpacerView.constraining;
+        }
+    }
+    spacerView.scale = _scaleFactor;
+    spacerView.alphaValue = isSelected ? 1.0f : 0.0f;
+    spacerView.hidden = spacerView.alphaValue == 0.0f;
+    [spacerView setNeedsLayout:YES];
+
+    spacerView = view.rightSpacerView;
+    oppositeView = view.closestRightView;
+
+    if (spacerView == nil) {
+        spacerView =
+        [[PBSpacerView alloc]
+         initWithLeftView:view
+         rightView:oppositeView
+         value:view.edgeDistances.right];
+        spacerView.delegate = self;
+        spacerView.constraining = NO;
+        [_scrollView.documentView addSubview:spacerView];
+        [_spacerViews addObject:spacerView];
+        view.rightSpacerView = spacerView;
+    } else {
+        spacerView.view2 = oppositeView;
+        spacerView.value = view.edgeDistances.right;
+
+        overlappingSpacerView = [spacerView overlappingSpacerView];
+
+        if (overlappingSpacerView != nil) {
+            spacerView.constraining = overlappingSpacerView.constraining;
+        }
+    }
+    spacerView.scale = _scaleFactor;
+    spacerView.alphaValue = isSelected && (view.closestRightView == nil || [_selectedViews containsObject:view.closestRightView] == NO) ? 1.0f : 0.0f;
+    spacerView.hidden = spacerView.alphaValue == 0.0f;
+    [spacerView setNeedsLayout:YES];
+}
+
+- (void)calculateEdgeDistances2 {
+
+    if (_toolViews.count == 0) return;
+
+//    for (NSView *view in _spacerViews) {
+//        [view removeFromSuperview];
+//    }
+//
+//    [_spacerViews removeAllObjects];
 
     for (PBResizableView *view in _toolViews) {
         view.closestTopView = nil;
         view.closestBottomView = nil;
         view.closestLeftView = nil;
         view.closestRightView = nil;
-        view.topSpacerView = nil;
-        view.bottomSpacerView = nil;
-        view.leftSpacerView = nil;
-        view.rightSpacerView = nil;
+//        view.topSpacerView = nil;
+//        view.bottomSpacerView = nil;
+//        view.leftSpacerView = nil;
+//        view.rightSpacerView = nil;
         view.edgeDistances =
         NSEdgeInsetsMake(MAXFLOAT, MAXFLOAT, MAXFLOAT, MAXFLOAT);
     }
@@ -729,159 +1294,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         }
     }
 
-    for (PBResizableView *view in _toolViews) {
-//        NSLog(@"view: %@ - %f, %f, %f, %f",
-//              NSStringFromRect(view.frame),
-//              view.edgeDistances.top,
-//              view.edgeDistances.left,
-//              view.edgeDistances.bottom,
-//              view.edgeDistances.right);
-
-        PBSpacerView *spacerView;
-
-        spacerView =
-        [[PBSpacerView alloc]
-         initWithTopView:view.closestTopView
-         bottomView:view
-         value:view.edgeDistances.top];
-        [self addSubview:spacerView];
-        [_spacerViews addObject:spacerView];
-        view.topSpacerView = spacerView;
-        spacerView.alphaValue = view.closestBottomView == nil ? 1.0f : 0.0f;
-
-        spacerView =
-        [[PBSpacerView alloc]
-         initWithTopView:view
-         bottomView:view.closestBottomView
-         value:view.edgeDistances.bottom];
-        [self addSubview:spacerView];
-        [_spacerViews addObject:spacerView];
-        view.bottomSpacerView = spacerView;
-
-        spacerView =
-        [[PBSpacerView alloc]
-         initWithLeftView:view.closestLeftView
-         rightView:view
-         value:view.edgeDistances.left];
-        [self addSubview:spacerView];
-        [_spacerViews addObject:spacerView];
-        view.leftSpacerView = spacerView;
-
-        spacerView =
-        [[PBSpacerView alloc]
-         initWithLeftView:view
-         rightView:view.closestRightView
-         value:view.edgeDistances.right];
-        [self addSubview:spacerView];
-        [_spacerViews addObject:spacerView];
-        view.rightSpacerView = spacerView;
-        spacerView.alphaValue = view.closestLeftView == nil ? 1.0f : 0.0f;
-    }
-}
-
-- (void)alignSpacer:(NSView *)spacerView toTopOfView:(NSView *)view {
-
-    NSLayoutConstraint *alignToHorizontalCenter =
-    [NSLayoutConstraint
-     constraintWithItem:spacerView
-     attribute:NSLayoutAttributeCenterX
-     relatedBy:NSLayoutRelationEqual
-     toItem:view
-     attribute:NSLayoutAttributeCenterX
-     multiplier:1.0f
-     constant:0.0f];
-
-    NSLayoutConstraint *verticalSpace =
-    [NSLayoutConstraint
-     constraintWithItem:spacerView
-     attribute:NSLayoutAttributeBottom
-     relatedBy:NSLayoutRelationEqual
-     toItem:view
-     attribute:NSLayoutAttributeTop
-     multiplier:1.0f
-     constant:0.0f];
-
-    [self addConstraint:alignToHorizontalCenter];
-    [self addConstraint:verticalSpace];
-}
-
-- (void)alignSpacer:(NSView *)spacerView toBottomOfView:(NSView *)view {
-
-    NSLayoutConstraint *alignToHorizontalCenter =
-    [NSLayoutConstraint
-     constraintWithItem:spacerView
-     attribute:NSLayoutAttributeCenterX
-     relatedBy:NSLayoutRelationEqual
-     toItem:view
-     attribute:NSLayoutAttributeCenterX
-     multiplier:1.0f
-     constant:0.0f];
-
-    NSLayoutConstraint *verticalSpace =
-    [NSLayoutConstraint
-     constraintWithItem:spacerView
-     attribute:NSLayoutAttributeTop
-     relatedBy:NSLayoutRelationEqual
-     toItem:view
-     attribute:NSLayoutAttributeBottom
-     multiplier:1.0f
-     constant:0.0f];
-
-    [self addConstraint:alignToHorizontalCenter];
-    [self addConstraint:verticalSpace];
-
-}
-
-- (void)alignSpacer:(NSView *)spacerView toLeftOfView:(NSView *)view {
-
-    NSLayoutConstraint *alignToVerticalCenter =
-    [NSLayoutConstraint
-     constraintWithItem:spacerView
-     attribute:NSLayoutAttributeCenterY
-     relatedBy:NSLayoutRelationEqual
-     toItem:view
-     attribute:NSLayoutAttributeCenterY
-     multiplier:1.0f
-     constant:0.0f];
-
-    NSLayoutConstraint *horizontalSpace =
-    [NSLayoutConstraint
-     constraintWithItem:spacerView
-     attribute:NSLayoutAttributeRight
-     relatedBy:NSLayoutRelationEqual
-     toItem:view
-     attribute:NSLayoutAttributeLeft
-     multiplier:1.0f
-     constant:0.0f];
-
-    [self addConstraint:alignToVerticalCenter];
-    [self addConstraint:horizontalSpace];
-}
-
-- (void)alignSpacer:(NSView *)spacerView toRightOfView:(NSView *)view {
-
-    NSLayoutConstraint *alignToVerticalCenter =
-    [NSLayoutConstraint
-     constraintWithItem:spacerView
-     attribute:NSLayoutAttributeCenterY
-     relatedBy:NSLayoutRelationEqual
-     toItem:view
-     attribute:NSLayoutAttributeCenterY
-     multiplier:1.0f
-     constant:0.0f];
-
-    NSLayoutConstraint *horizontalSpace =
-    [NSLayoutConstraint
-     constraintWithItem:spacerView
-     attribute:NSLayoutAttributeLeft
-     relatedBy:NSLayoutRelationEqual
-     toItem:view
-     attribute:NSLayoutAttributeRight
-     multiplier:1.0f
-     constant:0.0f];
-
-    [self addConstraint:alignToVerticalCenter];
-    [self addConstraint:horizontalSpace];
+    [self updateSpacers];
 }
 
 - (NSRect)rectToTopOfWindow:(PBResizableView *)view {
@@ -920,8 +1333,11 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
 //    CGFloat top, CGFloat left, CGFloat bottom, CGFloat right
 
+    NSRect documentFrame =
+    _newDocumentFrame.size.width >= 0 ? _newDocumentFrame : [_scrollView.documentView frame];
+
     CGFloat top = MIN(view.edgeDistances.top,
-                      NSHeight(view.window.frame) - NSMaxY(view.frame));
+                      NSHeight(documentFrame) - NSMaxY(view.frame));
 
     CGFloat left = MIN(view.edgeDistances.left,
                        NSMinX(view.frame));
@@ -930,9 +1346,183 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
                          NSMinY(view.frame));
 
     CGFloat right = MIN(view.edgeDistances.right,
-                      NSWidth(view.window.frame) - NSMaxX(view.frame));
+                      NSWidth(documentFrame) - NSMaxX(view.frame));
 
     view.edgeDistances = NSEdgeInsetsMake(top, left, bottom, right);
+}
+
+- (void)toggleSelectedViewTopConstraint {
+
+    PBSpacerView *spacerView = nil;
+
+    for (PBResizableView *view in _selectedViews) {
+        if (spacerView == nil ||
+            NSMaxY(view.topSpacerView.frame) > NSMaxY(spacerView.frame)) {
+            spacerView = view.topSpacerView;
+        }
+    }
+
+    PBSpacerView *overlappingView = [spacerView overlappingSpacerView];
+    
+    spacerView.constraining = !spacerView.isConstraining;
+    overlappingView.constraining = spacerView.constraining;
+    [spacerView setNeedsDisplay:YES];
+    [overlappingView setNeedsDisplay:YES];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
+
+}
+
+- (void)toggleSelectedViewBottomConstraint {
+
+    PBSpacerView *spacerView = nil;
+
+    for (PBResizableView *view in _selectedViews) {
+        if (spacerView == nil ||
+            NSMinY(view.bottomSpacerView.frame) < NSMinY(spacerView.frame)) {
+            spacerView = view.bottomSpacerView;
+        }
+    }
+
+    PBSpacerView *overlappingView = [spacerView overlappingSpacerView];
+
+    spacerView.constraining = !spacerView.isConstraining;
+    overlappingView.constraining = spacerView.constraining;
+    [spacerView setNeedsDisplay:YES];
+    [overlappingView setNeedsDisplay:YES];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
+}
+
+- (void)toggleSelectedViewLeftConstraint {
+
+    PBSpacerView *spacerView = nil;
+
+    for (PBResizableView *view in _selectedViews) {
+        if (spacerView == nil ||
+            NSMinX(view.leftSpacerView.frame) < NSMinX(spacerView.frame)) {
+            spacerView = view.leftSpacerView;
+        }
+    }
+
+    PBSpacerView *overlappingView = [spacerView overlappingSpacerView];
+
+    spacerView.constraining = !spacerView.isConstraining;
+    overlappingView.constraining = spacerView.constraining;
+    [spacerView setNeedsDisplay:YES];
+    [overlappingView setNeedsDisplay:YES];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
+}
+
+- (void)toggleSelectedViewRightConstraint {
+
+    PBSpacerView *spacerView = nil;
+
+    for (PBResizableView *view in _selectedViews) {
+        if (spacerView == nil ||
+            NSMaxX(view.rightSpacerView.frame) > NSMaxX(spacerView.frame)) {
+            spacerView = view.rightSpacerView;
+        }
+    }
+
+    PBSpacerView *overlappingView = [spacerView overlappingSpacerView];
+
+    spacerView.constraining = !spacerView.isConstraining;
+    overlappingView.constraining = spacerView.constraining;
+    [spacerView setNeedsDisplay:YES];
+    [overlappingView setNeedsDisplay:YES];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
+}
+
+- (void)pinSelectedViewsTop {
+
+    PBResizableView *topMostView = nil;
+
+    for (PBResizableView *view in _selectedViews) {
+
+        if (topMostView == nil ||
+            NSMaxY(view.frame) > NSMaxY(topMostView.frame)) {
+            topMostView = view;
+        }
+    }
+
+    if (topMostView != nil) {
+
+        CGFloat distance =
+        NSHeight(topMostView.superview.frame) - NSMaxY(topMostView.frame);
+
+        
+        [self moveSelectedViews:NSMakePoint(0.0f, distance)];
+    }
+}
+
+- (void)pinSelectedViewsBottom {
+
+    PBResizableView *bottomMostView = nil;
+
+    for (PBResizableView *view in _selectedViews) {
+
+        if (bottomMostView == nil ||
+            NSMinY(view.frame) < NSMinY(bottomMostView.frame)) {
+            bottomMostView = view;
+        }
+    }
+
+    if (bottomMostView != nil) {
+        [self moveSelectedViews:NSMakePoint(0.0f, -NSMinY(bottomMostView.frame))];
+    }
+}
+
+- (void)pinSelectedViewsLeft {
+
+    PBResizableView *leftMostView = nil;
+
+    for (PBResizableView *view in _selectedViews) {
+
+        if (leftMostView == nil ||
+            NSMinX(view.frame) < NSMinX(leftMostView.frame)) {
+            leftMostView = view;
+        }
+    }
+
+    if (leftMostView != nil) {
+        [self moveSelectedViews:NSMakePoint(-NSMinX(leftMostView.frame), 0.0f)];
+    }
+}
+
+- (void)pinSelectedViewsRight {
+
+    PBResizableView *rightMostView = nil;
+
+    for (PBResizableView *view in _selectedViews) {
+
+        if (rightMostView == nil ||
+            NSMaxX(view.frame) > NSMaxX(rightMostView.frame)) {
+            rightMostView = view;
+        }
+    }
+
+    if (rightMostView != nil) {
+
+        CGFloat distance =
+        NSWidth(rightMostView.superview.frame) - NSMaxX(rightMostView.frame);
+
+        [self moveSelectedViews:NSMakePoint(distance, 0.0f)];
+    }
 }
 
 #pragma mark - Info Label
@@ -950,18 +1540,21 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     CGFloat alpha = showingInfo ? 1.0f : 0.0f;
     _infoLabel.alphaValue = alpha;
+
+    _infoLabel.textColor = [NSColor whiteColor];
 }
 
 - (void)updateInfoLabel:(PBResizableView *)view {
 
-    NSPoint mouseLocation = [self windowLocationOfMouse];
+    NSPoint mouseLocation = [self mouseLocationInDocument];
 
     self.showingInfo =
     NSEqualSizes(NSZeroSize, view.frame.size) == NO &&
     view.isShowingInfoLabel == NO;
 
     CGFloat left = NSMaxX(view.frame) + 5.0f;
-    CGFloat bottom = NSMidY(view.frame) - 8.0f;
+    CGFloat bottom =
+    NSMidY(view.frame) - 8.0f + (NSHeight(_infoLabel.frame) / 2.0f);
 
     if (_infoLabelLeftSpace == nil) {
         self.infoLabelLeftSpace =
@@ -982,11 +1575,28 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
 #pragma mark - Guides
 
+- (void)updateGuidesForView:(PBResizableView *)view {
+    [self viewDidMove:view updateTrackingAndConstraintEdges:NO];
+    [self updateInfoLabel:view];
+}
+
+- (void)updateGuides {
+
+    NSInteger idx = 1;
+    for (PBResizableView *view in _toolViews) {
+
+        BOOL update = idx++ == _toolViews.count;
+        [self viewDidMove:view updateTrackingAndConstraintEdges:update];
+    }
+}
+
 - (void)viewDidMove:(PBResizableView *)view {
+    [self viewDidMove:view updateTrackingAndConstraintEdges:YES];
+}
+
+- (void)viewDidMove:(PBResizableView *)view updateTrackingAndConstraintEdges:(BOOL)update {
 
     NSDictionary *referenceViews = [_guideReferenceViews copy];
-
-    NSView *selectedView = _selectedViews.firstObject;
 
     for (NSNumber *positionType in referenceViews) {
 
@@ -997,8 +1607,10 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
         }
     }
 
-    [self setupTrackingRects];
-    [self calculateEdgeDistances];
+    if (update) {
+        [self setupTrackingRects];
+        [self calculateEdgeDistances];
+    }
 }
 
 - (PBGuideView *)guideForPosition:(PBGuidePosition)guidePosition {
@@ -1017,6 +1629,9 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
                  atPosition:(PBGuidePosition)guidePosition {
 
     NSRect frame;
+    NSRect documentFrame =
+    _newDocumentFrame.size.width >= 0.0f ?
+    _newDocumentFrame : [_scrollView.documentView frame];
 
     switch (guidePosition) {
         case PBGuidePositionLeft:
@@ -1024,7 +1639,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
             frame = NSMakeRect(NSMinX(view.frame),
                                0.0f,
                                1.0f,
-                               NSHeight(view.superview.frame));
+                               NSHeight(documentFrame));
             break;
 
         case PBGuidePositionRight:
@@ -1032,14 +1647,14 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
             frame = NSMakeRect(NSMaxX(view.frame) - 1.0f,
                                0.0f,
                                1.0f,
-                               NSHeight(view.superview.frame));
+                               NSHeight(documentFrame));
             break;
 
         case PBGuidePositionTop:
 
             frame = NSMakeRect(0.0f,
                                NSMaxY(view.frame) - 1.0f,
-                               NSWidth(view.superview.frame),
+                               NSWidth(documentFrame),
                                1.0f);
             break;
 
@@ -1047,17 +1662,13 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
             frame = NSMakeRect(0.0f,
                                NSMinY(view.frame),
-                               NSWidth(view.superview.frame),
+                               NSWidth(documentFrame),
                                1.0f);
             break;
 
     }
     
     return [self roundedRect:frame];
-}
-
-- (void)updateGuides {
-//    [self showGuides];
 }
 
 - (void)removeAllGuides {
@@ -1074,16 +1685,23 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 
     PBGuideView *guideView = _guideViews[@(guidePosition)];
 
+    CGFloat alpha = 0.0f;
+
     if (view != nil) {
         guideView.frame = [self guideFrameForView:view atPosition:guidePosition];
-        guideView.alphaValue = 1.0f;
+        alpha = 1.0f;
 
         _guideReferenceViews[@(guidePosition)] = view;
 
-        [self addSubview:guideView positioned:NSWindowAbove relativeTo:nil];
-    } else {
-        guideView.alphaValue = 0.0f;
+        [_scrollView.documentView addSubview:guideView positioned:NSWindowAbove relativeTo:nil];
     }
+
+    [PBAnimator
+     animateWithDuration:PB_WINDOW_ANIMATION_DURATION
+     timingFunction:PB_EASE_INOUT
+     animation:^{
+         guideView.animator.alphaValue = alpha;
+     }];
 }
 
 - (void)showGuides {
@@ -1159,11 +1777,42 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     return result;
 }
 
+#pragma mark - PBSpacerProtocol Conformance
+
+- (void)spacerViewClicked:(PBSpacerView *)spacerView {
+    spacerView.constraining = !spacerView.constraining;
+    PBResizableView *view1 = spacerView.view1;
+    PBResizableView *view2 = spacerView.view2;
+
+    for (PBSpacerView *view in _spacerViews) {
+        if (view != spacerView &&
+            view.view1 != nil &&
+            view.view2 != nil) {
+
+            if ((view.view1 == view2 &&
+                 view.view2 == view1) ||
+                (view.view1 == view1 &&
+                 view.view2 == view2)) {
+                    
+                view.constraining = spacerView.constraining;
+            }
+        }
+    }
+
+    [view1 validateConstraints:spacerView];
+    [view2 validateConstraints:spacerView];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
+}
+
 #pragma mark - Tracking Rects
 
 - (void)removeAllToolTrackingRects {
 
-    NSPoint mouseLocation = [self windowLocationOfMouse];
+    NSPoint mouseLocation = [self mouseLocationInDocument];
 
     for (NSNumber *rectTag in _toolTrackingRectTags) {
         [self removeTrackingRect:rectTag.integerValue];
@@ -1188,7 +1837,7 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     NSDictionary *rects =
     [_drawingTool trackingRectsForMouseEvents];
 
-    NSPoint mouseLocation = [self windowLocationOfMouse];
+    NSPoint mouseLocation = [self mouseLocationInDocument];
 
     for (NSString *identifier in rects) {
 
@@ -1241,22 +1890,44 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
 }
 
 - (void)mouseMoved:(NSEvent *)event {
-    NSPoint windowLocation = [self windowLocationOfMouse];
+    NSPoint windowLocation = [self mouseLocationInDocument];
     [_drawingTool mouseMovedToPoint:windowLocation inCanvas:self];
 }
 
 #pragma mark - PBClickableViewDelegate Conformance
 
 - (void)viewMousedDown:(PBClickableView *)view atPoint:(NSPoint)point {
-    [_drawingTool mouseDown:view atPoint:point inCanvas:self];
+
+    NSPoint pointInDocument =
+    [_scrollView.documentView convertPoint:point fromView:view];
+
+    [_drawingTool mouseDown:view atPoint:pointInDocument inCanvas:self];
 }
 
 - (void)viewMousedUp:(PBClickableView *)view atPoint:(NSPoint)point {
-    [_drawingTool mouseUp:view atPoint:point inCanvas:self];
+
+    NSPoint pointInDocument =
+    [_scrollView.documentView convertPoint:point fromView:view];
+
+    [_drawingTool mouseUp:view atPoint:pointInDocument inCanvas:self];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
 }
 
 - (void)viewMouseDragged:(PBClickableView *)view atPoint:(NSPoint)point {
-    [_drawingTool mouseDragged:view toPoint:point inCanvas:self];
+
+    NSPoint pointInDocument =
+    [_scrollView.documentView convertPoint:point fromView:view];
+
+    [_drawingTool mouseDragged:view toPoint:pointInDocument inCanvas:self];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
 }
 
 #pragma mark - NSWindowDelegate Conformance
@@ -1273,24 +1944,54 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     [self stopMouseTracking];
 }
 
+- (void)windowDidResize:(NSNotification *)notification {
+
+    NSRect documentFrame = _scrollView.bounds;
+    documentFrame.size.width = _scaleFactor * NSWidth(_scrollView.bounds);
+    documentFrame.size.height = _scaleFactor * NSHeight(_scrollView.bounds);
+
+    [_scrollView.documentView setFrame:documentFrame];
+
+    [self stopMouseTracking];
+    [self startMouseTracking];
+
+    [[NSNotificationCenter defaultCenter]
+     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+     object:self
+     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
+
+    self.lastDocumentSize = self.window.frame.size;
+}
+
 #pragma mark - Key Handling
 
 - (void)handleKeyEvent:(NSEvent *)event {
     
 //    NSLog(@"keyCode: %d, modifiers: %d", event.keyCode, event.modifierFlags);
 
-    NSInteger movementMultiplier = 1;
+    NSInteger movementMultiplier = 1 * _scaleFactor;
 
     if ([event isModifiersExactly:NSShiftKeyMask] ||
         [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
-        movementMultiplier = 10;
+        movementMultiplier = 10 * _scaleFactor;
     }
 
     switch (event.keyCode) {
         case kVK_Delete:
             
             if ([event isModifiersExactly:0]) {
-                [self deleteViews:_selectedViews];
+
+                if (_selectedViews.count == 1) {
+
+                    PBResizableView *view = _selectedViews[0];
+                    if (view.backgroundImage != nil) {
+                        view.backgroundImage = nil;
+                    } else {
+                        [self deleteViews:_selectedViews];
+                    }
+                } else {
+                    [self deleteViews:_selectedViews];
+                }
             }
             break;
             
@@ -1302,19 +2003,64 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
             break;
             
         case kVK_LeftArrow:
-            [self moveSelectedRulers:NSMakePoint(-1.0f * movementMultiplier, 0.0f)];
+            if ([event isModifiersExactly:0] ||
+                [event isModifiersExactly:NSShiftKeyMask] ||
+                [event isModifiersExactly:NSNumericPadKeyMask|NSFunctionKeyMask] ||
+                [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self moveSelectedViews:NSMakePoint(-1.0f * movementMultiplier, 0.0f)];
+            } else if ([event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask] ||
+                       [event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self pinSelectedViewsLeft];
+            } else if ([event isModifiersExactly:NSAlternateKeyMask] ||
+                       [event isModifiersExactly:NSAlternateKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self toggleSelectedViewLeftConstraint];
+            }
+
             break;
 
         case kVK_RightArrow:
-            [self moveSelectedRulers:NSMakePoint(1.0f * movementMultiplier, 0.0f)];
+            if ([event isModifiersExactly:0] ||
+                [event isModifiersExactly:NSShiftKeyMask] ||
+                [event isModifiersExactly:NSNumericPadKeyMask|NSFunctionKeyMask] ||
+                [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self moveSelectedViews:NSMakePoint(1.0f * movementMultiplier, 0.0f)];
+            } else if ([event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask] ||
+                       [event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self pinSelectedViewsRight];
+            } else if ([event isModifiersExactly:NSAlternateKeyMask] ||
+                       [event isModifiersExactly:NSAlternateKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self toggleSelectedViewRightConstraint];
+            }
             break;
 
         case kVK_UpArrow:
-            [self moveSelectedRulers:NSMakePoint(0.0f, 1.0f * movementMultiplier)];
+            if ([event isModifiersExactly:0] ||
+                [event isModifiersExactly:NSShiftKeyMask] ||
+                [event isModifiersExactly:NSNumericPadKeyMask|NSFunctionKeyMask] ||
+                [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self moveSelectedViews:NSMakePoint(0.0f, 1.0f * movementMultiplier)];
+            } else if ([event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask] ||
+                       [event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self pinSelectedViewsTop];
+            } else if ([event isModifiersExactly:NSAlternateKeyMask] ||
+                       [event isModifiersExactly:NSAlternateKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self toggleSelectedViewTopConstraint];
+            }
             break;
 
         case kVK_DownArrow:
-            [self moveSelectedRulers:NSMakePoint(0.0f, -1.0f * movementMultiplier)];
+            if ([event isModifiersExactly:0] ||
+                [event isModifiersExactly:NSShiftKeyMask] ||
+                [event isModifiersExactly:NSNumericPadKeyMask|NSFunctionKeyMask] ||
+                [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self moveSelectedViews:NSMakePoint(0.0f, -1.0f * movementMultiplier)];
+            } else if ([event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask] ||
+                       [event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self pinSelectedViewsBottom];
+            } else if ([event isModifiersExactly:NSAlternateKeyMask] ||
+                       [event isModifiersExactly:NSAlternateKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
+                [self toggleSelectedViewBottomConstraint];
+            }
             break;
 
         case kVK_Tab:
@@ -1336,14 +2082,134 @@ static NSComparisonResult PBDrawingCanvasViewsComparator( NSView * view1, NSView
     [self handleKeyEvent:event];
 }
 
+#pragma mark - First Responder
+
+- (void)paste:(id)sender {
+
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSArray *items = pasteboard.pasteboardItems;
+    NSPasteboardItem *lastItem = items.lastObject;
+
+    NSArray *imageTypesAry = @[@"public.tiff"];
+
+    if ([[lastItem availableTypeFromArray:imageTypesAry] isEqualToString:@"public.tiff"]) {
+        NSData *imageData = [lastItem dataForType:@"public.tiff"];
+        [self createRectangleWithImage:[[NSImage alloc] initWithData:imageData]];
+    }
+}
+
+#pragma mark - Drag n Drop
+
+- (NSArray *)imageFilenamesForPasteboard:(id)sender {
+    if ([sender respondsToSelector:@selector(draggingPasteboard)] == NO) return nil;
+
+    NSPasteboard *pasteboard = [sender draggingPasteboard];
+    NSArray *imageTypesAry = @[NSFilenamesPboardType];
+
+    NSString *desiredType =
+    [pasteboard availableTypeFromArray:imageTypesAry];
+
+    if ([desiredType isEqualToString:NSFilenamesPboardType]) {
+
+        NSArray *filenames =
+        [pasteboard propertyListForType:@"NSFilenamesPboardType"];
+
+        NSMutableArray *imageFilenames = [NSMutableArray array];
+
+        for (NSString *filename in filenames) {
+
+            NSString *ext = [[filename pathExtension] lowercaseString];
+
+            if ([ext isEqualToString:@"png"]  ||
+                [ext isEqualToString:@"tiff"] ||
+                [ext isEqualToString:@"jpg"]) {
+                [imageFilenames addObject:filename];
+            }
+        }
+
+        return imageFilenames;
+    }
+
+    return nil;
+}
+
+- (NSDragOperation)draggingEntered:(id )sender {
+
+    if ([sender respondsToSelector:@selector(draggingPasteboard)] == NO) {
+        return NSDragOperationNone;
+    }
+
+    if ([self imageFilenamesForPasteboard:sender].count == 1) {
+
+        if ((NSDragOperationGeneric & [sender draggingSourceOperationMask]) == NSDragOperationGeneric) {
+            return NSDragOperationCopy;
+        }
+
+    } else {
+
+        NSPasteboard *pasteboard = [sender draggingPasteboard];
+        NSArray *imageTypesAry = @[NSPasteboardTypeTIFF];
+
+        NSString *desiredType =
+        [pasteboard availableTypeFromArray:imageTypesAry];
+
+        if ([desiredType isEqualToString:NSPasteboardTypeTIFF]) {
+            return NSDragOperationCopy;
+        }
+    }
+    return NSDragOperationNone;
+}
+
+- (NSDragOperation)draggingUpdated:(id < NSDraggingInfo >)sender {
+    return NSDragOperationGeneric;
+}
+
+- (void)draggingEnded:(id < NSDraggingInfo >)sender {
+}
+
+- (void)draggingExited:(id < NSDraggingInfo >)sender {
+}
+
+- (BOOL)prepareForDragOperation:(id )sender {
+    return YES;
+}
+
+- (BOOL)performDragOperation:(id )sender {
+    NSArray *filenames = [self imageFilenamesForPasteboard:sender];
+
+    if (filenames.count == 1) {
+
+        NSImage *image =
+        [[NSImage alloc] initWithContentsOfFile:filenames[0]];
+        [self createRectangleWithImage:image];
+        return YES;
+        
+    } else {
+
+        NSPasteboard *pasteboard = [sender draggingPasteboard];
+
+        NSArray *imageTypesAry = @[NSPasteboardTypeTIFF];
+
+        NSString *desiredType =
+        [pasteboard availableTypeFromArray:imageTypesAry];
+
+        if ([desiredType isEqualToString:NSPasteboardTypeTIFF]) {
+
+            NSData *imageData = [pasteboard dataForType:desiredType];
+            [self
+             createRectangleWithImage:[[NSImage alloc] initWithData:imageData]];
+        }
+    }
+    return NO;
+}
+
+- (void)concludeDragOperation:(id )sender {
+    [self setNeedsDisplay:YES];
+}
+
 #pragma mark - Drawing
 
 - (void)drawRect:(NSRect)dirtyRect {
-
-    if (_backgroundColor != nil) {
-        [_backgroundColor setFill];
-        NSRectFillUsingOperation(dirtyRect, NSCompositeSourceOver);
-    }
 
     [_drawingTool drawBackgroundInCanvas:self dirtyRect:dirtyRect];
     [super drawRect:dirtyRect];
