@@ -89,6 +89,7 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 @property (nonatomic, getter = isLandscape) BOOL landscape;
 @property (nonatomic) CGFloat windowTitleHeight;
 @property (nonatomic) CGFloat scaleFactor;
+@property (nonatomic) CGFloat snapThreshold;
 
 // private
 
@@ -100,6 +101,7 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 @property (nonatomic, strong) NSColor *scrollViewBackgroundColor;
 @property (nonatomic, getter = isShowingInfo) BOOL showingInfo;
 @property (nonatomic, readonly) NSScrollView *scrollView;
+@property (nonatomic, strong) NSMutableDictionary *guideViews;
 
 - (NSPoint)roundedPoint:(NSPoint)point;
 - (NSRect)roundedRect:(NSRect)rect;
@@ -122,7 +124,6 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 - (NSPoint)mouseLocationInWindow;
 - (NSPoint)mouseLocationInDocument;
 - (void)selectOnlyViewsInRect:(NSRect)rect;
-- (BOOL)isViewSelected:(PBResizableView *)view;
 - (void)setInfoValue:(NSString *)value;
 - (void)updateInfoLabel:(PBResizableView *)view;
 - (void)willRotateWindow:(NSRect)frame;

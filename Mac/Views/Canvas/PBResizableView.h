@@ -25,6 +25,7 @@
 @property (nonatomic, strong) NSColor *backgroundColor;
 @property (nonatomic, strong) NSColor *foregroundColor;
 @property (nonatomic, strong) NSColor *dropTargetColor;
+@property (nonatomic, strong) NSColor *highlightColor;
 @property (nonatomic, strong) NSImage *backgroundImage;
 @property (nonatomic, strong) NSColor *borderColor;
 @property (nonatomic, strong) NSArray *borderDashPattern;
@@ -46,6 +47,7 @@
 @property (nonatomic, weak) PBResizableView *closestRightView;
 @property (nonatomic, readonly) NSTextField *infoLabel;
 @property (nonatomic) NSRect unscaledFrame;
+@property (nonatomic, getter = isSelected, readonly) BOOL selected;
 
 - (void)setupConstraints;
 - (void)updateViewConstraints;
@@ -64,5 +66,9 @@
 - (void)updateWidthConstraint:(CGFloat)value;
 - (void)updateHeightConstraint:(CGFloat)value;
 - (void)updateInfo;
+- (void)highlight;
+- (void)unhighlight;
+- (void)setDropTarget;
+- (void)clearDropTarget;
 
 @end

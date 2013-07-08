@@ -12,6 +12,8 @@
 @interface PBResizableView() {
 
     BOOL _rotating;
+    BOOL _highlighted;
+    BOOL _dropTarget;
 }
 
 @property (nonatomic, readwrite) NSTextField *infoLabel;
@@ -60,6 +62,7 @@
 }
 
 - (void)commonInit {
+    self.highlightColor = [NSColor colorWithRGBHex:0.0f alpha:.05f];
     self.dropTargetColor = [NSColor colorWithRGBHex:0.0f alpha:.4f];
     [self setupInfoLabel];
     [self registerForDraggedTypes:@[NSFilenamesPboardType, NSTIFFPboardType]];
@@ -120,6 +123,10 @@
     }
 
     return dataSource;
+}
+
+- (BOOL)isSelected {
+    return [_drawingCanvas.selectedViews containsObject:self];
 }
 
 - (void)setBackgroundImage:(NSImage *)backgroundImage {
@@ -745,6 +752,56 @@
     }
 }
 
+- (void)highlight {
+
+    if (_highlighted == NO) {
+
+        if (_dropTarget) {
+            [self clearDropTarget];
+        }
+
+        _highlighted = YES;
+        self.previousForegroundColor = _foregroundColor;
+        self.foregroundColor = _highlightColor;
+        [self setNeedsDisplay:YES];
+    }
+}
+
+- (void)unhighlight {
+
+    if (_highlighted) {
+        _highlighted = NO;
+        self.foregroundColor = self.previousForegroundColor;
+        self.previousForegroundColor = nil;
+        [self setNeedsDisplay:YES];
+    }
+}
+
+- (void)setDropTarget {
+
+    if (_dropTarget == NO) {
+
+        if (_highlighted) {
+            [self unhighlight];
+        }
+
+        _dropTarget = YES;
+        self.previousForegroundColor = _foregroundColor;
+        self.foregroundColor = _dropTargetColor;
+        [self setNeedsDisplay:YES];
+    }
+}
+
+- (void)clearDropTarget {
+
+    if (_dropTarget) {
+        _dropTarget = NO;
+        self.foregroundColor = self.previousForegroundColor;
+        self.previousForegroundColor = nil;
+        [self setNeedsDisplay:YES];
+    }
+}
+
 #pragma mark - First Responder
 
 - (void)paste:(id)sender {
@@ -807,10 +864,7 @@
 
         if ((NSDragOperationGeneric & [sender draggingSourceOperationMask]) == NSDragOperationGeneric) {
 
-            self.previousForegroundColor = _foregroundColor;
-            self.foregroundColor = self.dropTargetColor;
-            [self setNeedsDisplay:YES];
-
+            [self setDropTarget];
             return NSDragOperationCopy;
         }
         
@@ -824,10 +878,7 @@
 
         if ([desiredType isEqualToString:NSPasteboardTypeTIFF]) {
 
-            self.previousForegroundColor = _foregroundColor;
-            self.foregroundColor = self.dropTargetColor;
-            [self setNeedsDisplay:YES];
-
+            [self setDropTarget];
             return NSDragOperationCopy;
         }
     }
@@ -839,15 +890,11 @@
 }
 
 - (void)draggingEnded:(id < NSDraggingInfo >)sender {
-    self.foregroundColor = self.previousForegroundColor;
-    self.previousForegroundColor = nil;
-    [self setNeedsDisplay:YES];
+    [self clearDropTarget];
 }
 
 - (void)draggingExited:(id < NSDraggingInfo >)sender {
-    self.foregroundColor = self.previousForegroundColor;
-    self.previousForegroundColor = nil;
-    [self setNeedsDisplay:YES];
+    [self clearDropTarget];
 }
 
 - (BOOL)prepareForDragOperation:(id )sender {
@@ -882,9 +929,7 @@
 }
 
 - (void)concludeDragOperation:(id )sender {
-    self.foregroundColor = self.previousForegroundColor;
-    self.previousForegroundColor = nil;
-    [self setNeedsDisplay:YES];
+    [self clearDropTarget];
 }
 
 #pragma mark - Drawing

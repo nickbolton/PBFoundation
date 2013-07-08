@@ -64,7 +64,6 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 @property (nonatomic, readwrite) NSMutableArray *selectedViews;
 @property (nonatomic, readwrite) NSMutableArray *toolViews;
 @property (nonatomic, readwrite) NSMutableDictionary *mouseDownSelectedViewOrigins;
-@property (nonatomic, strong) NSMutableDictionary *guideViews;
 @property (nonatomic, strong) NSMutableArray *spacerViews;
 @property (nonatomic, strong) NSMutableDictionary *guideReferenceViews;
 @property (nonatomic, strong) NSTrackingArea *trackingArea;
@@ -78,7 +77,6 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 @property (nonatomic) NSSize lastDocumentSize;
 
 @end
-
 
 @implementation PBDrawingCanvas
 
@@ -153,6 +151,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     self.toolUnselectedColor = [NSColor colorWithRGBHex:0 alpha:.2];
     self.toolBorderColor = [NSColor blackColor];
     self.lastDocumentSize = self.window.frame.size;
+    _snapThreshold = 5.0f;
     _toolBorderWidth = 1;
     _scaleFactor = 1.0f;
 
@@ -244,8 +243,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 
         NSMutableDictionary *viewDataSource = [view.dataSource mutableCopy];
 
-        viewDataSource[kPBDrawingCanvasSelectedKey] =
-        @([_selectedViews containsObject:view]);
+        viewDataSource[kPBDrawingCanvasSelectedKey] = @(view.isSelected);
 
         NSImage *backgroundImage = viewDataSource[@"backgroundImage"];
 
@@ -463,7 +461,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 
         if ([view isKindOfClass:[PBResizableView class]]) {
 
-            if ([_selectedViews containsObject:view] == NO) {
+            if (view.isSelected == NO) {
                 view.foregroundColor = color;
                 [view setNeedsDisplay:YES];
             }
@@ -781,10 +779,6 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     }
 }
 
-- (BOOL)isViewSelected:(PBResizableView *)view {
-    return [_selectedViews containsObject:view];
-}
-
 - (void)updateMouseDownSelectedViewOrigin:(PBResizableView *)view {
     _mouseDownSelectedViewOrigins[view.key] =
     [NSValue valueWithPoint:view.frame.origin];
@@ -806,7 +800,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     if (view != nil) {
 
 
-        if ([_selectedViews containsObject:view] == NO) {
+        if (view.isSelected == NO) {
             [_selectedViews addObject:view];
             view.showingInfo = YES;
             [view
@@ -874,7 +868,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
      resizeViewAt:toFrame toFrame:oldFrame];
     [self.undoManager setActionName:PBLoc(@"Resize Rectangle")];
 
-    if ([_selectedViews containsObject:view]) {
+    if (view.isSelected) {
         _mouseDownSelectedViewOrigins[view.key] =
         [NSValue valueWithPoint:toFrame.origin];
     }
@@ -1042,7 +1036,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     spacerView = view.topSpacerView;
     oppositeView = view.closestTopView;
 
-    BOOL isSelected = [_selectedViews containsObject:view];
+    BOOL isSelected = view.isSelected;
 
     if (spacerView == nil) {
         spacerView =
@@ -1095,7 +1089,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
         }
     }
     spacerView.scale = _scaleFactor;
-    spacerView.alphaValue = isSelected && (view.closestBottomView == nil || [_selectedViews containsObject:view.closestBottomView] == NO) ? 1.0f : 0.0f;
+    spacerView.alphaValue = isSelected && (view.closestBottomView == nil || view.closestBottomView.isSelected == NO) ? 1.0f : 0.0f;
     spacerView.hidden = spacerView.alphaValue == 0.0f;
     [spacerView setNeedsLayout:YES];
 
@@ -1153,7 +1147,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
         }
     }
     spacerView.scale = _scaleFactor;
-    spacerView.alphaValue = isSelected && (view.closestRightView == nil || [_selectedViews containsObject:view.closestRightView] == NO) ? 1.0f : 0.0f;
+    spacerView.alphaValue = isSelected && (view.closestRightView == nil || view.closestRightView.isSelected == NO) ? 1.0f : 0.0f;
     spacerView.hidden = spacerView.alphaValue == 0.0f;
     [spacerView setNeedsLayout:YES];
 }
