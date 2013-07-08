@@ -1032,6 +1032,8 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 
 - (void)updateSpacersForView:(PBResizableView *)view {
 
+    if (_showSpacers == NO) return;
+    
     PBResizableView *oppositeView;
     PBSpacerView *spacerView;
     PBSpacerView *overlappingSpacerView;

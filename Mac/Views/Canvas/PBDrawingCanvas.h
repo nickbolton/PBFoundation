@@ -80,6 +80,7 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 @property (nonatomic) NSColor *toolBorderColor;
 @property (nonatomic) NSInteger toolBorderWidth;
 @property (nonatomic) BOOL showSelectionGuides;
+@property (nonatomic) BOOL showSpacers;
 @property (nonatomic, readonly) NSTextField *infoLabel;
 @property (nonatomic, strong) NSImage *verticalGuideImage;
 @property (nonatomic, strong) NSImage *horizontalGuideImage;
