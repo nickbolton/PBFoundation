@@ -128,6 +128,10 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     self.boundingRect = NSMakeRect(minX, minY, maxX - minX, maxY - minY);
     self.resizeType = PBPResizeTypeNone;
+
+    for (PBResizableView *view in canvas.toolViews) {
+        [view unhighlight];
+    }
 }
 
 - (void)mouseDragged:(PBClickableView *)view
@@ -388,6 +392,9 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     BOOL nonZeroRect = NSEqualRects(frame, NSZeroRect) == NO;
     CGFloat xOffset, yOffset;
 
+    PBResizableView *snapView = nil;
+    NSRect snapRect;
+
     switch (_resizeType) {
         case PBPResizeTypeUp:
 
@@ -406,6 +413,25 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
             frame.origin.y = _selectedViewAnchor.y;
             frame.size.height = roundf(point.y - NSMinY(frame) + yOffset);
             frame.size.height = MAX(minDimension, NSHeight(frame));
+
+            if (self.shouldSnapOnResize && canvas.snapThreshold > 0.0f) {
+
+                snapRect =
+                [self
+                 topSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.height += NSMinY(snapRect) - NSMaxY(frame);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+            }
 
             break;
 
@@ -427,6 +453,26 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
             frame.size.height = roundf(_selectedViewAnchor.y - NSMinY(frame));
             frame.size.height = MAX(minDimension, NSHeight(frame));
 
+            if (self.shouldSnapOnResize && canvas.snapThreshold > 0.0f) {
+
+                snapRect =
+                [self
+                 bottomSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.height -= NSMinY(snapRect) - NSMinY(frame);
+                    frame.origin.y = NSMinY(snapRect);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+            }
+
             break;
 
         case PBPResizeTypeLeft:
@@ -445,6 +491,26 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
             frame.size.width = roundf(_selectedViewAnchor.x - NSMinX(frame));
             frame.size.width = MAX(minDimension, NSWidth(frame));
 
+            if (self.shouldSnapOnResize && canvas.snapThreshold > 0.0f) {
+
+                snapRect =
+                [self
+                 leftSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.width -= NSMinX(snapRect) - NSMinX(frame);
+                    frame.origin.x = NSMinX(snapRect);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+            }
+
             break;
 
         case PBPResizeTypeRight:
@@ -462,6 +528,25 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
             frame.origin.x = _selectedViewAnchor.x;
             frame.size.width = roundf(point.x - NSMinX(frame));
             frame.size.width = MAX(minDimension, NSWidth(frame));
+
+            if (self.shouldSnapOnResize && canvas.snapThreshold > 0.0f) {
+
+                snapRect =
+                [self
+                 rightSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.width += NSMinX(snapRect) - NSMaxX(frame);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+            }
 
             break;
 
@@ -502,6 +587,42 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
             frame.origin.x = point.x;
             frame.size.width = roundf(_selectedViewAnchor.x - NSMinX(frame));
             frame.size.width = MAX(minDimension, NSWidth(frame));
+
+            if (self.shouldSnapOnResize && canvas.snapThreshold > 0.0f) {
+
+                snapRect =
+                [self
+                 topSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.height += NSMinY(snapRect) - NSMaxY(frame);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+
+                snapRect =
+                [self
+                 leftSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.width -= NSMinX(snapRect) - NSMinX(frame);
+                    frame.origin.x = NSMinX(snapRect);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+            }
 
         } break;
 
@@ -544,6 +665,41 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
             frame.size.width = roundf(point.x - NSMinX(frame));
             frame.size.width = MAX(minDimension, NSWidth(frame));
 
+            if (self.shouldSnapOnResize && canvas.snapThreshold > 0.0f) {
+
+                snapRect =
+                [self
+                 topSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.height += NSMinY(snapRect) - NSMaxY(frame);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+
+                snapRect =
+                [self
+                 rightSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.width += NSMinX(snapRect) - NSMaxX(frame);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+            }
+
         } break;
 
         case PBPResizeTypeDownLeft: {
@@ -583,6 +739,43 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
             frame.origin.x = point.x;
             frame.size.width = roundf(_selectedViewAnchor.x - NSMinX(frame));
             frame.size.width = MAX(minDimension, NSWidth(frame));
+
+            if (self.shouldSnapOnResize && canvas.snapThreshold > 0.0f) {
+
+                snapRect =
+                [self
+                 bottomSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.height -= NSMinY(snapRect) - NSMinY(frame);
+                    frame.origin.y = NSMinY(snapRect);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+
+                snapRect =
+                [self
+                 leftSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.width -= NSMinX(snapRect) - NSMinX(frame);
+                    frame.origin.x = NSMinX(snapRect);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+            }
 
         } break;
 
@@ -627,7 +820,43 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
             frame.origin.x = _selectedViewAnchor.x;
             frame.size.width = roundf(point.x - NSMinX(frame));
             frame.size.width = MAX(minDimension, NSWidth(frame));
-            
+
+            if (self.shouldSnapOnResize && canvas.snapThreshold > 0.0f) {
+
+                snapRect =
+                [self
+                 bottomSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.height -= NSMinY(snapRect) - NSMinY(frame);
+                    frame.origin.y = NSMinY(snapRect);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+
+                snapRect =
+                [self
+                 rightSnapRect:frame
+                 resizingRect:YES
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+
+                    frame.size.width += NSMinX(snapRect) - NSMaxX(frame);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
+                }
+            }
+
         } break;
             
         default:
@@ -640,6 +869,529 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
      animate:NO];
     
     [canvas updateInfoLabel:canvas.resizingView];
+}
+
+#pragma mark - Edge Operations
+
+- (NSRect)topSnapRect:(NSRect)rect
+         resizingRect:(BOOL)resizingRect
+               canvas:(PBDrawingCanvas *)canvas
+             snapView:(PBResizableView **)snapView {
+
+    PBResizableView *snapTopToTopView = nil;
+    PBResizableView *snapTopToBottomView = nil;
+
+    if (snapView != NULL) {
+        *snapView = nil;
+    }
+
+    for (PBResizableView *view in canvas.toolViews) {
+
+        if (view.isSelected == NO) {
+
+            if ([self
+                 topEdgesIntersect:rect
+                 rect2:view.frame
+                 containerSize:canvas.frame.size
+                 snapThreshold:canvas.snapThreshold]) {
+                snapTopToTopView = view;
+
+                if (snapView != NULL) {
+                    *snapView = view;
+                }
+                break;
+            }
+
+            if ([self
+                 topEdgeIntersects:rect
+                 bottomEdge:view.frame
+                 containerSize:canvas.frame.size
+                 snapThreshold:canvas.snapThreshold]) {
+                snapTopToBottomView = view;
+
+                if (snapView != NULL) {
+                    *snapView = view;
+                }
+                break;
+            }
+        }
+    }
+
+    if (snapTopToTopView != nil) {
+
+        if (resizingRect) {
+            return
+            NSMakeRect(0.0f,
+                       NSMaxY(snapTopToTopView.frame),
+                       1.0f,
+                       1.0f);
+        } else {
+            return
+            NSMakeRect(0.0f,
+                       NSMaxY(snapTopToTopView.frame) - NSHeight(rect),
+                       1.0f,
+                       1.0f);
+        }
+    }
+
+    if (snapTopToBottomView != nil) {
+        if (resizingRect) {
+            return
+            NSMakeRect(0.0f,
+                       NSMinY(snapTopToBottomView.frame),
+                       1.0f,
+                       1.0f);
+        } else {
+            return
+            NSMakeRect(0.0f,
+                       NSMinY(snapTopToBottomView.frame) - NSHeight(rect),
+                       1.0f,
+                       1.0f);
+        }
+    }
+
+    if ([self
+         topEdgesIntersect:rect
+         rect2:[canvas.scrollView.documentView bounds]
+         containerSize:canvas.frame.size
+         snapThreshold:canvas.snapThreshold]) {
+
+        if (resizingRect) {
+            return
+            NSMakeRect(0.0f,
+                       NSMaxY([canvas.scrollView.documentView bounds]),
+                       1.0f,
+                       1.0f);
+        } else {
+            return
+            NSMakeRect(0.0f,
+                       NSMaxY([canvas.scrollView.documentView bounds]) - NSHeight(rect),
+                       1.0f,
+                       1.0f);
+        }
+    }
+
+    return NSZeroRect;
+}
+
+- (NSRect)bottomSnapRect:(NSRect)rect
+            resizingRect:(BOOL)resizingRect
+                  canvas:(PBDrawingCanvas *)canvas
+                snapView:(PBResizableView **)snapView {
+
+    PBResizableView *snapBottomToBottomView = nil;
+    PBResizableView *snapBottomToTopView = nil;
+
+    if (snapView != NULL) {
+        *snapView = nil;
+    }
+
+    for (PBResizableView *view in canvas.toolViews) {
+
+        if (view.isSelected == NO) {
+
+            if ([self
+                 bottomEdgesIntersect:rect
+                 rect2:view.frame
+                 containerSize:canvas.frame.size
+                 snapThreshold:canvas.snapThreshold]) {
+
+                snapBottomToBottomView = view;
+
+                if (snapView != NULL) {
+                    *snapView = view;
+                }
+                break;
+            }
+
+            if ([self
+                 bottomEdgeIntersects:rect
+                 topEdge:view.frame
+                 containerSize:canvas.frame.size
+                 snapThreshold:canvas.snapThreshold]) {
+
+                snapBottomToTopView = view;
+
+                if (snapView != NULL) {
+                    *snapView = view;
+                }
+                break;
+            }
+        }
+    }
+
+    if (snapBottomToBottomView != nil) {
+        return
+        NSMakeRect(0.0f,
+                   NSMinY(snapBottomToBottomView.frame),
+                   1.0f,
+                   1.0f);
+    }
+
+    if (snapBottomToTopView != nil) {
+        return
+        NSMakeRect(0.0f,
+                   NSMaxY(snapBottomToTopView.frame),
+                   1.0f,
+                   1.0f);
+    }
+
+    if ([self
+         bottomEdgesIntersect:rect
+         rect2:[canvas.scrollView.documentView bounds]
+         containerSize:canvas.frame.size
+         snapThreshold:canvas.snapThreshold]) {
+
+        return
+        NSMakeRect(0.0f,
+                   0.0f,
+                   1.0f,
+                   1.0f);
+    }
+
+    return NSZeroRect;
+}
+
+- (NSRect)leftSnapRect:(NSRect)rect
+          resizingRect:(BOOL)resizingRect
+                canvas:(PBDrawingCanvas *)canvas
+              snapView:(PBResizableView **)snapView {
+
+    PBResizableView *snapLeftToLeftView = nil;
+    PBResizableView *snapLeftToRightView = nil;
+
+    if (snapView != NULL) {
+        *snapView = nil;
+    }
+
+    for (PBResizableView *view in canvas.toolViews) {
+
+        if (view.isSelected == NO) {
+
+            if ([self
+                 leftEdgesIntersect:rect
+                 rect2:view.frame
+                 containerSize:canvas.frame.size
+                 snapThreshold:canvas.snapThreshold]) {
+
+                snapLeftToLeftView = view;
+
+                if (snapView != NULL) {
+                    *snapView = view;
+                }
+                break;
+            }
+
+            if ([self
+                 leftEdgeIntersects:rect
+                 rightEdge:view.frame
+                 containerSize:canvas.frame.size
+                 snapThreshold:canvas.snapThreshold]) {
+
+                snapLeftToRightView = view;
+
+                if (snapView != NULL) {
+                    *snapView = view;
+                }
+                break;
+            }
+        }
+    }
+
+    if (snapLeftToLeftView != nil) {
+        return
+        NSMakeRect(NSMinX(snapLeftToLeftView.frame),
+                   0.0f,
+                   1.0f,
+                   1.0f);
+    }
+
+    if (snapLeftToRightView != nil) {
+        return
+        NSMakeRect(NSMaxX(snapLeftToRightView.frame),
+                   0.0f,
+                   1.0f,
+                   1.0f);
+    }
+
+    if ([self
+         leftEdgesIntersect:rect
+         rect2:[canvas.scrollView.documentView bounds]
+         containerSize:canvas.frame.size
+         snapThreshold:canvas.snapThreshold]) {
+
+        return
+        NSMakeRect(0.0f,
+                   0.0f,
+                   1.0f,
+                   1.0f);
+    }
+
+    return NSZeroRect;
+}
+
+- (NSRect)rightSnapRect:(NSRect)rect
+           resizingRect:(BOOL)resizingRect
+                 canvas:(PBDrawingCanvas *)canvas
+               snapView:(PBResizableView **)snapView {
+
+    PBResizableView *snapRightToRightView = nil;
+    PBResizableView *snapRightToLeftView = nil;
+
+    if (snapView != NULL) {
+        *snapView = nil;
+    }
+
+    for (PBResizableView *view in canvas.toolViews) {
+
+        if (view.isSelected == NO) {
+
+            if ([self
+                 rightEdgesIntersect:rect
+                 rect2:view.frame
+                 containerSize:canvas.frame.size
+                 snapThreshold:canvas.snapThreshold]) {
+
+                snapRightToRightView = view;
+
+                if (snapView != NULL) {
+                    *snapView = view;
+                }
+                break;
+            }
+
+            if ([self
+                 rightEdgeIntersects:rect
+                 leftEdge:view.frame
+                 containerSize:canvas.frame.size
+                 snapThreshold:canvas.snapThreshold]) {
+
+                snapRightToLeftView = view;
+
+                if (snapView != NULL) {
+                    *snapView = view;
+                }
+                break;
+            }
+        }
+    }
+
+    if (snapRightToRightView != nil) {
+
+        if (resizingRect) {
+            return
+            NSMakeRect(NSMaxX(snapRightToRightView.frame),
+                       0.0f,
+                       1.0f,
+                       1.0f);
+        } else {
+            return
+            NSMakeRect(NSMaxX(snapRightToRightView.frame) - NSWidth(rect),
+                       0.0f,
+                       1.0f,
+                       1.0f);
+        }
+    }
+
+    if (snapRightToLeftView != nil) {
+
+        if (resizingRect) {
+            return
+            NSMakeRect(NSMinX(snapRightToLeftView.frame),
+                       0.0f,
+                       1.0f,
+                       1.0f);
+        } else {
+            return
+            NSMakeRect(NSMinX(snapRightToLeftView.frame) - NSWidth(rect),
+                       0.0f,
+                       1.0f,
+                       1.0f);
+        }
+    }
+    
+    if ([self
+         rightEdgesIntersect:rect
+         rect2:[canvas.scrollView.documentView bounds]
+         containerSize:canvas.frame.size
+         snapThreshold:canvas.snapThreshold]) {
+
+        if (resizingRect) {
+            return
+            NSMakeRect(NSMaxX([canvas.scrollView.documentView bounds]),
+                       0.0f,
+                       1.0f,
+                       1.0f);
+        } else {
+            return
+            NSMakeRect(NSMaxX([canvas.scrollView.documentView bounds]) - NSWidth(rect),
+                       0.0f,
+                       1.0f,
+                       1.0f);
+        }
+    }
+    
+    return NSZeroRect;
+}
+
+- (BOOL)topEdgesIntersect:(NSRect)rect1
+                    rect2:(NSRect)rect2
+            containerSize:(NSSize)containerSize
+            snapThreshold:(CGFloat)snapThreshold {
+
+    NSRect snapRect1 =
+    NSMakeRect(0.0f,
+               NSMaxY(rect1) - snapThreshold,
+               containerSize.width,
+               snapThreshold * 2.0f);
+
+    NSRect snapRect2 =
+    NSMakeRect(0.0f,
+               NSMaxY(rect2) - snapThreshold,
+               containerSize.width,
+               snapThreshold * 2.0f);
+
+    return NSIntersectsRect(snapRect1, snapRect2);
+}
+
+- (BOOL)topEdgeIntersects:(NSRect)rect1
+               bottomEdge:(NSRect)rect2
+            containerSize:(NSSize)containerSize
+            snapThreshold:(CGFloat)snapThreshold {
+
+    NSRect snapRect1 =
+    NSMakeRect(0.0f,
+               NSMaxY(rect1) - snapThreshold,
+               containerSize.width,
+               snapThreshold * 2.0f);
+
+    NSRect snapRect2 =
+    NSMakeRect(0.0f,
+               NSMinY(rect2) - snapThreshold,
+               containerSize.width,
+               snapThreshold * 2.0f);
+
+    return NSIntersectsRect(snapRect1, snapRect2);
+}
+
+- (BOOL)bottomEdgesIntersect:(NSRect)rect1
+                       rect2:(NSRect)rect2
+               containerSize:(NSSize)containerSize
+               snapThreshold:(CGFloat)snapThreshold {
+
+    NSRect snapRect1 =
+    NSMakeRect(0.0f,
+               NSMinY(rect1) - snapThreshold,
+               containerSize.width,
+               snapThreshold * 2.0f);
+
+    NSRect snapRect2 =
+    NSMakeRect(0.0f,
+               NSMinY(rect2) - snapThreshold,
+               containerSize.width,
+               snapThreshold * 2.0f);
+
+    return NSIntersectsRect(snapRect1, snapRect2);
+}
+
+- (BOOL)bottomEdgeIntersects:(NSRect)rect1
+                     topEdge:(NSRect)rect2
+               containerSize:(NSSize)containerSize
+               snapThreshold:(CGFloat)snapThreshold {
+
+    NSRect snapRect1 =
+    NSMakeRect(0.0f,
+               NSMinY(rect1) - snapThreshold,
+               containerSize.width,
+               snapThreshold * 2.0f);
+
+    NSRect snapRect2 =
+    NSMakeRect(0.0f,
+               NSMaxY(rect2) - snapThreshold,
+               containerSize.width,
+               snapThreshold * 2.0f);
+
+    return NSIntersectsRect(snapRect1, snapRect2);
+}
+
+- (BOOL)leftEdgesIntersect:(NSRect)rect1
+                     rect2:(NSRect)rect2
+             containerSize:(NSSize)containerSize
+             snapThreshold:(CGFloat)snapThreshold {
+
+    NSRect snapRect1 =
+    NSMakeRect(NSMinX(rect1) - snapThreshold,
+               0.0f,
+               snapThreshold * 2.0f,
+               containerSize.height);
+
+    NSRect snapRect2 =
+    NSMakeRect(NSMinX(rect2) - snapThreshold,
+               0.0f,
+               snapThreshold * 2.0f,
+               containerSize.height);
+
+    return NSIntersectsRect(snapRect1, snapRect2);
+}
+
+- (BOOL)leftEdgeIntersects:(NSRect)rect1
+                 rightEdge:(NSRect)rect2
+             containerSize:(NSSize)containerSize
+             snapThreshold:(CGFloat)snapThreshold {
+
+    NSRect snapRect1 =
+    NSMakeRect(NSMinX(rect1) - snapThreshold,
+               0.0f,
+               snapThreshold * 2.0f,
+               containerSize.height);
+
+    NSRect snapRect2 =
+    NSMakeRect(NSMaxX(rect2) - snapThreshold,
+               0.0f,
+               snapThreshold * 2.0f,
+               containerSize.height);
+
+    return NSIntersectsRect(snapRect1, snapRect2);
+}
+
+- (BOOL)rightEdgesIntersect:(NSRect)rect1
+                      rect2:(NSRect)rect2
+              containerSize:(NSSize)containerSize
+              snapThreshold:(CGFloat)snapThreshold {
+
+    NSRect snapRect1 =
+    NSMakeRect(NSMaxX(rect1) - snapThreshold,
+               0.0f,
+               snapThreshold * 2.0f,
+               containerSize.height);
+
+    NSRect snapRect2 =
+    NSMakeRect(NSMaxX(rect2) - snapThreshold,
+               0.0f,
+               snapThreshold * 2.0f,
+               containerSize.height);
+
+    return NSIntersectsRect(snapRect1, snapRect2);
+}
+
+- (BOOL)rightEdgeIntersects:(NSRect)rect1
+                   leftEdge:(NSRect)rect2
+              containerSize:(NSSize)containerSize
+              snapThreshold:(CGFloat)snapThreshold {
+
+    NSRect snapRect1 =
+    NSMakeRect(NSMaxX(rect1) - snapThreshold,
+               0.0f,
+               snapThreshold * 2.0f,
+               containerSize.height);
+
+    NSRect snapRect2 =
+    NSMakeRect(NSMinX(rect2) - snapThreshold,
+               0.0f,
+               snapThreshold * 2.0f,
+               containerSize.height);
+    
+    return NSIntersectsRect(snapRect1, snapRect2);
 }
 
 #pragma mark - Mouse Tracking

@@ -17,6 +17,10 @@
 
 @implementation PBRectangleTool
 
+- (BOOL)shouldSnapOnResize {
+    return YES;
+}
+
 - (void)determineResizeTypeForView:(PBResizableView *)view
                            atPoint:(NSPoint)point
                           inCanvas:(PBDrawingCanvas *)canvas {
@@ -226,179 +230,66 @@
 
             if (canvas.snapThreshold > 0.0f) {
 
-                BOOL snapToContainerTop = NO;
-                BOOL snapToContainerBottom = NO;
-                BOOL snapToContainerLeft = NO;
-                BOOL snapToContainerRight = NO;
+                PBResizableView *snapView = nil;
 
-                PBResizableView *snapTopToTopView = nil;
-                PBResizableView *snapBottomToBottomView = nil;
-                PBResizableView *snapLeftToLeftView = nil;
-                PBResizableView *snapRightToRightView = nil;
-                PBResizableView *snapTopToBottomView = nil;
-                PBResizableView *snapBottomToTopView = nil;
-                PBResizableView *snapLeftToRightView = nil;
-                PBResizableView *snapRightToLeftView = nil;
+                NSRect snapRect =
+                [self
+                 topSnapRect:frame
+                 resizingRect:NO
+                 canvas:canvas
+                 snapView:&snapView];
 
-                if (canvas.selectedViews.count == 1) {
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+                    frame.origin.y = NSMinY(snapRect);
 
-                    if ([self
-                         topEdgesIntersect:frame
-                         rect2:[canvas.scrollView.documentView bounds]
-                         containerSize:canvas.frame.size
-                         snapThreshold:canvas.snapThreshold]) {
-                        snapToContainerTop = YES;
-                    }
-
-                    if ([self
-                         bottomEdgesIntersect:frame
-                         rect2:[canvas.scrollView.documentView bounds]
-                         containerSize:canvas.frame.size
-                         snapThreshold:canvas.snapThreshold]) {
-                        snapToContainerBottom = YES;
-                    }
-
-                    if ([self
-                         leftEdgesIntersect:frame
-                         rect2:[canvas.scrollView.documentView bounds]
-                         containerSize:canvas.frame.size
-                         snapThreshold:canvas.snapThreshold]) {
-                        snapToContainerLeft = YES;
-                    }
-
-                    if ([self
-                         rightEdgesIntersect:frame
-                         rect2:[canvas.scrollView.documentView bounds]
-                         containerSize:canvas.frame.size
-                         snapThreshold:canvas.snapThreshold]) {
-                        snapToContainerRight = YES;
-                    }
-
-                    for (PBResizableView *view in canvas.toolViews) {
-
-                        if (view.isSelected == NO) {
-
-                            if ([self
-                                 topEdgesIntersect:view.frame
-                                 rect2:frame
-                                 containerSize:canvas.frame.size
-                                 snapThreshold:canvas.snapThreshold]) {
-                                snapTopToTopView = view;
-                                [view highlight];
-                            }
-
-                            if ([self
-                                 topEdgeIntersects:frame
-                                 bottomEdge:view.frame
-                                 containerSize:canvas.frame.size
-                                 snapThreshold:canvas.snapThreshold]) {
-                                snapTopToBottomView = view;
-                                [view highlight];
-                            }
-
-                            if ([self
-                                 bottomEdgesIntersect:view.frame
-                                 rect2:frame
-                                 containerSize:canvas.frame.size
-                                 snapThreshold:canvas.snapThreshold]) {
-                                snapBottomToBottomView = view;
-                                [view highlight];
-                            }
-
-                            if ([self
-                                 bottomEdgeIntersects:frame
-                                 topEdge:view.frame
-                                 containerSize:canvas.frame.size
-                                 snapThreshold:canvas.snapThreshold]) {
-                                snapBottomToTopView = view;
-                                [view highlight];
-                            }
-
-                            if ([self
-                                 leftEdgesIntersect:view.frame
-                                 rect2:frame
-                                 containerSize:canvas.frame.size
-                                 snapThreshold:canvas.snapThreshold]) {
-                                snapLeftToLeftView = view;
-                                [view highlight];
-                            }
-
-                            if ([self
-                                 leftEdgeIntersects:frame
-                                 rightEdge:view.frame
-                                 containerSize:canvas.frame.size
-                                 snapThreshold:canvas.snapThreshold]) {
-                                snapLeftToRightView = view;
-                                [view highlight];
-                            }
-
-                            if ([self
-                                 rightEdgesIntersect:view.frame
-                                 rect2:frame
-                                 containerSize:canvas.frame.size
-                                 snapThreshold:canvas.snapThreshold]) {
-                                snapRightToRightView = view;
-                                [view highlight];
-                            }
-
-                            if ([self
-                                 rightEdgeIntersects:frame
-                                 leftEdge:view.frame
-                                 containerSize:canvas.frame.size
-                                 snapThreshold:canvas.snapThreshold]) {
-                                snapRightToLeftView = view;
-                                [view highlight];
-                            }
-                        }
+                    if (snapView != nil) {
+                        [snapView highlight];
                     }
                 }
 
-                if (snapToContainerTop) {
-                    frame.origin.y = NSMaxY([canvas.scrollView.documentView bounds]) - NSHeight(frame);
+                snapRect =
+                [self
+                 bottomSnapRect:frame
+                 resizingRect:NO
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+                    frame.origin.y = NSMinY(snapRect);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
                 }
 
-                if (snapToContainerBottom) {
-                    frame.origin.y = 0.0f;
+                snapRect =
+                [self
+                 leftSnapRect:frame
+                 resizingRect:NO
+                 canvas:canvas
+                 snapView:&snapView];
+
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+                    frame.origin.x = NSMinX(snapRect);
+
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
                 }
 
-                if (snapToContainerLeft) {
-                    frame.origin.x = 0.0f;
-                }
+                snapRect =
+                [self
+                 rightSnapRect:frame
+                 resizingRect:NO
+                 canvas:canvas
+                 snapView:&snapView];
 
-                if (snapToContainerRight) {
-                    frame.origin.x = NSMaxX([canvas.scrollView.documentView bounds]) - NSWidth(frame);
-                }
+                if (NSEqualRects(snapRect, NSZeroRect) == NO) {
+                    frame.origin.x = NSMinX(snapRect);
 
-                if (snapBottomToBottomView != nil) {
-                    frame.origin.y = NSMinY(snapBottomToBottomView.frame);
-                }
-
-                if (snapBottomToTopView != nil) {
-                    frame.origin.y = NSMaxY(snapBottomToTopView.frame);
-                }
-
-                if (snapTopToTopView != nil) {
-                    frame.origin.y = NSMaxY(snapTopToTopView.frame) - NSHeight(frame);
-                }
-
-                if (snapTopToBottomView != nil) {
-                    frame.origin.y = NSMinY(snapTopToBottomView.frame) - NSHeight(frame);
-                }
-                
-                if (snapRightToRightView != nil) {
-                    frame.origin.x = NSMaxX(snapRightToRightView.frame) - NSWidth(frame);
-                }
-                
-                if (snapRightToLeftView != nil) {
-                    frame.origin.x = NSMinX(snapRightToLeftView.frame) - NSWidth(frame);
-                }
-                
-                if (snapLeftToLeftView != nil) {
-                    frame.origin.x = NSMinX(snapLeftToLeftView.frame);
-                }
-                
-                if (snapLeftToRightView != nil) {
-                    frame.origin.x = NSMaxX(snapLeftToRightView.frame);
+                    if (snapView != nil) {
+                        [snapView highlight];
+                    }
                 }
             }
 
@@ -408,166 +299,6 @@
              animate:NO];
         }
     }
-}
-
-- (BOOL)topEdgesIntersect:(NSRect)rect1
-                    rect2:(NSRect)rect2
-            containerSize:(NSSize)containerSize
-            snapThreshold:(CGFloat)snapThreshold {
-
-    NSRect snapRect1 =
-    NSMakeRect(0.0f,
-               NSMaxY(rect1) - snapThreshold,
-               containerSize.width,
-               snapThreshold * 2.0f);
-
-    NSRect snapRect2 =
-    NSMakeRect(0.0f,
-               NSMaxY(rect2) - snapThreshold,
-               containerSize.width,
-               snapThreshold * 2.0f);
-
-    return NSIntersectsRect(snapRect1, snapRect2);
-}
-
-- (BOOL)topEdgeIntersects:(NSRect)rect1
-               bottomEdge:(NSRect)rect2
-            containerSize:(NSSize)containerSize
-            snapThreshold:(CGFloat)snapThreshold {
-
-    NSRect snapRect1 =
-    NSMakeRect(0.0f,
-               NSMaxY(rect1) - snapThreshold,
-               containerSize.width,
-               snapThreshold * 2.0f);
-
-    NSRect snapRect2 =
-    NSMakeRect(0.0f,
-               NSMinY(rect2) - snapThreshold,
-               containerSize.width,
-               snapThreshold * 2.0f);
-
-    return NSIntersectsRect(snapRect1, snapRect2);
-}
-
-- (BOOL)bottomEdgesIntersect:(NSRect)rect1
-                       rect2:(NSRect)rect2
-               containerSize:(NSSize)containerSize
-               snapThreshold:(CGFloat)snapThreshold {
-    
-    NSRect snapRect1 =
-    NSMakeRect(0.0f,
-               NSMinY(rect1) - snapThreshold,
-               containerSize.width,
-               snapThreshold * 2.0f);
-
-    NSRect snapRect2 =
-    NSMakeRect(0.0f,
-               NSMinY(rect2) - snapThreshold,
-               containerSize.width,
-               snapThreshold * 2.0f);
-
-    return NSIntersectsRect(snapRect1, snapRect2);
-}
-
-- (BOOL)bottomEdgeIntersects:(NSRect)rect1
-                     topEdge:(NSRect)rect2
-               containerSize:(NSSize)containerSize
-               snapThreshold:(CGFloat)snapThreshold {
-    
-    NSRect snapRect1 =
-    NSMakeRect(0.0f,
-               NSMinY(rect1) - snapThreshold,
-               containerSize.width,
-               snapThreshold * 2.0f);
-
-    NSRect snapRect2 =
-    NSMakeRect(0.0f,
-               NSMaxY(rect2) - snapThreshold,
-               containerSize.width,
-               snapThreshold * 2.0f);
-
-    return NSIntersectsRect(snapRect1, snapRect2);
-}
-
-- (BOOL)leftEdgesIntersect:(NSRect)rect1
-                     rect2:(NSRect)rect2
-             containerSize:(NSSize)containerSize
-             snapThreshold:(CGFloat)snapThreshold {
-    
-    NSRect snapRect1 =
-    NSMakeRect(NSMinX(rect1) - snapThreshold,
-               0.0f,
-               snapThreshold * 2.0f,
-               containerSize.height);
-
-    NSRect snapRect2 =
-    NSMakeRect(NSMinX(rect2) - snapThreshold,
-               0.0f,
-               snapThreshold * 2.0f,
-               containerSize.height);
-    
-    return NSIntersectsRect(snapRect1, snapRect2);
-}
-
-- (BOOL)leftEdgeIntersects:(NSRect)rect1
-                 rightEdge:(NSRect)rect2
-             containerSize:(NSSize)containerSize
-             snapThreshold:(CGFloat)snapThreshold {
-    
-    NSRect snapRect1 =
-    NSMakeRect(NSMinX(rect1) - snapThreshold,
-               0.0f,
-               snapThreshold * 2.0f,
-               containerSize.height);
-
-    NSRect snapRect2 =
-    NSMakeRect(NSMaxX(rect2) - snapThreshold,
-               0.0f,
-               snapThreshold * 2.0f,
-               containerSize.height);
-
-    return NSIntersectsRect(snapRect1, snapRect2);
-}
-
-- (BOOL)rightEdgesIntersect:(NSRect)rect1
-                      rect2:(NSRect)rect2
-              containerSize:(NSSize)containerSize
-              snapThreshold:(CGFloat)snapThreshold {
-    
-    NSRect snapRect1 =
-    NSMakeRect(NSMaxX(rect1) - snapThreshold,
-               0.0f,
-               snapThreshold * 2.0f,
-               containerSize.height);
-
-    NSRect snapRect2 =
-    NSMakeRect(NSMaxX(rect2) - snapThreshold,
-               0.0f,
-               snapThreshold * 2.0f,
-               containerSize.height);
-
-    return NSIntersectsRect(snapRect1, snapRect2);
-}
-
-- (BOOL)rightEdgeIntersects:(NSRect)rect1
-                   leftEdge:(NSRect)rect2
-              containerSize:(NSSize)containerSize
-              snapThreshold:(CGFloat)snapThreshold {
-    
-    NSRect snapRect1 =
-    NSMakeRect(NSMaxX(rect1) - snapThreshold,
-               0.0f,
-               snapThreshold * 2.0f,
-               containerSize.height);
-
-    NSRect snapRect2 =
-    NSMakeRect(NSMinX(rect2) - snapThreshold,
-               0.0f,
-               snapThreshold * 2.0f,
-               containerSize.height);
-
-    return NSIntersectsRect(snapRect1, snapRect2);
 }
 
 @end
