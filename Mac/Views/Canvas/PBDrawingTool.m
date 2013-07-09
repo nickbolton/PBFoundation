@@ -222,6 +222,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
 
     if ([NSEvent isCurrentModifiersExactly:NSAlternateKeyMask]) {
         _resizeType = PBPResizeTypeNone;
+        NSLog(@"none1");
         return;
     }
 
@@ -237,6 +238,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeUpLeft;
         [self determineSelectedViewAnchorPoint:canvas];
+        NSLog(@"up-left: %@", NSStringFromPoint(_selectedViewAnchor));
         return;
     }
 
@@ -250,6 +252,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeUpRight;
         [self determineSelectedViewAnchorPoint:canvas];
+        NSLog(@"up-right: %@", NSStringFromPoint(_selectedViewAnchor));
         return;
     }
 
@@ -263,6 +266,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeDownLeft;
         [self determineSelectedViewAnchorPoint:canvas];
+        NSLog(@"down-left: %@", NSStringFromPoint(_selectedViewAnchor));
         return;
     }
 
@@ -276,6 +280,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeDownRight;
         [self determineSelectedViewAnchorPoint:canvas];
+        NSLog(@"down-right: %@", NSStringFromPoint(_selectedViewAnchor));
         return;
     }
 
@@ -289,6 +294,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeLeft;
         [self determineSelectedViewAnchorPoint:canvas];
+        NSLog(@"left: %@", NSStringFromPoint(_selectedViewAnchor));
         return;
     }
 
@@ -302,6 +308,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeRight;
         [self determineSelectedViewAnchorPoint:canvas];
+        NSLog(@"right: %@", NSStringFromPoint(_selectedViewAnchor));
         return;
     }
 
@@ -315,6 +322,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeUp;
         [self determineSelectedViewAnchorPoint:canvas];
+        NSLog(@"up: %@", NSStringFromPoint(_selectedViewAnchor));
         return;
     }
 
@@ -328,6 +336,7 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     if (NSPointInRect(point, frame)) {
         _resizeType = PBPResizeTypeDown;
         [self determineSelectedViewAnchorPoint:canvas];
+        NSLog(@"down: %@", NSStringFromPoint(_selectedViewAnchor));
         return;
     }
 

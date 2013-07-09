@@ -67,9 +67,9 @@
         if ([NSEvent isCurrentModifiersExactly:NSCommandKeyMask]) {
 
             if (selectedView.isSelected) {
-                [canvas deselectView:selectedView];
+                [canvas deselectView:selectedView notify:YES];
             } else {
-                [canvas selectView:selectedView deselectCurrent:NO];
+                [canvas selectView:selectedView deselectCurrent:NO notify:YES];
 
                 canvas.resizingView = (id)selectedView;
 
@@ -90,7 +90,10 @@
         } else {
 
             if (selectedView.isSelected == NO) {
-                [canvas selectView:(id)selectedView deselectCurrent:YES];
+                [canvas
+                 selectView:(id)selectedView
+                 deselectCurrent:YES
+                 notify:YES];
             }
 
             canvas.resizingView = (id)selectedView;
@@ -129,7 +132,10 @@
     canvas.resizingView.showingInfo = YES;
     canvas.resizingView.updating = YES;
 
-    [canvas selectView:canvas.resizingView deselectCurrent:deselectCurrent];
+    [canvas
+     selectView:canvas.resizingView
+     deselectCurrent:deselectCurrent
+     notify:YES];
 
     self.didCreate = YES;
     self.resizeType = resizeType;
@@ -169,9 +175,14 @@
 
             for (PBResizableView *view in canvas.toolViews) {
                 if (view != canvas.resizingView) {
-                    [canvas deselectView:view];
+                    [canvas deselectView:view notify:NO];
                 }
             }
+
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+             object:self
+             userInfo:@{kPBDrawingCanvasSelectedViewsKey : canvas.selectedViews}];
         }
     }
 
@@ -200,7 +211,7 @@
 
         self.didResize = YES;
 
-        [canvas selectView:canvas.resizingView deselectCurrent:YES];
+        [canvas selectView:canvas.resizingView deselectCurrent:YES notify:YES];
         [self resizeSelectedViewAtPoint:point inCanvas:canvas];
         return;
     }
@@ -228,7 +239,7 @@
             frame.origin.x = mouseDownSelectedViewOrigin.x + xDelta;
             frame.origin.y = mouseDownSelectedViewOrigin.y + yDelta;
 
-            if (canvas.snapThreshold > 0.0f) {
+            if (canvas.selectedViews.count == 1 && canvas.snapThreshold > 0.0f) {
 
                 PBResizableView *snapView = nil;
 

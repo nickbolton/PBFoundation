@@ -11,6 +11,8 @@
 #import "PBDrawingCanvas.h"
 #import "PBResizableView.h"
 
+static CGFloat const kPBSpacerViewSize = 10.0f;
+
 @interface PBSpacerView() {
 
     BOOL _vertical;
@@ -57,7 +59,10 @@
 - (void)setValue:(CGFloat)value {
     _value = value;
 
-    if (value == -246.0f) {
+    if (_view1.isSelected || _view2.isSelected) {
+        NSLog(@"value: %f", value);
+    }
+    if (value < 0.0f) {
         NSLog(@"ZZZ");
     }
 }
@@ -110,7 +115,7 @@
              rightView:(PBGuideView *)rightView
                  value:(CGFloat)value {
 
-    NSRect frame = NSMakeRect(0.0f, 0.0f, value, 5.0f);
+    NSRect frame = NSMakeRect(0.0f, 0.0f, value, kPBSpacerViewSize);
 
     self = [super initWithFrame:frame];
 
@@ -178,7 +183,7 @@
            bottomView:(PBGuideView *)bottomView
                 value:(CGFloat)value {
 
-    NSRect frame = NSMakeRect(0.0f, 0.0f, 5.0f, value);
+    NSRect frame = NSMakeRect(0.0f, 0.0f, kPBSpacerViewSize, value);
 
     self = [super initWithFrame:frame];
 

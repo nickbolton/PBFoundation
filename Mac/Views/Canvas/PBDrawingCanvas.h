@@ -110,8 +110,10 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 - (void)calculateEdgeDistances;
 - (void)updateSpacers;
 - (PBResizableView *)viewAtPoint:(NSPoint)point;
-- (void)selectView:(PBResizableView *)view deselectCurrent:(BOOL)deselectCurrent;
-- (void)deselectView:(PBResizableView *)view;
+- (void)selectView:(PBResizableView *)view
+   deselectCurrent:(BOOL)deselectCurrent
+            notify:(BOOL)notify;
+- (void)deselectView:(PBResizableView *)view notify:(BOOL)notify;
 - (void)resizeViewAt:(NSRect)frame toFrame:(NSRect)toFrame;
 - (void)resizeView:(PBResizableView *)view
            toFrame:(NSRect)toFrame
