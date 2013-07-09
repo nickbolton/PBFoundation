@@ -220,7 +220,8 @@ CGFloat PBDrawingToolDistance(NSPoint a, NSPoint b) {
     CGFloat detectSize = 10.0f * canvas.scaleFactor;
     CGFloat padding = 1.0f * canvas.scaleFactor;
 
-    if ([NSEvent isCurrentModifiersExactly:NSAlternateKeyMask]) {
+    if ([NSEvent isCurrentModifiersExactly:NSAlternateKeyMask] ||
+        [canvas spacerAtPoint:point] != nil) {
         _resizeType = PBPResizeTypeNone;
         NSLog(@"none1");
         return;

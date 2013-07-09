@@ -1030,6 +1030,18 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     [self updateSpacers];
 }
 
+- (PBSpacerView *)spacerAtPoint:(NSPoint)point {
+
+    for (PBSpacerView *spacerView in _spacerViews) {
+
+        if (NSPointInRect(point, spacerView.frame)) {
+            return spacerView;
+        }
+    }
+
+    return nil;
+}
+
 - (void)updateSpacers {
 
     for (PBResizableView *view in _toolViews) {

@@ -41,6 +41,7 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 
 @class PBDrawingCanvas;
 @class PBResizableView;
+@class PBSpacerView;
 
 @protocol PBDrawingTool <NSObject>
 
@@ -125,6 +126,7 @@ typedef NS_ENUM(NSInteger, PBPResizeType) {
 - (void)retagViews;
 - (NSPoint)mouseLocationInWindow;
 - (NSPoint)mouseLocationInDocument;
+- (PBSpacerView *)spacerAtPoint:(NSPoint)point;
 - (void)selectOnlyViewsInRect:(NSRect)rect;
 - (void)setInfoValue:(NSString *)value;
 - (void)updateInfoLabel:(PBResizableView *)view;
