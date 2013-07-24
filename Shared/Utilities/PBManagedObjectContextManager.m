@@ -6,6 +6,7 @@
 //  Copyright 2012 Pixelbleed. All rights reserved.
 //
 
+#import <CoreData/CoreData.h>
 #import "PBManagedObjectContextManager.h"
 
 @interface PBManagedObjectContextManager()
