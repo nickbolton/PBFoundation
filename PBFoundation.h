@@ -21,7 +21,6 @@
 #import "NSArray+PBFoundation.h"
 #import "NSObject+PBFoundation.h"
 #import "NSLayoutConstraint+PBFoundation.h"
-#import "NSPersistentStoreCoordinator+PBFoundation.h"
 #import "NSNotification+PBFoundation.h"
 #import "PBDateRange.h"
 #import "PBCalendarManager.h"
