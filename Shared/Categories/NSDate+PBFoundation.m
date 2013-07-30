@@ -235,6 +235,18 @@
     return [cal ordinalityOfUnit:NSDayCalendarUnit inUnit:NSYearCalendarUnit forDate:self];
 }
 
+- (NSDate *)dateByAddingWeeks:(NSInteger)weeks {
+    return [self dateByAddingWeeks:weeks
+                           withCal:[[PBCalendarManager sharedInstance] calendarForCurrentThread]];
+}
+
+- (NSDate *)dateByAddingWeeks:(NSInteger)weeks withCal:(NSCalendar *)cal {
+    NSDateComponents *dateComponents = [[NSDateComponents alloc] init];
+    [dateComponents setWeek:weeks];
+    NSDate *result = [cal dateByAddingComponents:dateComponents toDate:self options:0];
+    return result;
+}
+
 - (NSDate *)dateByAddingDays:(NSInteger)days {
     return [self dateByAddingDays:days 
                           withCal:[[PBCalendarManager sharedInstance] calendarForCurrentThread]];
