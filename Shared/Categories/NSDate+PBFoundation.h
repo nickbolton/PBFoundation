@@ -58,6 +58,7 @@ typedef NSInteger TimePeriod;
 - (NSInteger)dayOfTheWeek;
 - (NSInteger)dayOfTheMonth;
 - (NSInteger)dayOfTheYear;
+- (NSDate *)dateByAddingWeeks:(NSInteger)weeks;
 - (NSDate *)dateByAddingDays:(NSInteger)days;
 - (NSDate *)dateByAddingSeconds:(NSTimeInterval)seconds;
 - (NSDate *)midnight;
@@ -76,6 +77,9 @@ typedef NSInteger TimePeriod;
 - (NSInteger)daysInBetweenDate:(NSDate *)date;
 
 - (NSInteger)valueForCalendarUnit:(NSCalendarUnit)calendarUnit;
+
+- (NSDate*)beginningOfWeek;
+- (NSDate*)beginningOfWeekForDate:(NSDate *)date;
 
 #if TARGET_OS_IPHONE
 - (BOOL)isGreaterThan:(id)object;
