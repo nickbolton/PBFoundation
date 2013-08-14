@@ -15,7 +15,14 @@
 
 + (instancetype)dateRangeWithStartDate:(NSDate *)startDate endDate:(NSDate *)endDate;
 
-- (instancetype)initWithStartDate:(NSDate *)startDate endDate:(NSDate *)endDate;
++ (instancetype)dateRangeWithStartDate:(NSDate *)startDate
+                               endDate:(NSDate *)endDate
+                  alignToDayBoundaries:(BOOL)alignToDayBoundaries;
+
+- (id)initWithStartDate:(NSDate *)startDate endDate:(NSDate *)endDate;
+- (id)initWithStartDate:(NSDate *)startDate
+                endDate:(NSDate *)endDate
+   alignToDayBoundaries:(BOOL)alignToDayBoundaries;
 
 - (BOOL)dateWithinRange:(NSDate *)date;
 

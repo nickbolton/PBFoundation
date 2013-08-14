@@ -19,18 +19,45 @@
 
 + (id)dateRangeWithStartDate:(NSDate *)startDate endDate:(NSDate *)endDate {    
     return
+    [self
+     dateRangeWithStartDate:startDate
+     endDate:endDate
+     alignToDayBoundaries:YES];
+}
+
++ (instancetype)dateRangeWithStartDate:(NSDate *)startDate
+                               endDate:(NSDate *)endDate
+                  alignToDayBoundaries:(BOOL)alignToDayBoundaries {
+    return
     [[PBDateRange alloc]
      initWithStartDate:startDate
      endDate:endDate];
 }
 
 - (id)initWithStartDate:(NSDate *)startDate endDate:(NSDate *)endDate {
-    
+    return
+    [self
+     initWithStartDate:startDate
+     endDate:endDate
+     alignToDayBoundaries:YES];
+}
+
+- (instancetype)initWithStartDate:(NSDate *)startDate
+                          endDate:(NSDate *)endDate
+             alignToDayBoundaries:(BOOL)alignToDayBoundaries {
+
+
     self = [super init];
     
     if (self != nil) {
-        self.startDate = [startDate midnight];
-        self.endDate = [endDate endOfDay];
+
+        if (alignToDayBoundaries) {
+            self.startDate = [startDate midnight];
+            self.endDate = [endDate endOfDay];
+        } else {
+            self.startDate = startDate;
+            self.endDate = endDate;
+        }
         _hashValue = [self description].hash;
     }
     
@@ -38,10 +65,11 @@
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-    
-    return [[PBDateRange alloc]
-            initWithStartDate:self.startDate
-            endDate:self.endDate];
+    return
+    [[PBDateRange alloc]
+     initWithStartDate:self.startDate
+     endDate:self.endDate
+     alignToDayBoundaries:NO];
 }
 
 - (NSUInteger)hash {
