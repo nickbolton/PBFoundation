@@ -184,6 +184,7 @@
 #else
 + (NSLayoutConstraint *)verticallyCenterView:(NSView *)view {
 #endif
+    return
     [self verticallyCenterView:view padding:0.0f];
 }
 
