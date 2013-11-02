@@ -13,6 +13,7 @@
 @property (nonatomic, strong) NSMutableDictionary *targetMap;
 @property (nonatomic, strong) NSMutableDictionary *actionMap;
 @property (nonatomic, strong) NSMutableDictionary *userContextMap;
+@property (nonatomic, strong) NSMutableDictionary *actionBlockMap;
 
 @end
 
@@ -25,6 +26,7 @@
     if (self != nil) {
         self.targetMap = [NSMutableDictionary dictionary];
         self.actionMap = [NSMutableDictionary dictionary];
+        self.actionBlockMap = [NSMutableDictionary dictionary];
         self.userContextMap = [NSMutableDictionary dictionary];
     }
 
@@ -44,8 +46,19 @@
     }
 }
 
+- (void)addBlock:(void(^)(void))actionBlock
+     userContext:(id)userContext
+        toButton:(NSInteger)buttonIndex {
+
+    NSValue *blockValue =
+    [NSValue valueWithPointer:(__bridge const void *)(actionBlock)];
+
+    _actionBlockMap[@(buttonIndex)]=blockValue;
+}
+
 - (void)performSelectorForButtonIndex:(NSInteger)buttonIndex {
     id target = _targetMap[@(buttonIndex)];
+    NSValue *actionValue = _actionBlockMap[@(buttonIndex)];
 
     if (target != nil) {
 
@@ -55,6 +68,10 @@
 
         SEL sel = selectorValue.pointerValue;
         [target performSelector:sel withObject:userContext];
+    } else if (actionValue != nil) {
+
+        void (^actionBlock)(void) = [actionValue pointerValue];
+        actionBlock();
     }
 }
 

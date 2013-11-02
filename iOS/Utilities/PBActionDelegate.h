@@ -15,4 +15,8 @@
       userContext:(id)userContext
          toButton:(NSInteger)buttonIndex;
 
+- (void)addBlock:(void(^)(void))actionBlock
+     userContext:(id)userContext
+        toButton:(NSInteger)buttonIndex;
+
 @end
