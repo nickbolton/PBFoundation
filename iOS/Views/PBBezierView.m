@@ -1,9 +1,9 @@
 //
 //  PBBezierView.m
-//  BerlinDecision
+//  PBFoundation
 //
-//  Created by Nick Bolton on 7/13/13.
-//  Copyright (c) 2013 MutualMobile. All rights reserved.
+//  Created by Nick Bolton on 11/26/12.
+//  Copyright (c) 2012 Pixelbleed LLC. All rights reserved.
 //
 
 #import "PBBezierView.h"
