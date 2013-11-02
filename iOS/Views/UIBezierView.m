@@ -1,14 +1,14 @@
 //
-//  PBBezierView.m
+//  UIBezierView.m
 //  PBFoundation
 //
 //  Created by Nick Bolton on 11/26/12.
 //  Copyright (c) 2012 Pixelbleed LLC. All rights reserved.
 //
 
-#import "PBBezierView.h"
+#import "UIBezierView.h"
 
-@implementation PBBezierView
+@implementation UIBezierView
 
 - (void)fillBackgroundPath {
     if (self.pathFillColor != nil) {

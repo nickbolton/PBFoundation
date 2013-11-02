@@ -32,6 +32,8 @@
 #import "UIColor+PBFoundation.h"
 #import "UIImage+PBFoundation.h"
 #import "UIView+PBFoundation.h"
+#import "UIBezierView.h"
+#import "UIBezierButton.h"
 #else
 
 #define PB_WINDOW_ANIMATION_DURATION 0.25f

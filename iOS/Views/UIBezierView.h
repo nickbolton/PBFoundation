@@ -1,5 +1,5 @@
 //
-//  BDView.h
+//  UIBezierView.h
 //  PBFoundation
 //
 //  Created by Nick Bolton on 11/26/12.
@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface BDView : UIView
+@interface UIBezierView : UIView
 
 @property (nonatomic, strong) UIBezierPath *bezierPath;
 @property (nonatomic, strong) UIColor *pathStrokeColor;

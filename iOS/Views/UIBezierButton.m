@@ -1,14 +1,14 @@
 //
-//  PBBezierButton.m
+//  UIBezierButton.m
 //  PBFoundation
 //
 //  Created by Nick Bolton on 11/26/12.
 //  Copyright (c) 2012 Pixelbleed LLC. All rights reserved.
 //
 
-#import "PBBezierButton.h"
+#import "UIBezierButton.h"
 
-@interface BDButton()
+@interface UIBezierButton()
 
 @property (nonatomic, strong) NSMutableDictionary *bezierPaths;
 @property (nonatomic, strong) NSMutableDictionary *pathStrokeValues;
@@ -16,7 +16,7 @@
 
 @end
 
-@implementation PBBezierButton
+@implementation UIBezierButton
 
 - (NSMutableDictionary *)bezierPaths {
     if (_bezierPaths == nil) {

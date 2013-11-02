@@ -1,5 +1,5 @@
 //
-//  BDButton.h
+//  UIBezierButton.h
 //  PBFoundation
 //
 //  Created by Nick Bolton on 11/26/12.
@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface BDButton : UIButton
+@interface UIBezierButton : UIButton
 
 - (void)setBezierPath:(UIBezierPath *)bezierPath
       forControlState:(UIControlState)controlState;
