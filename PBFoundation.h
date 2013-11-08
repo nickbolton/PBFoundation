@@ -10,7 +10,12 @@
 #define PBFoundation_PBFoundation_h
 
 # define PBDebugLog(...) if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"debugMode"] boolValue] == YES) { NSLog(@"[%@:%d (%p)]: %@", [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, self, [NSString stringWithFormat:__VA_ARGS__]); }
-# define PBLog(...) if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"debugMode"] boolValue] == YES) { NSLog(@"%@", [NSString stringWithFormat:__VA_ARGS__]); }
+
+#if DEBUG
+#define PBLog(...) NSLog(__VA_ARGS__)
+#else
+#define PBLog(...) do { } while (0)
+#endif
 
 // add -DTCDEBUG to Other C Flags for Debug
 
