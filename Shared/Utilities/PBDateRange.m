@@ -31,7 +31,8 @@
     return
     [[PBDateRange alloc]
      initWithStartDate:startDate
-     endDate:endDate];
+     endDate:endDate
+     alignToDayBoundaries:alignToDayBoundaries];
 }
 
 - (id)initWithStartDate:(NSDate *)startDate endDate:(NSDate *)endDate {
