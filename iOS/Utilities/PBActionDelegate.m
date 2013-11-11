@@ -33,6 +33,12 @@
     return self;
 }
 
+- (void)dealloc {
+    for (NSValue *value in self.actionBlockMap.allValues) {
+        CFBridgingRelease(value.pointerValue);
+    }
+}
+
 - (void)addTarget:(id)target
            action:(SEL)action
       userContext:(id)userContext
@@ -51,7 +57,7 @@
         toButton:(NSInteger)buttonIndex {
 
     NSValue *blockValue =
-    [NSValue valueWithPointer:(__bridge const void *)(actionBlock)];
+    [NSValue valueWithPointer:CFBridgingRetain(actionBlock)];
 
     _actionBlockMap[@(buttonIndex)]=blockValue;
 }
