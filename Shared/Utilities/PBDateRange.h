@@ -25,5 +25,6 @@
    alignToDayBoundaries:(BOOL)alignToDayBoundaries;
 
 - (BOOL)dateWithinRange:(NSDate *)date;
+- (void)adjustDateRangeToDate:(NSDate *)date;
 
 @end

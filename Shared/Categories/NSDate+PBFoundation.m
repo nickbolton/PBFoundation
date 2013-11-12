@@ -295,7 +295,6 @@
 
     switch (timePeriod) {
         case TimePeriod_All:
-        case TimePeriod_Archived:
             fromDate = [NSDate distantPast];
             toDate = [NSDate distantFuture];
             break;

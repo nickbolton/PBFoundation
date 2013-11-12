@@ -23,7 +23,6 @@ enum _TimePeriod {
     TimePeriod_PreviousWeek,
     TimePeriod_PreviousMonth,
     TimePeriod_PreviousYear,
-    TimePeriod_Archived,
     TimePeriod_OtherDay,
 };
 

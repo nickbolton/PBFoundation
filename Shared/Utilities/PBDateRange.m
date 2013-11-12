@@ -12,6 +12,7 @@
 @interface PBDateRange()
 
 @property (nonatomic) NSUInteger hashValue;
+@property (nonatomic) BOOL alignToDayBoundaries;
 
 @end
 
@@ -51,6 +52,8 @@
     self = [super init];
     
     if (self != nil) {
+
+        self.alignToDayBoundaries = alignToDayBoundaries;
 
         if (alignToDayBoundaries) {
             self.startDate = [startDate midnight];
@@ -94,6 +97,20 @@
     return
     [date isGreaterThanOrEqualTo:_startDate] &&
     [date isLessThanOrEqualTo:_endDate];
+}
+
+- (void)adjustDateRangeToDate:(NSDate *)date {
+
+    NSTimeInterval duration =
+    self.endDate.timeIntervalSinceReferenceDate -
+    self.startDate.timeIntervalSinceReferenceDate;
+
+    if (self.alignToDayBoundaries) {
+        self.endDate = [date endOfDay];
+    } else {
+        self.endDate = date;
+    }
+    self.startDate = [self.endDate dateByAddingTimeInterval:-duration];
 }
 
 @end

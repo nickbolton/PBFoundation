@@ -60,24 +60,26 @@
     [NSValue valueWithPointer:CFBridgingRetain(actionBlock)];
 
     _actionBlockMap[@(buttonIndex)]=blockValue;
+    if (userContext != nil) {
+        _userContextMap[@(buttonIndex)]=userContext;
+    }
 }
 
 - (void)performSelectorForButtonIndex:(NSInteger)buttonIndex {
     id target = _targetMap[@(buttonIndex)];
     NSValue *actionValue = _actionBlockMap[@(buttonIndex)];
+    id userContext = _userContextMap[@(buttonIndex)];
 
     if (target != nil) {
 
         NSValue *selectorValue = _actionMap[@(buttonIndex)];
 
-        id userContext = _userContextMap[@(buttonIndex)];
-
         SEL sel = selectorValue.pointerValue;
         [target performSelector:sel withObject:userContext];
     } else if (actionValue != nil) {
 
-        void (^actionBlock)(void) = [actionValue pointerValue];
-        actionBlock();
+        void (^actionBlock)(id userContext) = [actionValue pointerValue];
+        actionBlock(userContext);
     }
 }
 
