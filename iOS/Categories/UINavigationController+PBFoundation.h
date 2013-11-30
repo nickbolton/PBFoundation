@@ -14,4 +14,9 @@
                                fromViewController:(UIViewController *)presentingViewController
                                        completion:(void(^)(void))completionBlock;
 
++ (UINavigationController *)presentViewController:(UIViewController *)viewController
+                               fromViewController:(UIViewController *)presentingViewController
+                            transitioningDelegate:(id <UIViewControllerTransitioningDelegate>)transitioningDelegate
+                                       completion:(void(^)(void))completionBlock;
+
 @end

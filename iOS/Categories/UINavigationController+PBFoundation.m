@@ -13,10 +13,24 @@
 + (UINavigationController *)presentViewController:(UIViewController *)viewController
                                fromViewController:(UIViewController *)presentingViewController
                                        completion:(void(^)(void))completionBlock {
+    return
+    [self 
+     presentViewController:viewController
+     fromViewController:presentingViewController
+     transitioningDelegate:nil
+     completion:completionBlock];
+}
+
++ (UINavigationController *)presentViewController:(UIViewController *)viewController
+                               fromViewController:(UIViewController *)presentingViewController
+                            transitioningDelegate:(id <UIViewControllerTransitioningDelegate>)transitioningDelegate
+                                       completion:(void(^)(void))completionBlock {
 
     UINavigationController *navigationController =
     [[UINavigationController alloc]
      initWithRootViewController:viewController];
+
+    navigationController.transitioningDelegate = transitioningDelegate;
 
     [presentingViewController
      presentViewController:navigationController
