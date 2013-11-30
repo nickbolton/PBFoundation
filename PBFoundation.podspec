@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name      = 'PBFoundation'
-  s.version   = '0.0.44'
+  s.version   = '0.0.45'
   s.ios.deployment_target = '6.0'
   s.osx.deployment_target = '10.8'
   s.summary   = 'PBFoundation is a collection of useful Mac and iOS utilities.'
