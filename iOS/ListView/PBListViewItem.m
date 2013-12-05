@@ -16,10 +16,10 @@ CGFloat const kPBListActionRowHeight = 44.0f;
 
 + (instancetype)selectionItemWithTitle:(NSString *)title
                                  value:(NSString *)value
-                              listType:(PBListType)listType
+                              itemType:(PBItemType)itemType
                          hasDisclosure:(BOOL)hasDisclosure
                           selectAction:(UIViewController *(^)(PBListViewController *viewController))selectActionBlock
-                          deleteAction:(UIViewController *(^)(PBListViewController *viewController))deleteActionBlock {
+                          deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock {
 
     PBListViewItem *selectionItem =
     [[PBListViewItem alloc] init];
@@ -27,12 +27,37 @@ CGFloat const kPBListActionRowHeight = 44.0f;
     selectionItem.title = title;
     selectionItem.value = value;
     selectionItem.rowHeight = -1.0f;
-    selectionItem.listType = listType;
+    selectionItem.itemType = itemType;
     selectionItem.hasDisclosure = hasDisclosure;
     selectionItem.selectActionBlock = selectActionBlock;
     selectionItem.deleteActionBlock = deleteActionBlock;
     selectionItem.selectionStyle = UITableViewCellSelectionStyleGray;
     selectionItem.titleAlignment = NSTextAlignmentLeft;
+
+    return selectionItem;
+}
+
++ (instancetype)customItemWithUserContext:(id)userContext
+                                   cellID:(NSString *)cellID
+                                  cellNib:(UINib *)cellNib
+                                configure:(void(^)(PBListViewController *viewController, PBListViewItem *item, id cell))configureBlock
+                                  binding:(void(^)(PBListViewController *viewController, PBListViewItem *item, id cell))bindingBlock
+                             selectAction:(UIViewController *(^)(PBListViewController *viewController))selectActionBlock
+                             deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock {
+
+    PBListViewItem *selectionItem =
+    [[PBListViewItem alloc] init];
+
+    selectionItem.rowHeight = -1.0f;
+    selectionItem.itemType = PBItemTypeCustom;
+    selectionItem.userContext = userContext;
+    selectionItem.cellID = cellID;
+    selectionItem.cellNib = cellNib;
+    selectionItem.configureBlock = configureBlock;
+    selectionItem.bindingBlock = bindingBlock;
+    selectionItem.selectActionBlock = selectActionBlock;
+    selectionItem.deleteActionBlock = deleteActionBlock;
+    selectionItem.selectionStyle = UITableViewCellSelectionStyleNone;
 
     return selectionItem;
 }
@@ -43,19 +68,19 @@ CGFloat const kPBListActionRowHeight = 44.0f;
 
 - (CGFloat)rowHeight {
 
-    if (self.rowHeight > 0) {
-        return self.rowHeight;
+    if (_rowHeight > 0) {
+        return _rowHeight;
     }
 
     CGFloat rowHeight = kPBListRowHeight;
 
-    switch (self.listType) {
-        case PBListTypeAction:
+    switch (self.itemType) {
+        case PBItemTypeAction:
 
             rowHeight = kPBListActionRowHeight;
             break;
 
-            case PBListTypeSpacer:
+            case PBItemTypeSpacer:
             rowHeight = kPBListSpacerRowHeight;
 
         default:

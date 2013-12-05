@@ -121,10 +121,40 @@ static NSInteger const kPBListDefaultTag = 103;
 }
 
 - (void)reloadDataSource {
+
+    for (PBListViewItem *item in self.dataSource) {
+
+        if (item.itemType == PBItemTypeCustom) {
+
+            NSAssert(item.cellID != nil, @"No cellID configured");
+            NSAssert(item.cellNib != nil, @"No cellNib configured");
+
+            if (item.cellNib != nil) {
+
+                [self.tableView
+                 registerNib:item.cellNib
+                 forCellReuseIdentifier:item.cellID];
+
+                NSArray *views =
+                [item.cellNib instantiateWithOwner:self options:nil];
+
+                if (views.count > 0) {
+                    UIView *cell = views[0];
+
+                    item.rowHeight = CGRectGetHeight(cell.frame);
+                }
+            }
+        }
+    }
 }
 
 - (void)reloadData {
     [self reloadDataSource];
+
+    for (PBListViewItem *item in self.dataSource) {
+        item.itemConfigured = NO;
+    }
+
     [self.tableView reloadData];
 }
 
@@ -251,19 +281,35 @@ static NSInteger const kPBListDefaultTag = 103;
 
     UITableViewCell *cell;
 
-    switch (item.listType) {
+    switch (item.itemType) {
 
-        case PBListTypeAction: {
+        case PBItemTypeAction: {
 
             cell = [tableView dequeueReusableCellWithIdentifier:kPBListActionCellID];
             [self configureActionCell:cell withItem:item];
 
         } break;
 
-        case PBListTypeSpacer: {
+        case PBItemTypeSpacer: {
 
             cell = [tableView dequeueReusableCellWithIdentifier:kPBListSpacerCellID];
             [self configureActionCell:cell withItem:item];
+
+        } break;
+
+        case PBItemTypeCustom: {
+
+            cell = [tableView dequeueReusableCellWithIdentifier:item.cellID];
+            
+            if (item.configureBlock != nil && item.itemConfigured == NO) {
+
+                item.configureBlock(self, item, cell);
+                item.itemConfigured = YES;
+            }
+
+            NSAssert(item.bindingBlock != nil, @"No binding block!");
+
+            item.bindingBlock(self, item, cell);
 
         } break;
 
@@ -284,6 +330,12 @@ static NSInteger const kPBListDefaultTag = 103;
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
+    PBListViewItem *item = [self itemAtIndexPath:indexPath];
+
+    if (item.selectActionBlock != nil) {
+        item.selectActionBlock(self);
+    }
 }
 
 - (void)tableView:(UITableView *)tableView
