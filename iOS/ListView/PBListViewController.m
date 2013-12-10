@@ -396,6 +396,10 @@ static NSInteger const kPBListDefaultTag = 103;
         } break;
     }
 
+    if ([cell isKindOfClass:[PBListViewDefaultCell class]]) {
+        ((PBListViewDefaultCell *)cell).item = item;
+    }
+
     return cell;
 }
 

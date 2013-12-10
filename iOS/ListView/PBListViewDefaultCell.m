@@ -18,6 +18,12 @@
 
 @implementation PBListViewDefaultCell
 
+- (void)prepareForReuse {
+    [super prepareForReuse];
+    self.item = nil;
+    self.backgroundImageView.image = nil;
+}
+
 - (UIImageView *)backgroundImageView {
 
     if (_backgroundImageView == nil) {
