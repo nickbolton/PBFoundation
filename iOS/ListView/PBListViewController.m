@@ -20,6 +20,8 @@ static NSInteger const kPBListActionTag = 101;
 static NSInteger const kPBListDefaultTag = 103;
 
 @interface PBListViewController () {
+
+    BOOL _sectioned;
 }
 
 @end
@@ -49,6 +51,9 @@ static NSInteger const kPBListDefaultTag = 103;
 
 - (void)setupTableView {
 
+    self.tableView.backgroundColor = [UIColor clearColor];
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+
     UINib *nib =
     [UINib
      nibWithNibName:NSStringFromClass([PBListCell class])
@@ -59,11 +64,11 @@ static NSInteger const kPBListDefaultTag = 103;
      forCellReuseIdentifier:kPBListCellID];
 
     [self.tableView
-     registerClass:[UITableViewCell class]
+     registerClass:[PBListViewDefaultCell class]
      forCellReuseIdentifier:kPBListSpacerCellID];
 
     [self.tableView
-     registerClass:[UITableViewCell class]
+     registerClass:[PBListViewDefaultCell class]
      forCellReuseIdentifier:kPBListActionCellID];
 }
 
@@ -90,16 +95,41 @@ static NSInteger const kPBListDefaultTag = 103;
 
 #pragma mark - Getters and Setters
 
+- (void)setDataSource:(NSArray *)dataSource {
+    _dataSource = dataSource;
+    _sectioned = [dataSource.firstObject isKindOfClass:[NSArray class]];
+}
+
 #pragma mark - Actions
 
 #pragma mark -
 
+- (NSArray *)rowArrayAtSection:(NSInteger)section {
+
+    if (_sectioned) {
+
+        if (section < self.dataSource.count) {
+            return self.dataSource[section];
+        }
+
+        return nil;
+    }
+
+    return self.dataSource;
+}
+
 - (PBListViewItem *)itemAtIndexPath:(NSIndexPath *)indexPath {
+
+    NSArray *rowArray = [self rowArrayAtSection:indexPath.section];
+    return [self itemAtRow:indexPath.row inRowArray:rowArray];
+}
+
+- (PBListViewItem *)itemAtRow:(NSInteger)row inRowArray:(NSArray *)rowArray {
 
     PBListViewItem *item = nil;
 
-    if (indexPath.row < self.dataSource.count) {
-        item = self.dataSource[indexPath.row];
+    if (row < rowArray.count) {
+        item = rowArray[row];
 
         NSAssert([item isKindOfClass:[PBListViewItem class]],
                  @"item not a PBListViewItem");
@@ -122,12 +152,26 @@ static NSInteger const kPBListDefaultTag = 103;
 
 - (void)reloadDataSource {
 
-    for (PBListViewItem *item in self.dataSource) {
+    if (_sectioned) {
+
+        for (NSArray *section in self.dataSource) {
+            [self reloadDataSourceSection:section];
+        }
+
+    } else {
+
+        [self reloadDataSourceSection:self.dataSource];
+    }
+}
+
+- (void)reloadDataSourceSection:(NSArray *)sectionArray {
+
+    for (PBListViewItem *item in sectionArray) {
 
         if (item.itemType == PBItemTypeCustom) {
 
             NSAssert(item.cellID != nil, @"No cellID configured");
-            NSAssert(item.cellNib != nil, @"No cellNib configured");
+            NSAssert(item.cellNib != nil || item.cellClass != nil, @"No cellNib or cellClass configured");
 
             if (item.cellNib != nil) {
 
@@ -143,6 +187,12 @@ static NSInteger const kPBListDefaultTag = 103;
 
                     item.rowHeight = CGRectGetHeight(cell.frame);
                 }
+
+            } else {
+
+                [self.tableView
+                 registerClass:item.cellClass
+                 forCellReuseIdentifier:item.cellID];
             }
         }
     }
@@ -151,11 +201,25 @@ static NSInteger const kPBListDefaultTag = 103;
 - (void)reloadData {
     [self reloadDataSource];
 
-    for (PBListViewItem *item in self.dataSource) {
-        item.itemConfigured = NO;
+    if (_sectioned) {
+
+        for (NSArray *section in self.dataSource) {
+            [self clearSectionConfigured:section];
+        }
+
+    } else {
+
+        [self clearSectionConfigured:self.dataSource];
     }
 
     [self.tableView reloadData];
+}
+
+- (void)clearSectionConfigured:(NSArray *)sectionArray {
+
+    for (PBListViewItem *item in sectionArray) {
+        item.itemConfigured = NO;
+    }
 }
 
 - (void)addSeparatorToCell:(UITableViewCell *)cell
@@ -272,7 +336,18 @@ static NSInteger const kPBListDefaultTag = 103;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return self.dataSource.count;
+    
+    NSArray *rowArray = [self rowArrayAtSection:section];
+    return rowArray.count;
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+
+    if (_sectioned) {
+        return self.dataSource.count;
+    }
+
+    return 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -309,7 +384,7 @@ static NSInteger const kPBListDefaultTag = 103;
 
             NSAssert(item.bindingBlock != nil, @"No binding block!");
 
-            item.bindingBlock(self, item, cell);
+            item.bindingBlock(self, indexPath, item, cell);
 
         } break;
 
@@ -354,6 +429,54 @@ forRowAtIndexPath:(NSIndexPath *)indexPath {
 
     PBListViewItem *item = [self itemAtIndexPath:indexPath];
     return item.rowHeight;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+
+    PBListViewItem *item = [self itemAtIndexPath:indexPath];
+
+    if (item != nil && tableView.style == UITableViewStyleGrouped && [cell respondsToSelector:@selector(tintColor)]) {
+        if (tableView == self.tableView) {
+            CGFloat cornerRadius = 4.f;
+            cell.backgroundColor = UIColor.clearColor;
+            CAShapeLayer *layer = [[CAShapeLayer alloc] init];
+            CGMutablePathRef pathRef = CGPathCreateMutable();
+            CGRect bounds = CGRectInset(cell.bounds, 10, 0);
+            BOOL addLine = NO;
+            if (indexPath.row == 0 && indexPath.row == [tableView numberOfRowsInSection:indexPath.section]-1) {
+                CGPathAddRoundedRect(pathRef, nil, bounds, cornerRadius, cornerRadius);
+            } else if (indexPath.row == 0) {
+                CGPathMoveToPoint(pathRef, nil, CGRectGetMinX(bounds), CGRectGetMaxY(bounds));
+                CGPathAddArcToPoint(pathRef, nil, CGRectGetMinX(bounds), CGRectGetMinY(bounds), CGRectGetMidX(bounds), CGRectGetMinY(bounds), cornerRadius);
+                CGPathAddArcToPoint(pathRef, nil, CGRectGetMaxX(bounds), CGRectGetMinY(bounds), CGRectGetMaxX(bounds), CGRectGetMidY(bounds), cornerRadius);
+                CGPathAddLineToPoint(pathRef, nil, CGRectGetMaxX(bounds), CGRectGetMaxY(bounds));
+                addLine = YES;
+            } else if (indexPath.row == [tableView numberOfRowsInSection:indexPath.section]-1) {
+                CGPathMoveToPoint(pathRef, nil, CGRectGetMinX(bounds), CGRectGetMinY(bounds));
+                CGPathAddArcToPoint(pathRef, nil, CGRectGetMinX(bounds), CGRectGetMaxY(bounds), CGRectGetMidX(bounds), CGRectGetMaxY(bounds), cornerRadius);
+                CGPathAddArcToPoint(pathRef, nil, CGRectGetMaxX(bounds), CGRectGetMaxY(bounds), CGRectGetMaxX(bounds), CGRectGetMidY(bounds), cornerRadius);
+                CGPathAddLineToPoint(pathRef, nil, CGRectGetMaxX(bounds), CGRectGetMinY(bounds));
+            } else {
+                CGPathAddRect(pathRef, nil, bounds);
+                addLine = YES;
+            }
+            layer.path = pathRef;
+            CFRelease(pathRef);
+            layer.fillColor = item.backgroundColor.CGColor;
+
+            if (addLine == YES) {
+                CALayer *lineLayer = [[CALayer alloc] init];
+                CGFloat lineHeight = (1.f / [UIScreen mainScreen].scale);
+                lineLayer.frame = CGRectMake(CGRectGetMinX(bounds)+10, bounds.size.height-lineHeight, bounds.size.width-10, lineHeight);
+                lineLayer.backgroundColor = tableView.separatorColor.CGColor;
+                [layer addSublayer:lineLayer];
+            }
+            UIView *testView = [[UIView alloc] initWithFrame:bounds];
+            [testView.layer insertSublayer:layer atIndex:0];
+            testView.backgroundColor = UIColor.clearColor;
+            cell.backgroundView = testView;
+        }
+    }
 }
 
 @end

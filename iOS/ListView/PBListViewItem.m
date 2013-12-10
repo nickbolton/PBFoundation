@@ -18,7 +18,7 @@ CGFloat const kPBListActionRowHeight = 44.0f;
                                  value:(NSString *)value
                               itemType:(PBItemType)itemType
                          hasDisclosure:(BOOL)hasDisclosure
-                          selectAction:(UIViewController *(^)(PBListViewController *viewController))selectActionBlock
+                          selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
                           deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock {
 
     PBListViewItem *selectionItem =
@@ -37,13 +37,13 @@ CGFloat const kPBListActionRowHeight = 44.0f;
     return selectionItem;
 }
 
-+ (instancetype)customItemWithUserContext:(id)userContext
-                                   cellID:(NSString *)cellID
-                                  cellNib:(UINib *)cellNib
-                                configure:(void(^)(PBListViewController *viewController, PBListViewItem *item, id cell))configureBlock
-                                  binding:(void(^)(PBListViewController *viewController, PBListViewItem *item, id cell))bindingBlock
-                             selectAction:(UIViewController *(^)(PBListViewController *viewController))selectActionBlock
-                             deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock {
++ (instancetype)customNibItemWithUserContext:(id)userContext
+                                      cellID:(NSString *)cellID
+                                     cellNib:(UINib *)cellNib
+                                   configure:(void(^)(PBListViewController *viewController, PBListViewItem *item, id cell))configureBlock
+                                     binding:(void(^)(PBListViewController *viewController, NSIndexPath *indexPath, PBListViewItem *item, id cell))bindingBlock
+                                selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
+                                deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock {
 
     PBListViewItem *selectionItem =
     [[PBListViewItem alloc] init];
@@ -53,6 +53,31 @@ CGFloat const kPBListActionRowHeight = 44.0f;
     selectionItem.userContext = userContext;
     selectionItem.cellID = cellID;
     selectionItem.cellNib = cellNib;
+    selectionItem.configureBlock = configureBlock;
+    selectionItem.bindingBlock = bindingBlock;
+    selectionItem.selectActionBlock = selectActionBlock;
+    selectionItem.deleteActionBlock = deleteActionBlock;
+    selectionItem.selectionStyle = UITableViewCellSelectionStyleNone;
+
+    return selectionItem;
+}
+
++ (instancetype)customClassItemWithUserContext:(id)userContext
+                                        cellID:(NSString *)cellID
+                                     cellClass:(Class)cellClass
+                                     configure:(void(^)(PBListViewController *viewController, PBListViewItem *item, id cell))configureBlock
+                                       binding:(void(^)(PBListViewController *viewController, NSIndexPath *indexPath, PBListViewItem *item, id cell))bindingBlock
+                                  selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
+                                  deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock {
+
+    PBListViewItem *selectionItem =
+    [[PBListViewItem alloc] init];
+
+    selectionItem.rowHeight = -1.0f;
+    selectionItem.itemType = PBItemTypeCustom;
+    selectionItem.userContext = userContext;
+    selectionItem.cellID = cellID;
+    selectionItem.cellClass = cellClass;
     selectionItem.configureBlock = configureBlock;
     selectionItem.bindingBlock = bindingBlock;
     selectionItem.selectActionBlock = selectActionBlock;

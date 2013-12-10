@@ -6,9 +6,9 @@
 //  Copyright (c) 2013 Pixelbleed. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+#import "PBListViewDefaultCell.h"
 
-@interface PBListCell : UITableViewCell
+@interface PBListCell : PBListViewDefaultCell
 
 @property (nonatomic, weak) IBOutlet UILabel *titleLabel;
 @property (nonatomic, weak) IBOutlet UILabel *valueLabel;
