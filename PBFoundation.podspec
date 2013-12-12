@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name      = 'PBFoundation'
-  s.version   = '0.0.51'
+  s.version   = '0.0.52'
   s.ios.deployment_target = '6.0'
   s.osx.deployment_target = '10.8'
   s.summary   = 'PBFoundation is a collection of useful Mac and iOS utilities.'
@@ -17,6 +17,7 @@ Pod::Spec.new do |s|
                   :branch => 'master'}
   s.osx.source_files  = '*.{h,m}', 'Shared', 'Shared/**/*.{h,m}', 'Mac', 'Mac/**/*.{h,m}'
   s.ios.source_files  = '*.{h,m}', 'Shared', 'Shared/**/*.{h,m}', 'iOS', 'iOS/**/*.{h,m}'
+  s.ios.resources = 'iOS/ListView/PBListCell.xib'
   s.prefix_header_contents = <<-EOS
 #ifdef __OBJC__
 #import "PBFoundation.h"
