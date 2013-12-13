@@ -28,12 +28,24 @@ static NSInteger const kPBListDefaultTag = 103;
 
 @implementation PBListViewController
 
+- (id)initWithNib {
+    return [self initWithItems:nil];
+}
+
 - (id)initWithItems:(NSArray *)items {
 
     self = [super initWithNibName:NSStringFromClass([self class]) bundle:nil];
     if (self) {
         self.dataSource = items;
         self.reloadDataOnViewLoad = YES;
+    }
+    return self;
+}
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        [self createTableView];
     }
     return self;
 }
@@ -48,6 +60,14 @@ static NSInteger const kPBListDefaultTag = 103;
 }
 
 - (void)setupNavigationBar {
+}
+
+- (void)createTableView {
+
+    self.tableView = [[UITableView alloc] init];
+    self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:self.tableView];
+    [NSLayoutConstraint expandToSuperview:self.tableView];
 }
 
 - (void)setupTableView {

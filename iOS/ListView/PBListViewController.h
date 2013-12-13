@@ -16,7 +16,7 @@ extern NSString * const kPBListActionCellID;
 
 @interface PBListViewController : UIViewController
 
-@property (nonatomic, weak) IBOutlet UITableView *tableView;
+@property (nonatomic, strong) IBOutlet UITableView *tableView;
 
 @property (nonatomic, strong) NSArray *dataSource;
 @property (nonatomic, strong) PBActionDelegate *actionDelegate;
@@ -34,6 +34,7 @@ extern NSString * const kPBListActionCellID;
 @property (nonatomic) BOOL reloadDataOnViewLoad;
 
 - (id)initWithItems:(NSArray *)items;
+- (id)initWithNib;
 
 - (void)setupNotifications;
 - (void)setupTableView;
