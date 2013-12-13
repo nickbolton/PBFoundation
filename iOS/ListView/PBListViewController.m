@@ -33,6 +33,7 @@ static NSInteger const kPBListDefaultTag = 103;
     self = [super initWithNibName:NSStringFromClass([self class]) bundle:nil];
     if (self) {
         self.dataSource = items;
+        self.reloadDataOnViewLoad = YES;
     }
     return self;
 }
@@ -82,7 +83,9 @@ static NSInteger const kPBListDefaultTag = 103;
 
     self.tableView.backgroundColor = self.tableBackgroundColor;
 
-    [self reloadData];
+    if (self.reloadDataOnViewLoad) {
+        [self reloadData];
+    }
 }
 
 - (void)viewWillDisappear:(BOOL)animated {

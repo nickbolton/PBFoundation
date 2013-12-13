@@ -31,6 +31,7 @@ extern NSString * const kPBListActionCellID;
 @property (nonatomic, strong) UIColor *cellBackgroundColor;
 @property (nonatomic, strong) UIColor *spacerCellBackgroundColor;
 @property (nonatomic, strong) UIColor *tableBackgroundColor;
+@property (nonatomic) BOOL reloadDataOnViewLoad;
 
 - (id)initWithItems:(NSArray *)items;
 
