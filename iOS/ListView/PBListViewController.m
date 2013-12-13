@@ -81,6 +81,8 @@ static NSInteger const kPBListDefaultTag = 103;
     [self setupTableView];
 
     self.tableView.backgroundColor = self.tableBackgroundColor;
+
+    [self reloadData];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
