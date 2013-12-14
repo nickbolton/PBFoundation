@@ -460,26 +460,38 @@ static NSInteger const kPBListDefaultTag = 105;
 
     CGFloat height = 1.0f / scale;
 
+    CGFloat width = 0.0f;
+
+    if (CGRectGetWidth(self.tableView.frame) > 0) {
+        width =
+        CGRectGetWidth(self.tableView.frame) -
+        item.separatorInsets.left -
+        item.separatorInsets.right;
+    }
+
     CGRect frame =
     CGRectMake(item.separatorInsets.left,
                item.rowHeight-height,
-               CGRectGetWidth(self.tableView.frame) - item.separatorInsets.left - item.separatorInsets.right,
+               width,
                height);
 
     separator.frame = frame;
+    separator.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 }
 
 - (void)configureSpacerCell:(UITableViewCell *)cell
                    withItem:(PBListViewItem *)item {
 
     if (cell.tag != kPBListSeparatorCellTag) {
+
         cell.tag = kPBListSeparatorCellTag;
-        cell.backgroundColor = [UIColor clearColor];
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
 
         if (item.separatorColor != nil) {
             [self addSeparatorToCell:cell item:item];
         }
+
+        cell.backgroundColor = [UIColor clearColor];
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
 }
 
@@ -487,7 +499,12 @@ static NSInteger const kPBListDefaultTag = 105;
                    withItem:(PBListViewItem *)item {
 
     if (cell.tag != kPBListActionTag) {
+
         cell.tag = kPBListActionTag;
+
+        if (item.separatorColor != nil) {
+            [self addSeparatorToCell:cell item:item];
+        }
 
         cell.textLabel.textColor =
         item.titleColor != nil ? item.titleColor : self.actionColor;
@@ -501,8 +518,6 @@ static NSInteger const kPBListDefaultTag = 105;
         cell.selectionStyle = item.selectionStyle;
 
         cell.textLabel.textAlignment = item.titleAlignment;
-
-        [self addSeparatorToCell:cell item:item];
     }
 
     cell.textLabel.text = item.title;
@@ -514,6 +529,10 @@ static NSInteger const kPBListDefaultTag = 105;
     if (cell.tag != kPBListCheckedTag) {
 
         cell.tag = kPBListCheckedTag;
+
+        if (item.separatorColor != nil) {
+            [self addSeparatorToCell:cell item:item];
+        }
 
         cell.titleLabel.textColor =
         item.titleColor != nil ? item.titleColor : self.titleColor;
@@ -527,10 +546,8 @@ static NSInteger const kPBListDefaultTag = 105;
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
 
         cell.titleLabel.textAlignment = item.titleAlignment;
-
-        [self addSeparatorToCell:cell item:item];
     }
-    
+
     cell.titleLabel.text = item.title;
     cell.valueLabel.text = nil;
 
@@ -547,6 +564,10 @@ static NSInteger const kPBListDefaultTag = 105;
     if (cell.tag != kPBListDefaultTag) {
 
         cell.tag = kPBListDefaultTag;
+
+        if (item.separatorColor != nil) {
+            [self addSeparatorToCell:cell item:item];
+        }
 
         cell.titleLabel.textColor =
         item.titleColor != nil ? item.titleColor : self.titleColor;
@@ -573,8 +594,6 @@ static NSInteger const kPBListDefaultTag = 105;
             cell.accessoryType = UITableViewCellAccessoryNone;
         }
 
-
-        [self addSeparatorToCell:cell item:item];
     }
 
     cell.titleLabel.text = item.title;

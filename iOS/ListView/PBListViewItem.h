@@ -27,6 +27,7 @@ extern CGFloat const kPBListActionRowHeight;
 @interface PBListViewItem : NSObject
 
 @property (nonatomic, strong) NSString *title;
+@property (nonatomic) CGFloat titleMargin;
 @property (nonatomic, strong) NSString *value;
 @property (nonatomic, strong) UIColor *titleColor;
 @property (nonatomic, strong) UIColor *valueColor;

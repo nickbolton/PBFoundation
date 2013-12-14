@@ -124,4 +124,15 @@
     }
 }
 
+- (void) layoutSubviews {
+    [super layoutSubviews];
+
+    CGRect frame = self.textLabel.frame;
+    CGFloat xdiff = self.item.titleMargin - CGRectGetMinX(frame);
+
+    frame.origin.x += xdiff;
+    frame.size.width -= xdiff;
+    self.textLabel.frame = frame;
+}
+
 @end
