@@ -28,10 +28,32 @@ CGFloat const kPBListActionRowHeight = 44.0f;
     selectionItem.value = value;
     selectionItem.rowHeight = -1.0f;
     selectionItem.itemType = itemType;
+    selectionItem.deselectable = YES;
     selectionItem.hasDisclosure = hasDisclosure;
     selectionItem.selectActionBlock = selectActionBlock;
     selectionItem.deleteActionBlock = deleteActionBlock;
-    selectionItem.selectionStyle = UITableViewCellSelectionStyleGray;
+    selectionItem.selectionStyle = itemType == PBItemTypeChecked ? UITableViewCellSelectionStyleNone : UITableViewCellSelectionStyleGray;
+    selectionItem.titleAlignment = NSTextAlignmentLeft;
+
+    return selectionItem;
+}
+
++ (instancetype)selectAllItemWithTitle:(NSString *)title
+                          selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
+                          deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock {
+
+    PBListViewItem *selectionItem =
+    [[PBListViewItem alloc] init];
+
+    selectionItem.title = title;
+    selectionItem.value = nil;
+    selectionItem.rowHeight = -1.0f;
+    selectionItem.itemType = PBItemTypeSelectAll;
+    selectionItem.deselectable = NO;
+    selectionItem.hasDisclosure = NO;
+    selectionItem.selectActionBlock = selectActionBlock;
+    selectionItem.deleteActionBlock = deleteActionBlock;
+    selectionItem.selectionStyle = UITableViewCellSelectionStyleNone;
     selectionItem.titleAlignment = NSTextAlignmentLeft;
 
     return selectionItem;
@@ -53,6 +75,7 @@ CGFloat const kPBListActionRowHeight = 44.0f;
     selectionItem.userContext = userContext;
     selectionItem.cellID = cellID;
     selectionItem.cellNib = cellNib;
+    selectionItem.deselectable = YES;
     selectionItem.configureBlock = configureBlock;
     selectionItem.bindingBlock = bindingBlock;
     selectionItem.selectActionBlock = selectActionBlock;
@@ -77,6 +100,7 @@ CGFloat const kPBListActionRowHeight = 44.0f;
     selectionItem.itemType = PBItemTypeCustom;
     selectionItem.userContext = userContext;
     selectionItem.cellID = cellID;
+    selectionItem.deselectable = YES;
     selectionItem.cellClass = cellClass;
     selectionItem.configureBlock = configureBlock;
     selectionItem.bindingBlock = bindingBlock;

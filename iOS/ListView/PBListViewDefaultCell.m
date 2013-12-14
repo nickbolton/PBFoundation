@@ -45,6 +45,24 @@
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {
     [super setSelected:selected animated:animated];
     [self updateBackoundImage];
+
+    self.item.selected = selected;
+
+    if (self.item.itemType == PBItemTypeSelectAll ||
+        self.item.itemType == PBItemTypeChecked) {
+
+        if (selected) {
+            self.accessoryType = UITableViewCellAccessoryCheckmark;
+        } else {
+            self.accessoryType = UITableViewCellAccessoryNone;
+        }
+    }
+
+    if (selected &&
+        self.item.selectionDisabled == NO &&
+        self.item.selectActionBlock != nil) {
+        self.item.selectActionBlock(self);
+    }
 }
 
 - (void)setHighlighted:(BOOL)highlighted animated:(BOOL)animated {

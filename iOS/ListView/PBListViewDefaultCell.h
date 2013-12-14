@@ -13,5 +13,6 @@
 @interface PBListViewDefaultCell : UITableViewCell
 
 @property (nonatomic, strong) PBListViewItem *item;
+@property (nonatomic) UITableView *tableView;
 
 @end

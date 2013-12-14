@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 @class TCTimePeriodSelectorView;
+@class PBListViewItem;
 
 extern NSString * const kPBListCellID;
 extern NSString * const kPBListSpacerCellID;
@@ -22,6 +23,10 @@ extern NSString * const kPBListActionCellID;
 @property (nonatomic, strong) PBActionDelegate *actionDelegate;
 @property (nonatomic) BOOL initialized;
 @property (nonatomic, getter = isModal) BOOL modal;
+@property (nonatomic, readonly, getter = isMultiSelect) BOOL multiSelect;
+@property (nonatomic) id doneTarget;
+@property (nonatomic) SEL doneSelector;
+@property (nonatomic) BOOL dismissOnDone;
 @property (nonatomic, strong) UIColor *titleColor;
 @property (nonatomic, strong) UIColor *valueColor;
 @property (nonatomic, strong) UIColor *actionColor;
@@ -32,9 +37,12 @@ extern NSString * const kPBListActionCellID;
 @property (nonatomic, strong) UIColor *spacerCellBackgroundColor;
 @property (nonatomic, strong) UIColor *tableBackgroundColor;
 @property (nonatomic) BOOL reloadDataOnViewLoad;
+@property (nonatomic) BOOL hasCancelNavigationBarItem;
 
 - (id)initWithItems:(NSArray *)items;
 - (id)initWithNib;
+
+- (void)selectItems:(NSArray *)items inSection:(NSInteger)section;
 
 - (void)setupNotifications;
 - (void)setupTableView;

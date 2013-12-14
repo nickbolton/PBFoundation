@@ -17,37 +17,44 @@ NSString * const kPBListActionCellID = @"action-cell-id";
 static NSInteger const kPBListSeparatorCellTag = 98;
 static NSInteger const kPBListSeparatorTag = 99;
 static NSInteger const kPBListActionTag = 101;
-static NSInteger const kPBListDefaultTag = 103;
+static NSInteger const kPBListCheckedTag = 103;
+static NSInteger const kPBListDefaultTag = 105;
 
 @interface PBListViewController () {
 
     BOOL _sectioned;
+    BOOL _createTable;
 }
+
+@property (nonatomic, readwrite, getter = isMultiSelect) BOOL multiSelect;
+@property (nonatomic, strong) PBListViewItem *selectAllItem;
+@property (nonatomic, strong) NSArray *selectedRowIndexes;
 
 @end
 
 @implementation PBListViewController
 
 - (id)initWithNib {
-    return [self initWithItems:nil];
-}
-
-- (id)initWithItems:(NSArray *)items {
-
     self = [super initWithNibName:NSStringFromClass([self class]) bundle:nil];
     if (self) {
-        self.dataSource = items;
         self.reloadDataOnViewLoad = YES;
     }
     return self;
 }
 
-- (id)init {
+- (id)initWithItems:(NSArray *)items {
+
     self = [super init];
     if (self) {
-        [self createTableView];
+        self.dataSource = items;
+        self.reloadDataOnViewLoad = YES;
+        _createTable = YES;
     }
     return self;
+}
+
+- (id)init {
+    return [self initWithItems:nil];
 }
 
 - (void)dealloc {
@@ -60,12 +67,52 @@ static NSInteger const kPBListDefaultTag = 103;
 }
 
 - (void)setupNavigationBar {
+
+    if (self.hasCancelNavigationBarItem) {
+
+        UIBarButtonItem *cancelItem =
+        [[UIBarButtonItem alloc]
+         initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
+         target:self
+         action:@selector(cancelPressed:)];
+
+        self.navigationItem.leftBarButtonItem = cancelItem;
+    }
+
+    if (self.isMultiSelect) {
+
+        if (self.doneTarget != nil &&
+            self.doneSelector != nil) {
+
+            UIBarButtonItem *doneItem =
+            [[UIBarButtonItem alloc]
+             initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+             target:self.doneTarget
+             action:self.doneSelector];
+
+            self.navigationItem.rightBarButtonItem = doneItem;
+
+        } else if (self.dismissOnDone) {
+
+            UIBarButtonItem *doneItem =
+            [[UIBarButtonItem alloc]
+             initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+             target:self
+             action:@selector(cancelPressed:)];
+
+            self.navigationItem.rightBarButtonItem = doneItem;
+        }
+    }
 }
 
 - (void)createTableView {
 
     self.tableView = [[UITableView alloc] init];
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.tableView.backgroundColor = [UIColor clearColor];
+    self.tableView.dataSource = self;
+    self.tableView.delegate = self;
+
     [self.view addSubview:self.tableView];
     [NSLayoutConstraint expandToSuperview:self.tableView];
 }
@@ -97,6 +144,7 @@ static NSInteger const kPBListDefaultTag = 103;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self createTableView];
     [self setupNavigationBar];
     [self setupNotifications];
     [self setupTableView];
@@ -123,11 +171,163 @@ static NSInteger const kPBListDefaultTag = 103;
 - (void)setDataSource:(NSArray *)dataSource {
     _dataSource = dataSource;
     _sectioned = [dataSource.firstObject isKindOfClass:[NSArray class]];
+
+    NSMutableArray *selectedIndexes = [NSMutableArray array];
+
+    if (_sectioned) {
+
+        NSInteger section = 0;
+
+        for (NSArray *rowArray in self.dataSource) {
+
+            NSInteger row = 0;
+
+            for (PBListViewItem *item in rowArray) {
+
+                if (item.isSelected) {
+
+                    NSIndexPath *indexPath =
+                    [NSIndexPath indexPathForRow:row inSection:section];
+
+                    [selectedIndexes addObject:indexPath];
+                }
+
+                row++;
+            }
+
+            section++;
+        }
+
+    } else {
+
+        NSInteger row = 0;
+
+        for (PBListViewItem *item in self.dataSource) {
+
+            if (item.isSelected) {
+
+                NSIndexPath *indexPath =
+                [NSIndexPath indexPathForRow:row inSection:0];
+
+                [selectedIndexes addObject:indexPath];
+            }
+
+            row++;
+        }
+    }
+
+    self.selectedRowIndexes = selectedIndexes;
 }
 
 #pragma mark - Actions
 
+- (void)cancelPressed:(id)sender {
+
+    if (self.navigationController != nil) {
+        [self.navigationController popViewControllerAnimated:YES];
+    } else {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
+}
+
 #pragma mark -
+
+- (void)selectItems:(NSArray *)items inSection:(NSInteger)section {
+
+    NSInteger index = 0;
+
+    for (PBListViewItem *item in [self rowArrayAtSection:section]) {
+
+        NSIndexPath *indexPath =
+        [NSIndexPath indexPathForRow:index inSection:section];
+
+        [self.tableView
+         selectRowAtIndexPath:indexPath
+         animated:YES
+         scrollPosition:UITableViewScrollPositionNone];
+
+        index++;
+    }
+}
+
+- (void)selectItem:(PBListViewItem *)targetItem
+         inSection:(NSInteger)section {
+
+    NSMutableArray *indexPaths = [NSMutableArray array];
+
+    NSInteger index = 0;
+
+    for (PBListViewItem *item in [self rowArrayAtSection:section]) {
+
+        if (item == targetItem) {
+            item.selected = YES;
+
+            NSIndexPath *indexPath =
+            [NSIndexPath indexPathForRow:index inSection:section];
+
+            [indexPaths addObject:indexPath];
+            break;
+        }
+
+        index++;
+    }
+
+    [self.tableView
+     reloadRowsAtIndexPaths:indexPaths
+     withRowAnimation:UITableViewRowAnimationAutomatic];
+}
+
+- (void)deselectItem:(PBListViewItem *)targetItem
+           inSection:(NSInteger)section {
+
+    NSMutableArray *indexPaths = [NSMutableArray array];
+
+    NSInteger index = 0;
+
+    for (PBListViewItem *item in [self rowArrayAtSection:section]) {
+
+        if (item == targetItem) {
+            item.selected = NO;
+
+            NSIndexPath *indexPath =
+            [NSIndexPath indexPathForRow:index inSection:section];
+
+            [indexPaths addObject:indexPath];
+            break;
+        }
+
+        index++;
+    }
+
+    [self.tableView
+     reloadRowsAtIndexPaths:indexPaths
+     withRowAnimation:UITableViewRowAnimationAutomatic];
+}
+
+- (void)delselectOtherItems:(PBListViewItem *)targetItem inSection:(NSInteger)section {
+
+    NSMutableArray *indexPaths = [NSMutableArray array];
+
+    NSInteger index = 0;
+
+    for (PBListViewItem *item in [self rowArrayAtSection:section]) {
+
+        if (item != targetItem) {
+            item.selected = NO;
+
+            NSIndexPath *indexPath =
+            [NSIndexPath indexPathForRow:index inSection:section];
+
+            [indexPaths addObject:indexPath];
+        }
+
+        index++;
+    }
+
+    [self.tableView
+     reloadRowsAtIndexPaths:indexPaths
+     withRowAnimation:UITableViewRowAnimationAutomatic];
+}
 
 - (NSArray *)rowArrayAtSection:(NSInteger)section {
 
@@ -219,6 +419,11 @@ static NSInteger const kPBListDefaultTag = 103;
                  registerClass:item.cellClass
                  forCellReuseIdentifier:item.cellID];
             }
+
+        } else if (item.itemType == PBItemTypeSelectAll) {
+
+            self.selectAllItem = item;
+            self.multiSelect = YES;
         }
     }
 }
@@ -238,6 +443,37 @@ static NSInteger const kPBListDefaultTag = 103;
     }
 
     [self.tableView reloadData];
+
+    [self setSelectionDisabledForAllItems:YES];
+
+    for (NSIndexPath *indexPath in self.selectedRowIndexes) {
+
+        [self.tableView
+         selectRowAtIndexPath:indexPath
+         animated:NO
+         scrollPosition:UITableViewScrollPositionNone];
+    }
+
+    [self setSelectionDisabledForAllItems:NO];
+}
+
+- (void)setSelectionDisabledForAllItems:(BOOL)selectionDisabled {
+
+    if (_sectioned) {
+
+        for (NSArray *rowArray in self.dataSource) {
+
+            for (PBListViewItem *item in rowArray) {
+                item.selectionDisabled = selectionDisabled;
+            }
+        }
+
+    } else {
+
+        for (PBListViewItem *item in self.dataSource) {
+            item.selectionDisabled = selectionDisabled;
+        }
+    }
 }
 
 - (void)clearSectionConfigured:(NSArray *)sectionArray {
@@ -309,6 +545,39 @@ static NSInteger const kPBListDefaultTag = 103;
     }
 
     cell.textLabel.text = item.title;
+}
+
+- (void)configureCheckedCell:(PBListCell *)cell
+                    withItem:(PBListViewItem *)item {
+
+    if (cell.tag != kPBListCheckedTag) {
+
+        cell.tag = kPBListCheckedTag;
+
+        cell.titleLabel.textColor =
+        item.titleColor != nil ? item.titleColor : self.titleColor;
+
+        cell.titleLabel.font =
+        item.titleFont != nil ? item.titleFont : self.titleFont;
+
+        cell.backgroundColor =
+        item.backgroundColor != nil ? item.backgroundColor : self.cellBackgroundColor;
+
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+
+        cell.titleLabel.textAlignment = item.titleAlignment;
+
+        [self addSeparatorToCell:cell item:item];
+    }
+    
+    cell.titleLabel.text = item.title;
+    cell.valueLabel.text = nil;
+
+    if (item.isSelected) {
+        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+    } else {
+        cell.accessoryType = UITableViewCellAccessoryNone;
+    }
 }
 
 - (void)configureDefaultCell:(PBListCell *)cell
@@ -413,6 +682,14 @@ static NSInteger const kPBListDefaultTag = 103;
 
         } break;
 
+        case PBItemTypeSelectAll:
+        case PBItemTypeChecked: {
+
+            cell = [tableView dequeueReusableCellWithIdentifier:kPBListCellID];
+            [self configureCheckedCell:(id)cell withItem:item];
+
+        } break;
+
         default: {
 
             cell = [tableView dequeueReusableCellWithIdentifier:kPBListCellID];
@@ -433,13 +710,54 @@ static NSInteger const kPBListDefaultTag = 103;
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    if (self.isMultiSelect == NO) {
+        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    }
+
+//    PBListViewItem *item = [self itemAtIndexPath:indexPath];
+//
+//    item.selected = !item.isSelected;
+//
+//    [tableView reloadRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+//
+//    if (item.selectActionBlock != nil) {
+//        item.selectActionBlock(self);
+//    }
+//
+//    if (item == self.selectAllItem) {
+//
+//        [self
+//         delselectOtherItems:self.selectAllItem
+//         inSection:indexPath.section];
+//
+//    } else if (self.selectAllItem != nil) {
+//
+//        NSInteger selectionCount = 0;
+//
+//        for (PBListViewItem *item in [self rowArrayAtSection:indexPath.section]) {
+//
+//            if (item.isSelected) {
+//                selectionCount++;
+//            }
+//        }
+//
+//        if (selectionCount == 0) {
+//            [self selectItem:self.selectAllItem inSection:indexPath.section];
+//        } else {
+//            [self deselectItem:self.selectAllItem inSection:indexPath.section];
+//        }
+//    }
+}
+
+- (NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 
     PBListViewItem *item = [self itemAtIndexPath:indexPath];
 
-    if (item.selectActionBlock != nil) {
-        item.selectActionBlock(self);
+    if (item != nil && item.isSelected && item.isDeselectable == NO) {
+        return nil;
     }
+
+    return indexPath;
 }
 
 - (void)tableView:(UITableView *)tableView

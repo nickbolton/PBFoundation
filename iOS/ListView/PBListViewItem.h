@@ -13,6 +13,8 @@ typedef NS_ENUM(NSInteger, PBItemType) {
     PBItemTypeDefault = 0,
     PBItemTypeAction,
     PBItemTypeSpacer,
+    PBItemTypeChecked,
+    PBItemTypeSelectAll,
     PBItemTypeCustom,
 };
 
@@ -40,6 +42,9 @@ extern CGFloat const kPBListActionRowHeight;
 @property (nonatomic) UIEdgeInsets separatorInsets;
 @property (nonatomic) BOOL hasDisclosure;
 @property (nonatomic) BOOL itemConfigured;
+@property (nonatomic) BOOL selectionDisabled;
+@property (nonatomic, getter = isSelected) BOOL selected;
+@property (nonatomic, getter = isDeselectable) BOOL deselectable;
 @property (nonatomic, getter = isDeletable) BOOL deletable;
 @property (nonatomic) CGFloat rowHeight;
 @property (nonatomic) NSString *cellID;
@@ -58,6 +63,10 @@ extern CGFloat const kPBListActionRowHeight;
                                  value:(NSString *)value
                               itemType:(PBItemType)itemType
                          hasDisclosure:(BOOL)hasDisclosure
+                          selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
+                          deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock;
+
++ (instancetype)selectAllItemWithTitle:(NSString *)title
                           selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
                           deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock;
 
