@@ -23,7 +23,6 @@ extern NSString * const kPBListActionCellID;
 @property (nonatomic, strong) PBActionDelegate *actionDelegate;
 @property (nonatomic) BOOL initialized;
 @property (nonatomic, getter = isModal) BOOL modal;
-@property (nonatomic, readonly, getter = isMultiSelect) BOOL multiSelect;
 @property (nonatomic) id doneTarget;
 @property (nonatomic) SEL doneSelector;
 @property (nonatomic) BOOL dismissOnDone;
@@ -36,6 +35,7 @@ extern NSString * const kPBListActionCellID;
 @property (nonatomic, strong) UIColor *cellBackgroundColor;
 @property (nonatomic, strong) UIColor *spacerCellBackgroundColor;
 @property (nonatomic, strong) UIColor *tableBackgroundColor;
+@property (nonatomic, strong) UIColor *backgroundColor;
 @property (nonatomic) BOOL reloadDataOnViewLoad;
 @property (nonatomic) BOOL hasCancelNavigationBarItem;
 

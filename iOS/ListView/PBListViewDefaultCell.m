@@ -9,6 +9,7 @@
 #import "PBListViewDefaultCell.h"
 #import "PBListViewItem.h"
 #import "NSLayoutConstraint+PBFoundation.h"
+#import "PBListViewController.h"
 
 @interface PBListViewDefaultCell()
 
@@ -42,26 +43,37 @@
     return _backgroundImageView;
 }
 
-- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
-    [super setSelected:selected animated:animated];
+- (void)updateForSelectedState {
+
     [self updateBackoundImage];
 
-    self.item.selected = selected;
+    self.item.selected = self.isSelected;
 
     if (self.item.itemType == PBItemTypeSelectAll ||
         self.item.itemType == PBItemTypeChecked) {
 
-        if (selected) {
+        if (self.isSelected) {
             self.accessoryType = UITableViewCellAccessoryCheckmark;
         } else {
             self.accessoryType = UITableViewCellAccessoryNone;
         }
     }
 
-    if (selected &&
+    if (self.isSelected &&
         self.item.selectionDisabled == NO &&
         self.item.selectActionBlock != nil) {
         self.item.selectActionBlock(self);
+    }
+
+    self.item.selectionDisabled = NO;
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
+
+    if (self.isSelected != selected) {
+
+        [super setSelected:selected animated:animated];
+        [self updateForSelectedState];
     }
 }
 
