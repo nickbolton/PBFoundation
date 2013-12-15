@@ -28,6 +28,7 @@ extern CGFloat const kPBListActionRowHeight;
 
 @property (nonatomic, strong) NSString *title;
 @property (nonatomic) CGFloat titleMargin;
+@property (nonatomic) CGFloat valueMargin;
 @property (nonatomic, strong) NSString *value;
 @property (nonatomic, strong) UIColor *titleColor;
 @property (nonatomic, strong) UIColor *valueColor;

@@ -594,6 +594,12 @@ static NSInteger const kPBListDefaultTag = 105;
             cell.accessoryType = UITableViewCellAccessoryNone;
         }
 
+        if (item.hasDisclosure == NO) {
+
+            CGRect frame = cell.valueLabel.frame;
+            frame.origin.x -= item.valueMargin;
+            cell.valueLabel.frame = frame;
+        }
     }
 
     cell.titleLabel.text = item.title;
