@@ -22,7 +22,8 @@
 - (void)prepareForReuse {
     [super prepareForReuse];
     self.item = nil;
-    self.backgroundImageView.image = nil;
+
+    _backgroundImageView.image = nil;
 }
 
 - (UIImageView *)backgroundImageView {
@@ -41,6 +42,10 @@
     }
 
     return _backgroundImageView;
+}
+
+- (void)setBackgroundColor:(UIColor *)backgroundColor {
+    [super setBackgroundColor:backgroundColor];
 }
 
 - (void)updateForSelectedState {
