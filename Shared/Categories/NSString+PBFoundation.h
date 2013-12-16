@@ -10,6 +10,7 @@
 
 @interface NSString (PBFoundation)
 
++ (NSString *)uuidString;
 + (NSString *)deviceIdentifier;
 + (NSString *)timestampedGuid;
 + (NSString *)applicationInstanceId;

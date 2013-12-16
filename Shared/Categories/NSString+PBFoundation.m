@@ -23,6 +23,16 @@ NSString * const kPBFRemoteApplicationInstanceIdKey = @"!pbr-app-instance-id";
 
 @implementation NSString (PBFoundation)
 
++ (NSString *)uuidString {
+    // Returns a UUID
+
+    CFUUIDRef uuid = CFUUIDCreate(kCFAllocatorDefault);
+    NSString *uuidString = (__bridge_transfer NSString *)CFUUIDCreateString(kCFAllocatorDefault, uuid);
+    CFRelease(uuid);
+
+    return uuidString;
+}
+
 + (NSString *)machineName {
 #if TARGET_OS_IPHONE
     return [[UIDevice currentDevice] name];
