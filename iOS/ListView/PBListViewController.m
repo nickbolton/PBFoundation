@@ -104,16 +104,18 @@ static NSInteger const kPBListDefaultTag = 105;
     }
 }
 
-- (void)createTableView {
+- (void)createTableViewIfNecessary {
 
-    self.tableView = [[UITableView alloc] init];
-    self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
-    self.tableView.backgroundColor = [UIColor clearColor];
-    self.tableView.dataSource = self;
-    self.tableView.delegate = self;
+    if (self.tableView == nil) {
+        self.tableView = [[UITableView alloc] init];
+        self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
+        self.tableView.backgroundColor = [UIColor clearColor];
+        self.tableView.dataSource = self;
+        self.tableView.delegate = self;
 
-    [self.view addSubview:self.tableView];
-    [NSLayoutConstraint expandToSuperview:self.tableView];
+        [self.view addSubview:self.tableView];
+        [NSLayoutConstraint expandToSuperview:self.tableView];
+    }
 }
 
 - (void)setupTableView {
@@ -150,7 +152,7 @@ static NSInteger const kPBListDefaultTag = 105;
         self.view.backgroundColor = [UIColor clearColor];
     }
 
-    [self createTableView];
+    [self createTableViewIfNecessary];
     [self setupNavigationBar];
     [self setupNotifications];
     [self setupTableView];
