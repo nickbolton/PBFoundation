@@ -15,6 +15,7 @@
 
 @property (nonatomic, strong) PBListViewItem *item;
 @property (nonatomic, weak) PBListViewController *viewController;
+@property (nonatomic) BOOL cellConfigured;
 
 - (void)updateForSelectedState;
 

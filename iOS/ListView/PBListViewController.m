@@ -657,10 +657,20 @@ static NSInteger const kPBListDefaultTag = 105;
         case PBItemTypeCustom: {
 
             cell = [tableView dequeueReusableCellWithIdentifier:item.cellID];
-            
-            if (item.configureBlock != nil && item.itemConfigured == NO) {
+
+            NSAssert([cell isKindOfClass:[PBListViewDefaultCell class]],
+                     @"custom cells must extend from PBListViewDefaultCell");
+
+            PBListViewDefaultCell *defaultCell = (id)cell;
+
+            if (item.configureBlock != nil &&
+                (defaultCell.cellConfigured == NO ||
+                item.itemConfigured == NO)) {
+
+                cell.selectionStyle = item.selectionStyle;
 
                 item.configureBlock(self, item, cell);
+                defaultCell.cellConfigured = YES;
                 item.itemConfigured = YES;
             }
 
