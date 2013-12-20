@@ -61,6 +61,8 @@ extern CGFloat const kPBListActionRowHeight;
 @property (nonatomic) UITableViewCellSelectionStyle selectionStyle;
 @property (nonatomic) NSTextAlignment titleAlignment;
 
++ (instancetype)spacerItemWithHeight:(CGFloat)height;
+
 + (instancetype)selectionItemWithTitle:(NSString *)title
                                  value:(NSString *)value
                               itemType:(PBItemType)itemType

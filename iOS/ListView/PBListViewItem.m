@@ -14,6 +14,23 @@ CGFloat const kPBListActionRowHeight = 44.0f;
 
 @implementation PBListViewItem
 
++ (instancetype)spacerItemWithHeight:(CGFloat)height {
+
+    PBListViewItem *item =
+    [self
+     selectionItemWithTitle:nil
+     value:nil
+     itemType:PBItemTypeSpacer
+     hasDisclosure:NO
+     selectAction:nil
+     deleteAction:nil];
+
+    item.backgroundColor = [UIColor clearColor];
+    item.rowHeight = height;
+
+    return item;
+}
+
 + (instancetype)selectionItemWithTitle:(NSString *)title
                                  value:(NSString *)value
                               itemType:(PBItemType)itemType
