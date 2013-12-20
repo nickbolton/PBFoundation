@@ -20,7 +20,7 @@ static NSInteger const kPBListActionTag = 101;
 static NSInteger const kPBListCheckedTag = 103;
 static NSInteger const kPBListDefaultTag = 105;
 
-@interface PBListViewController () {
+@interface PBListViewController () <UITableViewDataSource, UITableViewDelegate> {
 
     BOOL _sectioned;
     BOOL _createTable;
@@ -785,8 +785,6 @@ static NSInteger const kPBListDefaultTag = 105;
 
 - (void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath {
 
-    PBListViewItem *item = [self itemAtIndexPath:indexPath];
-
     if (self.selectAllItem != nil) {
 
         NSInteger selectionCount = 0;
@@ -821,7 +819,7 @@ static NSInteger const kPBListDefaultTag = 105;
             if (tableView.allowsMultipleSelection == NO) {
 
                 PBListViewDefaultCell *cell =
-                [tableView cellForRowAtIndexPath:indexPath];
+                (id)[tableView cellForRowAtIndexPath:indexPath];
 
                 if ([cell isKindOfClass:[PBListViewDefaultCell class]]) {
                     [cell updateForSelectedState];
