@@ -122,6 +122,7 @@ static NSInteger const kPBListDefaultTag = 105;
 
     self.tableView.backgroundColor = [UIColor clearColor];
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    self.tableView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
 
     UINib *nib =
     [UINib
