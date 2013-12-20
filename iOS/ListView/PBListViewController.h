@@ -52,5 +52,8 @@ extern NSString * const kPBListActionCellID;
 - (void)reloadTableRow:(NSUInteger)row;
 - (void)reloadTableRow:(NSUInteger)row
          withAnimation:(UITableViewRowAnimation)animation;
+- (void)keyboardWillShow:(NSNotification *)notification;
+- (void)keyboardWillHide:(NSNotification *)notification;
+- (void)dismissKeyboard;
 
 @end

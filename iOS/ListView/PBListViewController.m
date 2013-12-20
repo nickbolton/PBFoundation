@@ -28,6 +28,7 @@ static NSInteger const kPBListDefaultTag = 105;
 
 @property (nonatomic, strong) PBListViewItem *selectAllItem;
 @property (nonatomic, strong) NSArray *selectedRowIndexes;
+@property (nonatomic, strong) UISwipeGestureRecognizer *swipeGesture;
 
 @end
 
@@ -63,6 +64,18 @@ static NSInteger const kPBListDefaultTag = 105;
 #pragma mark - Setup
 
 - (void)setupNotifications {
+
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(keyboardWillHide:)
+     name:UIKeyboardWillHideNotification
+     object:nil];
+
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(keyboardWillShow:)
+     name:UIKeyboardWillShowNotification
+     object:nil];
 }
 
 - (void)setupNavigationBar {
@@ -122,7 +135,6 @@ static NSInteger const kPBListDefaultTag = 105;
 
     self.tableView.backgroundColor = [UIColor clearColor];
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-    self.tableView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
 
     UINib *nib =
     [UINib
@@ -607,6 +619,36 @@ static NSInteger const kPBListDefaultTag = 105;
 
     cell.titleLabel.text = item.title;
     cell.valueLabel.text = item.value;
+}
+
+#pragma mark - Keyboard Handling
+
+- (void)keyboardWillShow:(NSNotification *)notification {
+
+    self.swipeGesture =
+    [[UISwipeGestureRecognizer alloc]
+     initWithTarget:self action:@selector(dismissKeyboard:)];
+
+    self.tableView.scrollEnabled = NO;
+    self.swipeGesture.direction = UISwipeGestureRecognizerDirectionDown;
+    [self.tableView addGestureRecognizer:self.swipeGesture];
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification {
+
+    [self.tableView removeGestureRecognizer:self.swipeGesture];
+    self.swipeGesture = nil;
+    self.tableView.scrollEnabled = YES;
+}
+
+- (void)dismissKeyboard:(UISwipeGestureRecognizer *)gesture {
+
+    if (gesture.state == UIGestureRecognizerStateEnded) {
+        [self dismissKeyboard];
+    }
+}
+
+- (void)dismissKeyboard {
 }
 
 #pragma mark -
