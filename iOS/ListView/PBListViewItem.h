@@ -13,6 +13,7 @@ typedef NS_ENUM(NSInteger, PBItemType) {
     PBItemTypeDefault = 0,
     PBItemTypeAction,
     PBItemTypeSpacer,
+    PBItemTypeSeparator,
     PBItemTypeChecked,
     PBItemTypeSelectAll,
     PBItemTypeCustom,
@@ -35,7 +36,6 @@ extern CGFloat const kPBListActionRowHeight;
 @property (nonatomic, strong) UIFont *titleFont;
 @property (nonatomic, strong) UIFont *valueFont;
 @property (nonatomic, strong) UIColor *backgroundColor;
-@property (nonatomic, strong) UIColor *separatorColor;
 @property (nonatomic, strong) UIImage *backgroundImage;
 @property (nonatomic, strong) UIImage *selectedBackgroundImage;
 @property (nonatomic, strong) UIImage *hightlightedBackgroundImage;

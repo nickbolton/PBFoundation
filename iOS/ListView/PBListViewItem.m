@@ -27,6 +27,7 @@ CGFloat const kPBListActionRowHeight = 44.0f;
 
     item.backgroundColor = [UIColor clearColor];
     item.rowHeight = height;
+    item.selectionStyle = UITableViewCellSelectionStyleNone;
 
     return item;
 }

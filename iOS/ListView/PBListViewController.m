@@ -135,6 +135,8 @@ static NSInteger const kPBListDefaultTag = 105;
 
     self.tableView.backgroundColor = [UIColor clearColor];
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
 
     UINib *nib =
     [UINib
@@ -459,40 +461,40 @@ static NSInteger const kPBListDefaultTag = 105;
     }
 }
 
-- (void)addSeparatorToCell:(UITableViewCell *)cell
-                      item:(PBListViewItem *)item {
-
-    UIView *separator = [cell viewWithTag:kPBListSeparatorTag];
-
-    if (separator == nil) {
-        separator = [[UIView alloc] init];
-        separator.backgroundColor = item.separatorColor;
-        separator.tag = kPBListSeparatorTag;
-        [cell addSubview:separator];
-    }
-
-    CGFloat scale = [[UIScreen mainScreen] scale];
-
-    CGFloat height = 1.0f / scale;
-
-    CGFloat width = 0.0f;
-
-    if (CGRectGetWidth(self.tableView.frame) > 0) {
-        width =
-        CGRectGetWidth(self.tableView.frame) -
-        item.separatorInsets.left -
-        item.separatorInsets.right;
-    }
-
-    CGRect frame =
-    CGRectMake(item.separatorInsets.left,
-               item.rowHeight-height,
-               width,
-               height);
-
-    separator.frame = frame;
-    separator.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-}
+//- (void)addSeparatorToCell:(UITableViewCell *)cell
+//                      item:(PBListViewItem *)item {
+//
+//    UIView *separator = [cell viewWithTag:kPBListSeparatorTag];
+//
+//    if (separator == nil) {
+//        separator = [[UIView alloc] init];
+//        separator.backgroundColor = item.separatorColor;
+//        separator.tag = kPBListSeparatorTag;
+//        [cell addSubview:separator];
+//    }
+//
+//    CGFloat scale = [[UIScreen mainScreen] scale];
+//
+//    CGFloat height = 1.0f / scale;
+//
+//    CGFloat width = 0.0f;
+//
+//    if (CGRectGetWidth(self.tableView.frame) > 0) {
+//        width =
+//        CGRectGetWidth(self.tableView.frame) -
+//        item.separatorInsets.left -
+//        item.separatorInsets.right;
+//    }
+//
+//    CGRect frame =
+//    CGRectMake(item.separatorInsets.left,
+//               item.rowHeight-height,
+//               width,
+//               height);
+//
+//    separator.frame = frame;
+//    separator.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+//}
 
 - (void)configureSpacerCell:(UITableViewCell *)cell
                    withItem:(PBListViewItem *)item {
@@ -501,13 +503,11 @@ static NSInteger const kPBListDefaultTag = 105;
 
         cell.tag = kPBListSeparatorCellTag;
 
-        if (item.separatorColor != nil) {
-            [self addSeparatorToCell:cell item:item];
-        }
-
         cell.backgroundColor = [UIColor clearColor];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
+
+    cell.separatorInset = item.separatorInsets;
 }
 
 - (void)configureActionCell:(UITableViewCell *)cell
@@ -516,10 +516,6 @@ static NSInteger const kPBListDefaultTag = 105;
     if (cell.tag != kPBListActionTag) {
 
         cell.tag = kPBListActionTag;
-
-        if (item.separatorColor != nil) {
-            [self addSeparatorToCell:cell item:item];
-        }
 
         cell.textLabel.textColor =
         item.titleColor != nil ? item.titleColor : self.actionColor;
@@ -535,6 +531,7 @@ static NSInteger const kPBListDefaultTag = 105;
         cell.textLabel.textAlignment = item.titleAlignment;
     }
 
+    cell.separatorInset = item.separatorInsets;
     cell.textLabel.text = item.title;
 }
 
@@ -544,10 +541,6 @@ static NSInteger const kPBListDefaultTag = 105;
     if (cell.tag != kPBListCheckedTag) {
 
         cell.tag = kPBListCheckedTag;
-
-        if (item.separatorColor != nil) {
-            [self addSeparatorToCell:cell item:item];
-        }
 
         cell.titleLabel.textColor =
         item.titleColor != nil ? item.titleColor : self.titleColor;
@@ -565,6 +558,7 @@ static NSInteger const kPBListDefaultTag = 105;
 
     cell.titleLabel.text = item.title;
     cell.valueLabel.text = nil;
+    cell.separatorInset = item.separatorInsets;
 
     if (item.isSelected) {
         cell.accessoryType = UITableViewCellAccessoryCheckmark;
@@ -579,10 +573,6 @@ static NSInteger const kPBListDefaultTag = 105;
     if (cell.tag != kPBListDefaultTag) {
 
         cell.tag = kPBListDefaultTag;
-
-        if (item.separatorColor != nil) {
-            [self addSeparatorToCell:cell item:item];
-        }
 
         cell.titleLabel.textColor =
         item.titleColor != nil ? item.titleColor : self.titleColor;
@@ -617,6 +607,7 @@ static NSInteger const kPBListDefaultTag = 105;
         }
     }
 
+    cell.separatorInset = item.separatorInsets;
     cell.titleLabel.text = item.title;
     cell.valueLabel.text = item.value;
 }
@@ -711,10 +702,12 @@ static NSInteger const kPBListDefaultTag = 105;
                 item.itemConfigured == NO)) {
 
                 cell.selectionStyle = item.selectionStyle;
+                cell.separatorInset = item.separatorInsets;
 
                 item.configureBlock(self, item, cell);
                 defaultCell.cellConfigured = YES;
                 item.itemConfigured = YES;
+
             }
 
             NSAssert(item.bindingBlock != nil, @"No binding block!");
