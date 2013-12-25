@@ -22,4 +22,7 @@
                              translation:(CGPoint)translation;
 - (void)stopWiggleAnimation;
 
+- (UIImage *)pb_screenshotInBounds:(CGRect)bounds
+                afterScreenUpdates:(BOOL)afterScreenUpdates;
+
 @end

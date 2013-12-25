@@ -196,4 +196,19 @@
     return anim;
 }
 
+- (UIImage *)pb_screenshotInBounds:(CGRect)bounds afterScreenUpdates:(BOOL)afterScreenUpdates {
+    UIGraphicsBeginImageContext(bounds.size);
+    if([self respondsToSelector:@selector(drawViewHierarchyInRect:afterScreenUpdates:)]){
+        [self drawViewHierarchyInRect:bounds afterScreenUpdates:afterScreenUpdates];
+    }
+    else{
+        [self.layer renderInContext:UIGraphicsGetCurrentContext()];
+    }
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    NSData *imageData = UIImageJPEGRepresentation(image, 0.75);
+    image = [UIImage imageWithData:imageData];
+    return image;
+}
+
 @end
