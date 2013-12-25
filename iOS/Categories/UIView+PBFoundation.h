@@ -17,4 +17,9 @@
 - (void)addFadingMaskWithEdgeInsets:(UIEdgeInsets)edgeInsets;
 - (void)disableGesturesOfType:(Class)gestureType recurse:(BOOL)recurse;
 
+// animations
+- (void)startWiggleAnimationWithRotation:(CGFloat)rotation
+                             translation:(CGPoint)translation;
+- (void)stopWiggleAnimation;
+
 @end

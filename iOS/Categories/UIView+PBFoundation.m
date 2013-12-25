@@ -142,4 +142,58 @@
 
 }
 
+- (void)startWiggleAnimationWithRotation:(CGFloat)rotation
+                             translation:(CGPoint)translation {
+
+    CAAnimation *rotationAnimation = [self wiggleRotationAnimation:rotation];
+    [self.layer addAnimation:rotationAnimation forKey:@"wiggleRotation"];
+
+    CAAnimation *translationXAnimation = [self wiggleTranslationXAnimation:translation.x];
+    [self.layer addAnimation:translationXAnimation forKey:@"wiggleTranslationX"];
+
+    CAAnimation *translationYAnimation = [self wiggleTranslationYAnimation:translation.y];
+    [self.layer addAnimation:translationYAnimation forKey:@"wiggleTranslationY"];
+}
+
+- (void)stopWiggleAnimation {
+    [self.layer removeAnimationForKey:@"wiggleRotation"];
+    [self.layer removeAnimationForKey:@"wiggleTranslationX"];
+    [self.layer removeAnimationForKey:@"wiggleTranslationY"];
+}
+
+- (CAAnimation *)wiggleRotationAnimation:(CGFloat)rotation {
+    CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:@"transform.rotation"];
+    anim.values = [NSArray arrayWithObjects:[NSNumber numberWithFloat:-rotation],
+                   [NSNumber numberWithFloat:rotation],
+                   nil];
+    anim.duration = 0.1f;
+    anim.autoreverses = YES;
+    anim.repeatCount = HUGE_VALF;
+    return anim;
+}
+
+- (CAAnimation *)wiggleTranslationXAnimation:(CGFloat)x {
+    CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
+    anim.values = [NSArray arrayWithObjects:[NSNumber numberWithFloat:-x],
+                   [NSNumber numberWithFloat:x],
+                   nil];
+    anim.duration = 0.05f;
+    anim.autoreverses = YES;
+    anim.repeatCount = HUGE_VALF;
+    anim.additive = YES;
+    return anim;
+}
+
+- (CAAnimation *)wiggleTranslationYAnimation:(CGFloat)y {
+    CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.y"];
+    anim.values = [NSArray arrayWithObjects:[NSNumber numberWithFloat:-y],
+                   [NSNumber numberWithFloat:y],
+                   nil];
+    anim.duration = 0.08f;
+    anim.autoreverses = YES;
+    anim.repeatCount = HUGE_VALF;
+    anim.additive = YES;
+    return anim;
+}
+
 @end

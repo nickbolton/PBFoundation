@@ -37,6 +37,7 @@
 #import "UIColor+PBFoundation.h"
 #import "UIImage+PBFoundation.h"
 #import "UIView+PBFoundation.h"
+#import "UIButton+PBFoundation.h"
 #import "UIBezierView.h"
 #import "UIBezierButton.h"
 #import "UINavigationController+PBFoundation.h"
