@@ -196,6 +196,13 @@
     return anim;
 }
 
+- (UIImage *)pb_screenshot {
+    return
+    [self
+     pb_screenshotInBounds:self.bounds
+     afterScreenUpdates:NO];
+}
+
 - (UIImage *)pb_screenshotInBounds:(CGRect)bounds afterScreenUpdates:(BOOL)afterScreenUpdates {
     UIGraphicsBeginImageContext(bounds.size);
     if([self respondsToSelector:@selector(drawViewHierarchyInRect:afterScreenUpdates:)]){
