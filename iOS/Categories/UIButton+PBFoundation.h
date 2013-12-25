@@ -10,6 +10,9 @@
 
 @interface UIButton (PBFoundation)
 
-- (void)bindWithWiggleAnimation:(id)target action:(SEL)action;
+- (void)bindWiggleAnimationWithView:(UIView *)view
+                       withRotation:(CGFloat)rotation
+                        translation:(CGPoint)translation
+                stopOnTouchUpInside:(BOOL)stopOnTouchUpInside;
 
 @end
