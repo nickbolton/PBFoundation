@@ -13,6 +13,7 @@
 static char kPBWiggleAnimationRotationObjectKey;
 static char kPBWiggleAnimationTranslationObjectKey;
 static char kPBWiggleAnimationTargetViewObjectKey;
+static char kPBWiggleAnimationStopDelayObjectKey;
 
 @implementation UIButton (PBFoundation)
 
@@ -40,14 +41,23 @@ static char kPBWiggleAnimationTargetViewObjectKey;
     objc_setAssociatedObject(self, &kPBWiggleAnimationTranslationObjectKey, translation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
+- (NSNumber *)pb_wiggleAnimationStopDelay {
+    return (NSNumber *)objc_getAssociatedObject(self, &kPBWiggleAnimationStopDelayObjectKey);
+}
+
+- (void)pb_setWiggleAnimationStopDelay:(NSNumber *)stopDelay {
+    objc_setAssociatedObject(self, &kPBWiggleAnimationStopDelayObjectKey, stopDelay, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
 - (void)bindWiggleAnimationWithView:(UIView *)view
                        withRotation:(CGFloat)rotation
                         translation:(CGPoint)translation
-                stopOnTouchUpInside:(BOOL)stopOnTouchUpInside {
+           stopDelayOnTouchUpInside:(NSTimeInterval)stopDelayOnTouchUpInside {
 
     [self pb_setWiggleAnimationTargetView:view];
     [self pb_setWiggleAnimationRotation:@(rotation)];
     [self pb_setWiggleAnimationTranslation:[NSValue valueWithCGPoint:translation]];
+    [self pb_setWiggleAnimationStopDelay:@(stopDelayOnTouchUpInside)];
 
     [self
      addTarget:self
@@ -64,13 +74,10 @@ static char kPBWiggleAnimationTargetViewObjectKey;
      action:@selector(stopWiggleAnimation)
      forControlEvents:UIControlEventTouchCancel];
 
-    if (stopOnTouchUpInside) {
-
-        [self
-         addTarget:view
-         action:@selector(stopWiggleAnimation)
-         forControlEvents:UIControlEventTouchUpInside];
-    }
+    [self
+     addTarget:self
+     action:@selector(pb_stopWiggleAnimation:)
+     forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)pb_startWiggleAnimation:(id)sender {
@@ -84,6 +91,27 @@ static char kPBWiggleAnimationTargetViewObjectKey;
         [view
          startWiggleAnimationWithRotation:rotaton.floatValue
          translation:translationValue.CGPointValue];
+    }
+}
+
+- (void)pb_stopWiggleAnimation:(id)sender {
+
+    UIView *view = [self pb_wiggleAnimationTargetView];
+    NSNumber *stopDelay = [self pb_wiggleAnimationStopDelay];
+
+    if (view != nil && stopDelay != nil) {
+
+        if (stopDelay.floatValue > 0.0f) {
+
+            NSTimeInterval delayInSeconds = stopDelay.floatValue;
+            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+            dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+                [view stopWiggleAnimation];
+            });
+
+        } else {
+            [view stopWiggleAnimation];
+        }
     }
 }
 

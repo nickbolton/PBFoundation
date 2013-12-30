@@ -13,6 +13,6 @@
 - (void)bindWiggleAnimationWithView:(UIView *)view
                        withRotation:(CGFloat)rotation
                         translation:(CGPoint)translation
-                stopOnTouchUpInside:(BOOL)stopOnTouchUpInside;
+           stopDelayOnTouchUpInside:(NSTimeInterval)stopDelayOnTouchUpInside;
 
 @end
