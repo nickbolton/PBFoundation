@@ -1,15 +1,15 @@
 //
-//  PBListCell.m
+//  PBTitleCell.m
 //  PBFoundation
 //
 //  Created by Nick Bolton on 11/4/13.
 //  Copyright (c) 2013 Pixelbleed. All rights reserved.
 //
 
-#import "PBListCell.h"
+#import "PBTitleCell.h"
 #import "PBListViewItem.h"
 
-@implementation PBListCell
+@implementation PBTitleCell
 
 - (void) layoutSubviews {
     [super layoutSubviews];

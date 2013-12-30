@@ -9,10 +9,12 @@
 #import "PBListViewController.h"
 #import "PBListViewItem.h"
 #import "PBListCell.h"
+#import "PBTitleCell.h"
 
 NSString * const kPBListCellID = @"default-cell-id";
 NSString * const kPBListSpacerCellID = @"spacer-cell-id";
 NSString * const kPBListActionCellID = @"action-cell-id";
+NSString * const kPBListTitleCellID = @"title-cell-id";
 
 static NSInteger const kPBListSeparatorCellTag = 98;
 static NSInteger const kPBListSeparatorTag = 99;
@@ -143,9 +145,18 @@ static NSInteger const kPBListDefaultTag = 105;
      nibWithNibName:NSStringFromClass([PBListCell class])
      bundle:nil];
 
+    UINib *titleNib =
+    [UINib
+     nibWithNibName:NSStringFromClass([PBTitleCell class])
+     bundle:nil];
+
     [self.tableView
      registerNib:nib
      forCellReuseIdentifier:kPBListCellID];
+
+    [self.tableView
+     registerNib:titleNib
+     forCellReuseIdentifier:kPBListTitleCellID];
 
     [self.tableView
      registerClass:[PBListViewDefaultCell class]
@@ -669,6 +680,7 @@ static NSInteger const kPBListDefaultTag = 105;
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
 
     PBListViewItem *item = [self itemAtIndexPath:indexPath];
+    item.indexPath = indexPath;
 
     UITableViewCell *cell;
 
@@ -713,6 +725,13 @@ static NSInteger const kPBListDefaultTag = 105;
             NSAssert(item.bindingBlock != nil, @"No binding block!");
 
             item.bindingBlock(self, indexPath, item, cell);
+
+        } break;
+
+        case PBItemTypeTitle: {
+
+            cell = [tableView dequeueReusableCellWithIdentifier:kPBListTitleCellID];
+            [self configureDefaultCell:(id)cell withItem:item];
 
         } break;
 

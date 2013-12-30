@@ -11,6 +11,7 @@
 typedef NS_ENUM(NSInteger, PBItemType) {
 
     PBItemTypeDefault = 0,
+    PBItemTypeTitle,
     PBItemTypeAction,
     PBItemTypeSpacer,
     PBItemTypeSeparator,
@@ -24,6 +25,7 @@ extern CGFloat const kPBListSpacerRowHeight;
 extern CGFloat const kPBListActionRowHeight;
 
 @class PBListViewController;
+@class PBListViewDefaultCell;
 
 @interface PBListViewItem : NSObject
 
@@ -53,6 +55,7 @@ extern CGFloat const kPBListActionRowHeight;
 @property (nonatomic) UINib *cellNib;
 @property (nonatomic) Class cellClass;
 @property (nonatomic) id userContext;
+@property (nonatomic, strong) NSIndexPath *indexPath;
 @property (nonatomic, copy) void(^selectActionBlock)(id sender);
 @property (nonatomic, copy) void(^deleteActionBlock)(id sender);
 @property (nonatomic, copy) void(^configureBlock)(id sender, PBListViewItem *item, id cell);
@@ -63,31 +66,33 @@ extern CGFloat const kPBListActionRowHeight;
 
 + (instancetype)spacerItemWithHeight:(CGFloat)height;
 
++ (instancetype)titleItemWithTitle:(NSString *)title height:(CGFloat)height;
+
 + (instancetype)selectionItemWithTitle:(NSString *)title
                                  value:(NSString *)value
                               itemType:(PBItemType)itemType
                          hasDisclosure:(BOOL)hasDisclosure
-                          selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
-                          deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock;
+                          selectAction:(void(^)(id cell))selectActionBlock
+                          deleteAction:(void(^)(id cell))deleteActionBlock;
 
 + (instancetype)selectAllItemWithTitle:(NSString *)title
-                          selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
-                          deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock;
+                          selectAction:(void(^)(id cell))selectActionBlock
+                          deleteAction:(void(^)(id cell))deleteActionBlock;
 
 + (instancetype)customNibItemWithUserContext:(id)userContext
                                       cellID:(NSString *)cellID
                                      cellNib:(UINib *)cellNib
-                                   configure:(void(^)(PBListViewController *viewController, PBListViewItem *item, id cell))configureBlock
-                                     binding:(void(^)(PBListViewController *viewController, NSIndexPath *indexPath, PBListViewItem *item, id cell))bindingBlock
-                                selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
-                                deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock;
+                                   configure:(void(^)(id viewController, PBListViewItem *item, id cell))configureBlock
+                                     binding:(void(^)(id viewController, NSIndexPath *indexPath, PBListViewItem *item, id cell))bindingBlock
+                                selectAction:(void(^)(id cell))selectActionBlock
+                                deleteAction:(void(^)(id cell))deleteActionBlock;
 
 + (instancetype)customClassItemWithUserContext:(id)userContext
                                         cellID:(NSString *)cellID
                                      cellClass:(Class)cellClass
-                                     configure:(void(^)(PBListViewController *viewController, PBListViewItem *item, id cell))configureBlock
-                                       binding:(void(^)(PBListViewController *viewController, NSIndexPath *indexPath, PBListViewItem *item, id cell))bindingBlock
-                                  selectAction:(void(^)(PBListViewController *viewController))selectActionBlock
-                                  deleteAction:(void(^)(PBListViewController *viewController))deleteActionBlock;
+                                     configure:(void(^)(id viewController, PBListViewItem *item, id cell))configureBlock
+                                       binding:(void(^)(id viewController, NSIndexPath *indexPath, PBListViewItem *item, id cell))bindingBlock
+                                  selectAction:(void(^)(id cell))selectActionBlock
+                                  deleteAction:(void(^)(id cell))deleteActionBlock;
 
 @end
