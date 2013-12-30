@@ -745,11 +745,14 @@ static NSInteger const kPBListDefaultTag = 105;
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
 
-    if (self.tableView.allowsMultipleSelection == NO) {
-        [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    }
-
     PBListViewItem *item = [self itemAtIndexPath:indexPath];
+
+    if (self.tableView.allowsMultipleSelection == NO) {
+
+        if (item.itemType != PBItemTypeChecked && item.itemType != PBItemTypeSelectAll) {
+            [tableView deselectRowAtIndexPath:indexPath animated:YES];
+        }
+    }
 
     if (item == self.selectAllItem) {
 

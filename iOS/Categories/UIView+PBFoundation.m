@@ -145,14 +145,17 @@
 - (void)startWiggleAnimationWithRotation:(CGFloat)rotation
                              translation:(CGPoint)translation {
 
-    CAAnimation *rotationAnimation = [self wiggleRotationAnimation:rotation];
-    [self.layer addAnimation:rotationAnimation forKey:@"wiggleRotation"];
+    if ([self.layer.animationKeys containsObject:@"wiggleRotation"] == NO) {
 
-    CAAnimation *translationXAnimation = [self wiggleTranslationXAnimation:translation.x];
-    [self.layer addAnimation:translationXAnimation forKey:@"wiggleTranslationX"];
+        CAAnimation *rotationAnimation = [self wiggleRotationAnimation:rotation];
+        [self.layer addAnimation:rotationAnimation forKey:@"wiggleRotation"];
 
-    CAAnimation *translationYAnimation = [self wiggleTranslationYAnimation:translation.y];
-    [self.layer addAnimation:translationYAnimation forKey:@"wiggleTranslationY"];
+        CAAnimation *translationXAnimation = [self wiggleTranslationXAnimation:translation.x];
+        [self.layer addAnimation:translationXAnimation forKey:@"wiggleTranslationX"];
+
+        CAAnimation *translationYAnimation = [self wiggleTranslationYAnimation:translation.y];
+        [self.layer addAnimation:translationYAnimation forKey:@"wiggleTranslationY"];
+    }
 }
 
 - (void)stopWiggleAnimation {
@@ -194,6 +197,27 @@
     anim.repeatCount = HUGE_VALF;
     anim.additive = YES;
     return anim;
+}
+
+- (void)startPulsingAnimation:(CGFloat)periodicty {
+
+    if ([self.layer.animationKeys containsObject:@"animateOpacity"] == NO) {
+
+        CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+        animation.duration=periodicty;
+        animation.repeatCount=HUGE_VALF;
+        animation.autoreverses=YES;
+        animation.fromValue=[NSNumber numberWithFloat:1.0f];
+        animation.toValue=[NSNumber numberWithFloat:0.7f];
+        animation.timingFunction =
+        [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+
+        [self.layer addAnimation:animation forKey:@"animateOpacity"];
+    }
+}
+
+- (void)stopPulsingAnimation {
+    [self.layer removeAnimationForKey:@"animateOpacity"];
 }
 
 - (UIImage *)pb_screenshot {

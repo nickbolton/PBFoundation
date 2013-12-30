@@ -62,12 +62,22 @@
         } else {
             self.accessoryType = UITableViewCellAccessoryNone;
         }
+
+        [self setNeedsDisplay];
     }
 
     if (self.isSelected &&
         self.item.selectionDisabled == NO &&
         self.item.selectActionBlock != nil) {
-        self.item.selectActionBlock(self);
+
+        [[UIApplication sharedApplication] beginIgnoringInteractionEvents];
+
+        NSTimeInterval delayInSeconds = .1f;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            [[UIApplication sharedApplication] endIgnoringInteractionEvents];
+            self.item.selectActionBlock(self);
+        });
     }
 
     self.item.selectionDisabled = NO;

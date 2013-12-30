@@ -17,13 +17,16 @@
 - (void)addFadingMaskWithEdgeInsets:(UIEdgeInsets)edgeInsets;
 - (void)disableGesturesOfType:(Class)gestureType recurse:(BOOL)recurse;
 
+- (UIImage *)pb_screenshot;
+- (UIImage *)pb_screenshotInBounds:(CGRect)bounds
+                afterScreenUpdates:(BOOL)afterScreenUpdates;
+
 // animations
 - (void)startWiggleAnimationWithRotation:(CGFloat)rotation
                              translation:(CGPoint)translation;
 - (void)stopWiggleAnimation;
 
-- (UIImage *)pb_screenshot;
-- (UIImage *)pb_screenshotInBounds:(CGRect)bounds
-                afterScreenUpdates:(BOOL)afterScreenUpdates;
+- (void)startPulsingAnimation:(CGFloat)periodicty;
+- (void)stopPulsingAnimation;
 
 @end
