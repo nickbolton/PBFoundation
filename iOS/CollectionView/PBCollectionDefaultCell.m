@@ -10,7 +10,8 @@
 #import "PBCollectionItem.h"
 #import "PBCollectionSupplimentaryImageItem.h"
 
-@interface PBCollectionDefaultCell()
+@interface PBCollectionDefaultCell() {
+}
 
 @property (nonatomic, readwrite) IBOutlet UIImageView *backgroundImageView;
 

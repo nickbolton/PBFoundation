@@ -29,4 +29,8 @@
 - (void)startPulsingAnimation:(CGFloat)periodicty;
 - (void)stopPulsingAnimation;
 
+// motion
+- (void)addHorizontalMotion:(CGFloat)weight;
+- (void)addVerticalMotion:(CGFloat)weight;
+
 @end

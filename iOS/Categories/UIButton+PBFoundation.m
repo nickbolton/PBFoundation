@@ -65,9 +65,19 @@ static char kPBWiggleAnimationStopDelayObjectKey;
      forControlEvents:UIControlEventTouchDown];
 
     [self
+     addTarget:self
+     action:@selector(pb_startWiggleAnimation:)
+     forControlEvents:UIControlEventTouchDragInside];
+
+    [self
      addTarget:view
      action:@selector(stopWiggleAnimation)
      forControlEvents:UIControlEventTouchUpOutside];
+
+    [self
+     addTarget:view
+     action:@selector(stopWiggleAnimation)
+     forControlEvents:UIControlEventTouchDragOutside];
 
     [self
      addTarget:view

@@ -242,4 +242,32 @@
     return image;
 }
 
+// motion
+
+- (void)addHorizontalMotion:(CGFloat)weight {
+
+    UIInterpolatingMotionEffect *motionEffect =
+    [[UIInterpolatingMotionEffect alloc]
+     initWithKeyPath:@"center.x"
+     type:UIInterpolatingMotionEffectTypeTiltAlongHorizontalAxis];
+
+    motionEffect.minimumRelativeValue = @(-weight);
+
+    motionEffect.maximumRelativeValue = @(weight);
+    [self addMotionEffect:motionEffect];
+}
+
+- (void)addVerticalMotion:(CGFloat)weight {
+
+    UIInterpolatingMotionEffect *motionEffect =
+    [[UIInterpolatingMotionEffect alloc]
+     initWithKeyPath:@"center.y"
+     type:UIInterpolatingMotionEffectTypeTiltAlongHorizontalAxis];
+
+    motionEffect.minimumRelativeValue = @(-weight);
+
+    motionEffect.maximumRelativeValue = @(weight);
+    [self addMotionEffect:motionEffect];
+}
+
 @end
