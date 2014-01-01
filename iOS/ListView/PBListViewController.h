@@ -38,6 +38,7 @@ extern NSString * const kPBListActionCellID;
 @property (nonatomic, strong) UIColor *backgroundColor;
 @property (nonatomic) BOOL reloadDataOnViewLoad;
 @property (nonatomic) BOOL hasCancelNavigationBarItem;
+@property (nonatomic, getter = isMultiSelect) BOOL multiSelect;
 
 - (id)initWithItems:(NSArray *)items;
 - (id)initWithNib;

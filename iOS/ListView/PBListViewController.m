@@ -93,7 +93,7 @@ static NSInteger const kPBListDefaultTag = 105;
         self.navigationItem.leftBarButtonItem = cancelItem;
     }
 
-    if (self.tableView.allowsMultipleSelection) {
+    if (self.isMultiSelect || self.tableView.allowsMultipleSelection) {
 
         if (self.doneTarget != nil &&
             self.doneSelector != nil) {
@@ -421,6 +421,10 @@ static NSInteger const kPBListDefaultTag = 105;
             self.selectAllItem = item;
             self.tableView.allowsMultipleSelection = YES;
         }
+    }
+
+    if (self.tableView.allowsMultipleSelection == NO && self.isMultiSelect) {
+        self.tableView.allowsMultipleSelection = YES;
     }
 }
 

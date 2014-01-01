@@ -66,7 +66,7 @@
         [self setNeedsDisplay];
     }
 
-    if (self.isSelected &&
+    if ((self.isSelected || self.viewController.multiSelect) &&
         self.item.selectionDisabled == NO &&
         self.item.selectActionBlock != nil) {
 
