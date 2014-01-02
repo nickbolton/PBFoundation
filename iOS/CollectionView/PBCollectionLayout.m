@@ -179,6 +179,9 @@
         y = item.point.y + item.size.height;
     }
 
+    x += item.contentSizeOffset.width;
+    y += item.contentSizeOffset.height;
+
     if (item.supplimentaryItem != nil) {
 
         // resursion

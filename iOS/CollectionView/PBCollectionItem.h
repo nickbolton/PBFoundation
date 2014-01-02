@@ -28,6 +28,7 @@
 @property (nonatomic) BOOL itemConfigured;
 @property (nonatomic) BOOL selectAllItem;
 @property (nonatomic) BOOL useCenter;
+@property (nonatomic) CGSize contentSizeOffset;
 @property (nonatomic, strong) PBCollectionItem *supplimentaryItem;
 @property (nonatomic, strong) PBCollectionItem *decorationItem;
 @property (nonatomic, getter = isDeselectable) BOOL deselectable;
