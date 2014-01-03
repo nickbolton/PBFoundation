@@ -19,7 +19,7 @@ extern NSString * const kPBListActionCellID;
 
 @property (nonatomic, strong) IBOutlet UITableView *tableView;
 
-@property (nonatomic, strong) NSArray *dataSource;
+@property (nonatomic, readonly) NSArray *dataSource;
 @property (nonatomic, strong) PBActionDelegate *actionDelegate;
 @property (nonatomic) BOOL initialized;
 @property (nonatomic, getter = isModal) BOOL modal;
@@ -47,6 +47,7 @@ extern NSString * const kPBListActionCellID;
 
 - (void)setupNotifications;
 - (void)setupTableView;
+- (NSArray *)buildDataSource;
 - (void)reloadDataSource;
 - (void)reloadData;
 - (void)setupNavigationBar;

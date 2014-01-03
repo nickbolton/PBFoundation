@@ -19,6 +19,8 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
 }
 
 @property (nonatomic, strong) IBOutlet PBCollectionLayout *collectionLayout;
+@property (nonatomic, readwrite) NSArray *dataSource;
+@property (nonatomic, strong) NSArray *providedDataSource;
 @property (nonatomic, strong) UISwipeGestureRecognizer *swipeGesture;
 @property (nonatomic, strong) NSArray *selectedItemIndexes;
 @property (nonatomic, strong) PBCollectionItem *selectAllItem;
@@ -40,7 +42,7 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
 
     self = [super init];
     if (self) {
-        self.dataSource = items;
+        self.providedDataSource = items;
         self.reloadDataOnViewLoad = YES;
     }
     return self;
@@ -54,6 +56,9 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
++ (Class)collectionViewLayoutClass {
+    return [PBCollectionLayout class];
+}
 
 #pragma mark - Setup
 
@@ -114,7 +119,10 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
 - (void)createCollectionViewIfNecessary {
 
     if (self.collectionView == nil) {
-        self.collectionView = [[UICollectionView alloc] init];
+        self.collectionView =
+        [[UICollectionView alloc]
+         initWithFrame:CGRectZero
+         collectionViewLayout:self.collectionLayout];
         self.collectionView.translatesAutoresizingMaskIntoConstraints = NO;
 
         [self.view addSubview:self.collectionView];
@@ -124,7 +132,6 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
 
 - (void)setupCollectionView {
 
-    self.collectionLayout = [[PBCollectionLayout alloc] init];
     self.collectionView.collectionViewLayout = self.collectionLayout;
     self.collectionView.dataSource = self;
     self.collectionView.delegate = self;
@@ -148,6 +155,7 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
         self.view.backgroundColor = [UIColor clearColor];
     }
 
+    self.collectionLayout = [[[self.class collectionViewLayoutClass] alloc] init];
     [self createCollectionViewIfNecessary];
     [self setupNavigationBar];
     [self setupNotifications];
@@ -424,7 +432,18 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
     }
 }
 
+- (NSArray *)buildDataSource {
+    [self doesNotRecognizeSelector:_cmd];
+    return nil;
+}
+
 - (void)reloadDataSource {
+
+    if (self.providedDataSource.count > 0) {
+        self.dataSource = self.providedDataSource;
+    } else {
+        self.dataSource = [self buildDataSource];
+    }
 
     if (_sectioned) {
 
@@ -468,6 +487,7 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
 }
 
 - (void)reloadData {
+
     [self reloadDataSource];
 
     if (_sectioned) {

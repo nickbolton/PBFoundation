@@ -17,7 +17,7 @@ extern NSString * const kPBCollectionViewDecorationKind;
 @interface PBCollectionViewController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate>
 
 @property (nonatomic, strong) IBOutlet UICollectionView *collectionView;
-@property (nonatomic, strong) NSArray *dataSource;
+@property (nonatomic, readonly) NSArray *dataSource;
 @property (nonatomic) BOOL reloadDataOnViewLoad;
 @property (nonatomic) BOOL hasCancelNavigationBarItem;
 @property (nonatomic) id doneTarget;
@@ -28,11 +28,14 @@ extern NSString * const kPBCollectionViewDecorationKind;
 @property (nonatomic, strong) UIColor *backgroundColor;
 @property (nonatomic, strong) UIColor *collectionBackgroundColor;
 
++ (Class)collectionViewLayoutClass;
+
 - (id)initWithNib;
 - (id)initWithItems:(NSArray *)items;
 
 - (void)setupNotifications;
 - (void)setupCollectionView;
+- (NSArray *)buildDataSource;
 - (void)reloadDataSource;
 - (void)reloadData;
 - (void)setupNavigationBar;

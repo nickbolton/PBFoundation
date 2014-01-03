@@ -28,6 +28,8 @@ static NSInteger const kPBListDefaultTag = 105;
     BOOL _createTable;
 }
 
+@property (nonatomic, readwrite) NSArray *dataSource;
+@property (nonatomic, strong) NSArray *providedDataSource;
 @property (nonatomic, strong) PBListViewItem *selectAllItem;
 @property (nonatomic, strong) NSArray *selectedRowIndexes;
 @property (nonatomic, strong) UISwipeGestureRecognizer *swipeGesture;
@@ -48,7 +50,7 @@ static NSInteger const kPBListDefaultTag = 105;
 
     self = [super init];
     if (self) {
-        self.dataSource = items;
+        self.providedDataSource = items;
         self.reloadDataOnViewLoad = YES;
         _createTable = YES;
     }
@@ -371,7 +373,18 @@ static NSInteger const kPBListDefaultTag = 105;
      withRowAnimation:animation];
 }
 
+- (NSArray *)buildDataSource {
+    [self doesNotRecognizeSelector:_cmd];
+    return nil;
+}
+
 - (void)reloadDataSource {
+
+    if (self.providedDataSource.count > 0) {
+        self.dataSource = self.providedDataSource;
+    } else {
+        self.dataSource = [self buildDataSource];
+    }
 
     if (_sectioned) {
 
@@ -429,6 +442,7 @@ static NSInteger const kPBListDefaultTag = 105;
 }
 
 - (void)reloadData {
+
     [self reloadDataSource];
 
     if (_sectioned) {
