@@ -22,7 +22,7 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
 @property (nonatomic, readwrite) NSArray *dataSource;
 @property (nonatomic, strong) NSArray *providedDataSource;
 @property (nonatomic, strong) UISwipeGestureRecognizer *swipeGesture;
-@property (nonatomic, strong) NSArray *selectedItemIndexes;
+@property (nonatomic, strong) NSMutableArray *selectedItemIndexes;
 @property (nonatomic, strong) PBCollectionItem *selectAllItem;
 @property (nonatomic, getter = isSectioned, readwrite) BOOL sectioned;
 
