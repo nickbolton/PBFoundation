@@ -32,5 +32,6 @@
 // motion
 - (void)addHorizontalMotion:(CGFloat)weight;
 - (void)addVerticalMotion:(CGFloat)weight;
+- (void)add2DMotion:(CGFloat)weight;
 
 @end

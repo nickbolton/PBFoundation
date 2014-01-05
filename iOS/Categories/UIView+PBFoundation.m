@@ -8,11 +8,25 @@
 
 #import "UIView+PBFoundation.h"
 #import <QuartzCore/QuartzCore.h>
+#import <objc/runtime.h>
 
 #define ARC4RANDOM_MAX      0x100000000
 #define MIN_DIFFERENCE      0.15f
 
+static char kPBMotionDictionaryObjectKey;
+
+static NSString *kPBHorizontalMotionKey = @"horizontal-motion";
+static NSString *kPBVerticalMotionKey = @"vertical-motion";
+
 @implementation UIView (PBFoundation)
+
+- (NSMutableDictionary *)pb_motionDictionaryObject {
+    return (NSMutableDictionary *)objc_getAssociatedObject(self, &kPBMotionDictionaryObjectKey);
+}
+
+- (void)pb_setMotionDictionaryObject:(NSMutableDictionary *)motionDictionary {
+    objc_setAssociatedObject(self, &kPBMotionDictionaryObjectKey, motionDictionary, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
 
 - (void)removeAllSubviews {
     NSArray *subviews = [self.subviews copy];
@@ -244,7 +258,32 @@
 
 // motion
 
+- (void)removeHorizontalMotionEffect {
+    NSDictionary *motionDict = [self pb_motionDictionaryObject];
+    UIMotionEffect *motion = motionDict[kPBHorizontalMotionKey];
+    [self removeMotionEffect:motion];
+}
+
+- (void)removeVerticalMotionEffect {
+    NSDictionary *motionDict = [self pb_motionDictionaryObject];
+    UIMotionEffect *motion = motionDict[kPBVerticalMotionKey];
+    [self removeMotionEffect:motion];
+}
+
+- (void)storeMotionEffect:(UIMotionEffect *)motionEffect key:(NSString *)key {
+
+    NSMutableDictionary *motionDict = [self pb_motionDictionaryObject];
+    if (motionDict == nil) {
+        motionDict = [NSMutableDictionary dictionary];
+        [self pb_setMotionDictionaryObject:motionDict];
+    }
+
+    motionDict[key] = motionEffect;
+}
+
 - (void)addHorizontalMotion:(CGFloat)weight {
+
+    [self removeHorizontalMotionEffect];
 
     UIInterpolatingMotionEffect *motionEffect =
     [[UIInterpolatingMotionEffect alloc]
@@ -255,6 +294,8 @@
 
     motionEffect.maximumRelativeValue = @(weight);
     [self addMotionEffect:motionEffect];
+
+    [self storeMotionEffect:motionEffect key:kPBHorizontalMotionKey];
 }
 
 - (void)addVerticalMotion:(CGFloat)weight {
@@ -262,12 +303,19 @@
     UIInterpolatingMotionEffect *motionEffect =
     [[UIInterpolatingMotionEffect alloc]
      initWithKeyPath:@"center.y"
-     type:UIInterpolatingMotionEffectTypeTiltAlongHorizontalAxis];
+     type:UIInterpolatingMotionEffectTypeTiltAlongVerticalAxis];
 
     motionEffect.minimumRelativeValue = @(-weight);
 
     motionEffect.maximumRelativeValue = @(weight);
     [self addMotionEffect:motionEffect];
+
+    [self storeMotionEffect:motionEffect key:kPBVerticalMotionKey];
+}
+
+- (void)add2DMotion:(CGFloat)weight {
+    [self addHorizontalMotion:weight];
+    [self addVerticalMotion:weight];
 }
 
 @end
