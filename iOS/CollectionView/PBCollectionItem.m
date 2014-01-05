@@ -32,7 +32,7 @@ deleteAction:(void(^)(PBCollectionViewController *viewController))deleteActionBl
     item.bindingBlock = bindingBlock;
     item.selectActionBlock = selectActionBlock;
     item.deleteActionBlock = deleteActionBlock;
-
+    item.useBackgroundImageSize = YES;
 
     item.point = CGPointZero;
     item.center = CGPointZero;

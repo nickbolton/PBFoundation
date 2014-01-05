@@ -168,7 +168,6 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    [self reloadData];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -231,45 +230,17 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
 
         for (NSArray *rowArray in self.dataSource) {
 
-            NSInteger row = 0;
+            NSInteger itemIndex = 0;
 
             for (PBCollectionItem *item in rowArray) {
 
-                if (item.isSelected) {
+                [self
+                 configureItem:item
+                 section:section
+                 item:itemIndex
+                 selectedIndexes:self.selectedItemIndexes];
 
-                    NSIndexPath *indexPath =
-                    [NSIndexPath indexPathForRow:row inSection:section];
-
-                    [selectedIndexes addObject:indexPath];
-                }
-
-                if ([item.supplimentaryItem.kind isEqualToString:kPBCollectionViewSupplimentaryKind]) {
-                    [self.collectionView
-                     registerClass:[PBCollectionDefaultCell class]
-                     forSupplementaryViewOfKind:kPBCollectionViewSupplimentaryKind
-                     withReuseIdentifier:item.supplimentaryItem.reuseIdentifier];
-
-                    if (item.supplimentaryItem.backgroundImage != nil) {
-                        item.supplimentaryItem.size = item.supplimentaryItem.backgroundImage.size;
-                    }
-                }
-
-                if ([item.decorationItem.kind isEqualToString:kPBCollectionViewDecorationKind]) {
-                    [self.collectionView
-                     registerClass:[PBCollectionDefaultCell class]
-                     forSupplementaryViewOfKind:kPBCollectionViewDecorationKind
-                     withReuseIdentifier:item.decorationItem.reuseIdentifier];
-
-                    if (item.decorationItem.backgroundImage != nil) {
-                        item.decorationItem.size = item.decorationItem.backgroundImage.size;
-                    }
-                }
-
-                if (item.backgroundImage != nil) {
-                    item.size = item.backgroundImage.size;
-                }
-
-                row++;
+                itemIndex++;
             }
 
             section++;
@@ -277,45 +248,17 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
 
     } else {
 
-        NSInteger row = 0;
+        NSInteger itemIndex = 0;
 
         for (PBCollectionItem *item in self.dataSource) {
 
-            if (item.isSelected) {
+            [self
+             configureItem:item
+             section:0
+             item:itemIndex
+             selectedIndexes:self.selectedItemIndexes];
 
-                NSIndexPath *indexPath =
-                [NSIndexPath indexPathForRow:row inSection:0];
-                
-                [selectedIndexes addObject:indexPath];
-            }
-
-            if ([item.supplimentaryItem.kind isEqualToString:kPBCollectionViewSupplimentaryKind]) {
-                [self.collectionView
-                 registerClass:[PBCollectionDefaultCell class]
-                 forSupplementaryViewOfKind:kPBCollectionViewSupplimentaryKind
-                 withReuseIdentifier:item.supplimentaryItem.reuseIdentifier];
-
-                if (item.supplimentaryItem.backgroundImage != nil) {
-                    item.supplimentaryItem.size = item.supplimentaryItem.backgroundImage.size;
-                }
-            }
-
-            if ([item.decorationItem.kind isEqualToString:kPBCollectionViewDecorationKind]) {
-                [self.collectionView
-                 registerClass:[PBCollectionDefaultCell class]
-                 forSupplementaryViewOfKind:kPBCollectionViewDecorationKind
-                 withReuseIdentifier:item.decorationItem.reuseIdentifier];
-
-                if (item.decorationItem.backgroundImage != nil) {
-                    item.decorationItem.size = item.decorationItem.backgroundImage.size;
-                }
-            }
-
-            if (item.backgroundImage != nil) {
-                item.size = item.backgroundImage.size;
-            }
-
-            row++;
+            itemIndex++;
         }
     }
 
@@ -324,8 +267,47 @@ NSString * const kPBCollectionViewDecorationKind = @"kPBCollectionViewDecoration
     [self.collectionLayout invalidateLayout];
 }
 
-#pragma mark - 
+- (void)configureItem:(PBCollectionItem *)item
+              section:(NSInteger)section
+                 item:(NSInteger)itemIndex
+  selectedIndexes:(NSMutableArray *)selectedIndexes {
 
+    if (item.isSelected) {
+
+        NSIndexPath *indexPath =
+        [NSIndexPath indexPathForRow:itemIndex inSection:section];
+
+        [selectedIndexes addObject:indexPath];
+    }
+
+    if ([item.supplimentaryItem.kind isEqualToString:kPBCollectionViewSupplimentaryKind]) {
+        [self.collectionView
+         registerClass:[PBCollectionDefaultCell class]
+         forSupplementaryViewOfKind:kPBCollectionViewSupplimentaryKind
+         withReuseIdentifier:item.supplimentaryItem.reuseIdentifier];
+
+        if (item.supplimentaryItem.backgroundImage != nil) {
+            item.supplimentaryItem.size = item.supplimentaryItem.backgroundImage.size;
+        }
+    }
+
+    if ([item.decorationItem.kind isEqualToString:kPBCollectionViewDecorationKind]) {
+        [self.collectionView
+         registerClass:[PBCollectionDefaultCell class]
+         forSupplementaryViewOfKind:kPBCollectionViewDecorationKind
+         withReuseIdentifier:item.decorationItem.reuseIdentifier];
+
+        if (item.decorationItem.backgroundImage != nil) {
+            item.decorationItem.size = item.decorationItem.backgroundImage.size;
+        }
+    }
+
+    if (item.useBackgroundImageSize && item.backgroundImage != nil) {
+        item.size = item.backgroundImage.size;
+    }
+}
+
+#pragma mark -
 
 - (void)selectItems:(NSArray *)items inSection:(NSInteger)section {
 

@@ -10,8 +10,10 @@
 
 @class PBCollectionViewController;
 
-@interface PBCollectionLayout : UICollectionViewLayout
+@interface PBCollectionLayout : UICollectionViewFlowLayout
 
 @property (nonatomic, weak) PBCollectionViewController *viewController;
+
+@property (nonatomic) CGSize minContentSize;
 
 @end

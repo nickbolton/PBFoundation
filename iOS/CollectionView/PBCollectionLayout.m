@@ -18,6 +18,35 @@
 
 @implementation PBCollectionLayout
 
+- (id)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (id)init {
+    self = [super init];
+    if (self) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (void)commonInit {
+
+    CGRect screenBounds = [[UIScreen mainScreen] bounds];
+
+    UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
+
+    if (UIDeviceOrientationIsLandscape(orientation)) {
+        self.minContentSize = CGSizeMake(CGRectGetHeight(screenBounds), CGRectGetWidth(screenBounds));
+    } else {
+        self.minContentSize = CGSizeMake(CGRectGetWidth(screenBounds), CGRectGetHeight(screenBounds));
+    }
+}
+
 #pragma mark - Getters and Setters
 
 #pragma mark -
@@ -242,13 +271,19 @@
         }
     }
 
+    CGFloat width = self.minContentSize.width;
+    CGFloat height = self.minContentSize.height;
+
     if (sizeSet) {
-        return CGSizeMake(rightMostPosition, bottomMostPosition);
+        width = MAX(width, rightMostPosition);
+        height = MAX(height, bottomMostPosition);
+    } else {
+        PBLog(@"No items in datasource!");
     }
 
-    PBLog(@"No items in datasource!");
+    NSLog(@"content size: %@", NSStringFromCGSize(CGSizeMake(width, height)));
 
-    return CGSizeMake(0.0f, 0.0f);
+    return CGSizeMake(width, height);
 }
 
 @end
