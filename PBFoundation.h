@@ -22,7 +22,7 @@
 #define PBLogOff(...) do { } while (0)
 #define PBLogOn(...) NSLog(__VA_ARGS__)
 
-#import "NSString+PBFoundation.h"
+#import <PBFoundation/NSString+PBFoundation.h>
 #import "NSArray+PBFoundation.h"
 #import "NSObject+PBFoundation.h"
 #import "NSLayoutConstraint+PBFoundation.h"
