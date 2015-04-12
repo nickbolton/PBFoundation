@@ -34,4 +34,36 @@
 - (void)resizeSelectedViewAtPoint:(NSPoint)point
                          inCanvas:(PBDrawingCanvas *)canvas;
 
+- (BOOL)topEdgesIntersect:(NSRect)rect1
+                    rect2:(NSRect)rect2
+            containerSize:(NSSize)containerSize
+            snapThreshold:(CGFloat)snapThreshold;
+- (BOOL)topEdgeIntersects:(NSRect)rect1
+               bottomEdge:(NSRect)rect2
+            containerSize:(NSSize)containerSize
+            snapThreshold:(CGFloat)snapThreshold;
+- (BOOL)bottomEdgesIntersect:(NSRect)rect1
+                       rect2:(NSRect)rect2
+               containerSize:(NSSize)containerSize
+               snapThreshold:(CGFloat)snapThreshold;
+- (BOOL)bottomEdgeIntersects:(NSRect)rect1
+                     topEdge:(NSRect)rect2
+               containerSize:(NSSize)containerSize
+               snapThreshold:(CGFloat)snapThreshold;
+- (BOOL)leftEdgesIntersect:(NSRect)rect1
+                     rect2:(NSRect)rect2
+             containerSize:(NSSize)containerSize
+             snapThreshold:(CGFloat)snapThreshold;
+- (BOOL)leftEdgeIntersects:(NSRect)rect1
+                 rightEdge:(NSRect)rect2
+             containerSize:(NSSize)containerSize
+             snapThreshold:(CGFloat)snapThreshold;
+- (BOOL)rightEdgesIntersect:(NSRect)rect1
+                      rect2:(NSRect)rect2
+              containerSize:(NSSize)containerSize
+              snapThreshold:(CGFloat)snapThreshold;
+- (BOOL)rightEdgeIntersects:(NSRect)rect1
+                   leftEdge:(NSRect)rect2
+              containerSize:(NSSize)containerSize
+              snapThreshold:(CGFloat)snapThreshold;
 @end
