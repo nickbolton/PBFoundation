@@ -10,6 +10,8 @@
 
 @implementation PBStretchableImageView
 
+@synthesize flipped = _flipped;
+
 - (id)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
     if (self) {

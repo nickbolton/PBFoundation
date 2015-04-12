@@ -12,7 +12,6 @@
 @interface PBDateRange()
 
 @property (nonatomic) NSUInteger hashValue;
-@property (nonatomic) BOOL alignToDayBoundaries;
 
 @end
 
@@ -20,48 +19,18 @@
 
 + (id)dateRangeWithStartDate:(NSDate *)startDate endDate:(NSDate *)endDate {    
     return
-    [self
-     dateRangeWithStartDate:startDate
-     endDate:endDate
-     alignToDayBoundaries:YES];
-}
-
-+ (instancetype)dateRangeWithStartDate:(NSDate *)startDate
-                               endDate:(NSDate *)endDate
-                  alignToDayBoundaries:(BOOL)alignToDayBoundaries {
-    return
     [[PBDateRange alloc]
      initWithStartDate:startDate
-     endDate:endDate
-     alignToDayBoundaries:alignToDayBoundaries];
+     endDate:endDate];
 }
 
 - (id)initWithStartDate:(NSDate *)startDate endDate:(NSDate *)endDate {
-    return
-    [self
-     initWithStartDate:startDate
-     endDate:endDate
-     alignToDayBoundaries:YES];
-}
-
-- (instancetype)initWithStartDate:(NSDate *)startDate
-                          endDate:(NSDate *)endDate
-             alignToDayBoundaries:(BOOL)alignToDayBoundaries {
-
-
+    
     self = [super init];
     
     if (self != nil) {
-
-        self.alignToDayBoundaries = alignToDayBoundaries;
-
-        if (alignToDayBoundaries) {
-            self.startDate = [startDate midnight];
-            self.endDate = [endDate endOfDay];
-        } else {
-            self.startDate = startDate;
-            self.endDate = endDate;
-        }
+        self.startDate = [startDate midnight];
+        self.endDate = [endDate endOfDay];
         _hashValue = [self description].hash;
     }
     
@@ -69,11 +38,10 @@
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-    return
-    [[PBDateRange alloc]
-     initWithStartDate:self.startDate
-     endDate:self.endDate
-     alignToDayBoundaries:NO];
+    
+    return [[PBDateRange alloc]
+            initWithStartDate:self.startDate
+            endDate:self.endDate];
 }
 
 - (NSUInteger)hash {
@@ -97,20 +65,6 @@
     return
     [date isGreaterThanOrEqualTo:_startDate] &&
     [date isLessThanOrEqualTo:_endDate];
-}
-
-- (void)adjustDateRangeToDate:(NSDate *)date {
-
-    NSTimeInterval duration =
-    self.endDate.timeIntervalSinceReferenceDate -
-    self.startDate.timeIntervalSinceReferenceDate;
-
-    if (self.alignToDayBoundaries) {
-        self.endDate = [date endOfDay];
-    } else {
-        self.endDate = date;
-    }
-    self.startDate = [self.endDate dateByAddingTimeInterval:-duration];
 }
 
 @end

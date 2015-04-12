@@ -485,7 +485,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     }
 
     PBResizableView *view = [self viewWithTag:_lastTabbedView];
-    [self selectView:view deselectCurrent:YES notify:YES];
+    [self selectView:view deselectCurrent:YES];
 }
 
 - (void)selectPreviousContainer {
@@ -500,7 +500,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     }
 
     PBResizableView *view = [self viewWithTag:_lastTabbedView];
-    [self selectView:view deselectCurrent:YES notify:YES];
+    [self selectView:view deselectCurrent:YES];
 }
 
 - (PBResizableView *)createRectangle:(NSRect)frame {
@@ -553,7 +553,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     [_scrollView.documentView addSubview:view];
     [view setupConstraints];
     [_toolViews addObject:view];
-    [self selectView:view deselectCurrent:YES notify:YES];
+    [self selectView:view deselectCurrent:YES];
 
     view.backgroundImage = image;
 }
@@ -576,7 +576,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
         view.key = [NSString timestampedGuid];
 
         [views addObject:view];
-        [self selectView:view deselectCurrent:NO notify:NO];
+        [self selectView:view deselectCurrent:NO];
         [_scrollView.documentView addSubview:view];
         [view setupConstraints];
         [_toolViews addObject:view];
@@ -609,11 +609,6 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     [self setupTrackingRects];
     [self calculateEdgeDistances];
     [self retagViews];
-
-    [[NSNotificationCenter defaultCenter]
-     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
-     object:self
-     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
 
     return views;
 }
@@ -692,7 +687,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 
     NSArray *toolViews = [_toolViews copy];
     for (PBResizableView *view in toolViews) {
-        [self selectView:view deselectCurrent:NO notify:NO];
+        [self selectView:view deselectCurrent:NO];
     }
 
     [[NSNotificationCenter defaultCenter]
@@ -704,7 +699,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 - (void)deselectAllContainers {
 
     for (PBResizableView *view in _toolViews) {
-        [self deselectView:view notify:NO];
+        [self deselectView:view];
     }
 
     [[NSNotificationCenter defaultCenter]
@@ -779,14 +774,9 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     for (PBResizableView *view in toolViews) {
 
         if (NSContainsRect(rect, view.frame)) {
-            [self selectView:view deselectCurrent:NO notify:NO];
+            [self selectView:view deselectCurrent:NO];
         }
     }
-
-    [[NSNotificationCenter defaultCenter]
-     postNotificationName:kPBDrawingCanvasSelectedViewsNotification
-     object:self
-     userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
 }
 
 - (void)updateMouseDownSelectedViewOrigin:(PBResizableView *)view {
@@ -795,15 +785,14 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 }
 
 - (void)selectView:(PBResizableView *)view
-   deselectCurrent:(BOOL)deselectCurrent
-            notify:(BOOL)notify {
+   deselectCurrent:(BOOL)deselectCurrent {
 
     if (deselectCurrent) {
 
         NSArray *selectedViews = [_selectedViews copy];
         for (PBResizableView *selectedView in selectedViews) {
             if (selectedView != view) {
-                [self deselectView:selectedView notify:NO];
+                [self deselectView:selectedView];
             }
         }
     }
@@ -839,16 +828,9 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     }
 
     [self showGuides];
-
-    if (notify) {
-        [[NSNotificationCenter defaultCenter]
-         postNotificationName:kPBDrawingCanvasSelectedViewsNotification
-         object:self
-         userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
-    }
 }
 
-- (void)deselectView:(PBResizableView *)view notify:(BOOL)notify {
+- (void)deselectView:(PBResizableView *)view {
 
     if ([_drawingTool shouldDeselectView:view]) {
         [_mouseDownSelectedViewOrigins removeObjectForKey:view.key];
@@ -864,12 +846,10 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
 
         [self showGuides];
 
-        if (notify) {
-            [[NSNotificationCenter defaultCenter]
-             postNotificationName:kPBDrawingCanvasSelectedViewsNotification
-             object:self
-             userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
-        }
+        [[NSNotificationCenter defaultCenter]
+         postNotificationName:kPBDrawingCanvasSelectedViewsNotification
+         object:self
+         userInfo:@{kPBDrawingCanvasSelectedViewsKey : _selectedViews}];
     }
 }
 
@@ -920,12 +900,21 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     }
 }
 
+- (CGFloat)roundedValue:(CGFloat)value {
+    CGFloat scale = self.window != nil ? self.window.backingScaleFactor : 1.0f;
+    return roundf(value * scale) / scale;
+}
+
 - (NSSize)roundedSize:(NSSize)size {
-    return NSMakeSize(roundf(size.width), roundf(size.height));
+    return
+    NSMakeSize([self roundedValue:size.width],
+               [self roundedValue:size.height]);
 }
 
 - (NSPoint)roundedPoint:(NSPoint)point {
-    return NSMakePoint(roundf(point.x), roundf(point.y));
+    return
+    NSMakePoint([self roundedValue:point.x],
+                [self roundedValue:point.y]);
 }
 
 - (NSRect)roundedRect:(NSRect)rect {
@@ -1030,18 +1019,6 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     [self updateSpacers];
 }
 
-- (PBSpacerView *)spacerAtPoint:(NSPoint)point {
-
-    for (PBSpacerView *spacerView in _spacerViews) {
-
-        if (NSPointInRect(point, spacerView.frame)) {
-            return spacerView;
-        }
-    }
-
-    return nil;
-}
-
 - (void)updateSpacers {
 
     for (PBResizableView *view in _toolViews) {
@@ -1078,6 +1055,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
          value:view.edgeDistances.top];
         spacerView.delegate = self;
         spacerView.constraining = YES;
+        [_scrollView.documentView addSubview:spacerView];
         [_spacerViews addObject:spacerView];
         view.topSpacerView = spacerView;
     } else {
@@ -1090,10 +1068,6 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
             spacerView.constraining = overlappingSpacerView.constraining;
         }
     }
-    [_scrollView.documentView
-     addSubview:spacerView
-     positioned:NSWindowAbove
-     relativeTo:nil];
     spacerView.scale = _scaleFactor;
     spacerView.alphaValue = isSelected ? 1.0f : 0.0f;
     spacerView.hidden = spacerView.alphaValue == 0.0f;
@@ -1110,6 +1084,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
          value:view.edgeDistances.bottom];
         spacerView.delegate = self;
         spacerView.constraining = NO;
+        [_scrollView.documentView addSubview:spacerView];
         [_spacerViews addObject:spacerView];
         view.bottomSpacerView = spacerView;
     } else {
@@ -1121,12 +1096,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
         if (overlappingSpacerView != nil) {
             spacerView.constraining = overlappingSpacerView.constraining;
         }
-
     }
-    [_scrollView.documentView
-     addSubview:spacerView
-     positioned:NSWindowAbove
-     relativeTo:nil];
     spacerView.scale = _scaleFactor;
     spacerView.alphaValue = isSelected && (view.closestBottomView == nil || view.closestBottomView.isSelected == NO) ? 1.0f : 0.0f;
     spacerView.hidden = spacerView.alphaValue == 0.0f;
@@ -1143,6 +1113,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
          value:view.edgeDistances.left];
         spacerView.delegate = self;
         spacerView.constraining = YES;
+        [_scrollView.documentView addSubview:spacerView];
         [_spacerViews addObject:spacerView];
         view.leftSpacerView = spacerView;
     } else {
@@ -1155,10 +1126,6 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
             spacerView.constraining = overlappingSpacerView.constraining;
         }
     }
-    [_scrollView.documentView
-     addSubview:spacerView
-     positioned:NSWindowAbove
-     relativeTo:nil];
     spacerView.scale = _scaleFactor;
     spacerView.alphaValue = isSelected ? 1.0f : 0.0f;
     spacerView.hidden = spacerView.alphaValue == 0.0f;
@@ -1175,6 +1142,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
          value:view.edgeDistances.right];
         spacerView.delegate = self;
         spacerView.constraining = NO;
+        [_scrollView.documentView addSubview:spacerView];
         [_spacerViews addObject:spacerView];
         view.rightSpacerView = spacerView;
     } else {
@@ -1187,10 +1155,6 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
             spacerView.constraining = overlappingSpacerView.constraining;
         }
     }
-    [_scrollView.documentView
-     addSubview:spacerView
-     positioned:NSWindowAbove
-     relativeTo:nil];
     spacerView.scale = _scaleFactor;
     spacerView.alphaValue = isSelected && (view.closestRightView == nil || view.closestRightView.isSelected == NO) ? 1.0f : 0.0f;
     spacerView.hidden = spacerView.alphaValue == 0.0f;
@@ -1678,30 +1642,32 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     NSRect documentFrame =
     _newDocumentFrame.size.width >= 0.0f ?
     _newDocumentFrame : [_scrollView.documentView frame];
+    
+    CGFloat minDimension = 1.0f / self.window.backingScaleFactor;
 
     switch (guidePosition) {
         case PBGuidePositionLeft:
 
             frame = NSMakeRect(NSMinX(view.frame),
                                0.0f,
-                               1.0f,
+                               minDimension,
                                NSHeight(documentFrame));
             break;
 
         case PBGuidePositionRight:
 
-            frame = NSMakeRect(NSMaxX(view.frame) - 1.0f,
+            frame = NSMakeRect(NSMaxX(view.frame) - minDimension,
                                0.0f,
-                               1.0f,
+                               minDimension,
                                NSHeight(documentFrame));
             break;
 
         case PBGuidePositionTop:
 
             frame = NSMakeRect(0.0f,
-                               NSMaxY(view.frame) - 1.0f,
+                               NSMaxY(view.frame) - minDimension,
                                NSWidth(documentFrame),
-                               1.0f);
+                               minDimension);
             break;
 
         case PBGuidePositionBottom:
@@ -1709,7 +1675,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
             frame = NSMakeRect(0.0f,
                                NSMinY(view.frame),
                                NSWidth(documentFrame),
-                               1.0f);
+                               minDimension);
             break;
 
     }
@@ -2015,6 +1981,8 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
     
 //    NSLog(@"keyCode: %d, modifiers: %d", event.keyCode, event.modifierFlags);
 
+    CGFloat minDimension = 1.0f / self.window.backingScaleFactor;
+
     NSInteger movementMultiplier = 1 * _scaleFactor;
 
     if ([event isModifiersExactly:NSShiftKeyMask] ||
@@ -2053,7 +2021,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
                 [event isModifiersExactly:NSShiftKeyMask] ||
                 [event isModifiersExactly:NSNumericPadKeyMask|NSFunctionKeyMask] ||
                 [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
-                [self moveSelectedViews:NSMakePoint(-1.0f * movementMultiplier, 0.0f)];
+                [self moveSelectedViews:NSMakePoint(-minDimension * movementMultiplier, 0.0f)];
             } else if ([event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask] ||
                        [event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
                 [self pinSelectedViewsLeft];
@@ -2069,7 +2037,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
                 [event isModifiersExactly:NSShiftKeyMask] ||
                 [event isModifiersExactly:NSNumericPadKeyMask|NSFunctionKeyMask] ||
                 [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
-                [self moveSelectedViews:NSMakePoint(1.0f * movementMultiplier, 0.0f)];
+                [self moveSelectedViews:NSMakePoint(minDimension * movementMultiplier, 0.0f)];
             } else if ([event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask] ||
                        [event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
                 [self pinSelectedViewsRight];
@@ -2084,7 +2052,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
                 [event isModifiersExactly:NSShiftKeyMask] ||
                 [event isModifiersExactly:NSNumericPadKeyMask|NSFunctionKeyMask] ||
                 [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
-                [self moveSelectedViews:NSMakePoint(0.0f, 1.0f * movementMultiplier)];
+                [self moveSelectedViews:NSMakePoint(0.0f, minDimension * movementMultiplier)];
             } else if ([event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask] ||
                        [event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
                 [self pinSelectedViewsTop];
@@ -2099,7 +2067,7 @@ typedef NS_ENUM(NSInteger, PBDrawingCanvasConstraint) {
                 [event isModifiersExactly:NSShiftKeyMask] ||
                 [event isModifiersExactly:NSNumericPadKeyMask|NSFunctionKeyMask] ||
                 [event isModifiersExactly:NSShiftKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
-                [self moveSelectedViews:NSMakePoint(0.0f, -1.0f * movementMultiplier)];
+                [self moveSelectedViews:NSMakePoint(0.0f, -minDimension * movementMultiplier)];
             } else if ([event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask] ||
                        [event isModifiersExactly:NSShiftKeyMask|NSCommandKeyMask|NSNumericPadKeyMask|NSFunctionKeyMask]) {
                 [self pinSelectedViewsBottom];

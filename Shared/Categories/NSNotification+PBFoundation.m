@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 Pixelbleed LLC. All rights reserved.
 //
 
-#import <CoreData/CoreData.h>
 #import "NSNotification+PBFoundation.h"
 #import "NSArray+PBFoundation.h"
 

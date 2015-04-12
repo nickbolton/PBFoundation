@@ -11,8 +11,6 @@
 #import "PBDrawingCanvas.h"
 #import "PBResizableView.h"
 
-static CGFloat const kPBSpacerViewSize = 10.0f;
-
 @interface PBSpacerView() {
 
     BOOL _vertical;
@@ -59,10 +57,7 @@ static CGFloat const kPBSpacerViewSize = 10.0f;
 - (void)setValue:(CGFloat)value {
     _value = value;
 
-    if (_view1.isSelected || _view2.isSelected) {
-        NSLog(@"value: %f", value);
-    }
-    if (value < 0.0f) {
+    if (value == -246.0f) {
         NSLog(@"ZZZ");
     }
 }
@@ -115,7 +110,7 @@ static CGFloat const kPBSpacerViewSize = 10.0f;
              rightView:(PBGuideView *)rightView
                  value:(CGFloat)value {
 
-    NSRect frame = NSMakeRect(0.0f, 0.0f, value, kPBSpacerViewSize);
+    NSRect frame = NSMakeRect(0.0f, 0.0f, value, 5.0f);
 
     self = [super initWithFrame:frame];
 
@@ -183,7 +178,7 @@ static CGFloat const kPBSpacerViewSize = 10.0f;
            bottomView:(PBGuideView *)bottomView
                 value:(CGFloat)value {
 
-    NSRect frame = NSMakeRect(0.0f, 0.0f, kPBSpacerViewSize, value);
+    NSRect frame = NSMakeRect(0.0f, 0.0f, 5.0f, value);
 
     self = [super initWithFrame:frame];
 
@@ -274,12 +269,14 @@ static CGFloat const kPBSpacerViewSize = 10.0f;
     } else {
         [_spacerColor setStroke];
     }
+    
+    CGFloat minDimension = 1.0f / self.window.backingScaleFactor;
 
     if (_vertical) {
 
         // draw bottom line
 
-        frame = NSMakeRect(0.0f, 0.0f, NSWidth(self.bounds), 1.0f);
+        frame = NSMakeRect(0.0f, 0.0f, NSWidth(self.bounds), minDimension);
         frame = NSIntersectionRect(frame, dirtyRect);
         point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMinY(frame)));
         point2 = NSMakePoint(roundf(NSMaxX(frame)), roundf(NSMinY(frame)));
@@ -288,16 +285,16 @@ static CGFloat const kPBSpacerViewSize = 10.0f;
 
         // draw vertical line
 
-        frame = NSMakeRect(NSMidX(self.bounds), 0.0f, 1.0f, NSHeight(self.bounds));
+        frame = NSMakeRect(NSMidX(self.bounds), 0.0f, minDimension, NSHeight(self.bounds));
         frame = NSIntersectionRect(frame, dirtyRect);
-        point1 = NSMakePoint(roundf(NSMidX(frame) - 1.0f), roundf(NSMinY(frame)));
-        point2 = NSMakePoint(roundf(NSMidX(frame) - 1.0f), roundf(NSMaxY(frame)));
+        point1 = NSMakePoint(roundf(NSMidX(frame) - minDimension), roundf(NSMinY(frame)));
+        point2 = NSMakePoint(roundf(NSMidX(frame) - minDimension), roundf(NSMaxY(frame)));
 
         [NSBezierPath strokeLineFromPoint:point1 toPoint:point2];
 
         // draw top line
 
-        frame = NSMakeRect(0.0f, NSHeight(self.bounds)-1.0f, NSWidth(self.bounds), 1.0f);
+        frame = NSMakeRect(0.0f, NSHeight(self.bounds)-minDimension, NSWidth(self.bounds), minDimension);
         frame = NSIntersectionRect(frame, dirtyRect);
         point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMinY(frame)));
         point2 = NSMakePoint(roundf(NSMaxX(frame)), roundf(NSMaxY(frame)));
@@ -308,7 +305,7 @@ static CGFloat const kPBSpacerViewSize = 10.0f;
 
         // draw left line
 
-        frame = NSMakeRect(0.0f, 0.0f, 1.0f, NSHeight(self.bounds));
+        frame = NSMakeRect(0.0f, 0.0f, minDimension, NSHeight(self.bounds));
         frame = NSIntersectionRect(frame, dirtyRect);
         point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMinY(frame)));
         point2 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMaxY(frame)));
@@ -317,16 +314,16 @@ static CGFloat const kPBSpacerViewSize = 10.0f;
 
         // draw horizontal line
 
-        frame = NSMakeRect(0.0f, NSMidY(self.bounds), NSWidth(self.bounds), 1.0f);
+        frame = NSMakeRect(0.0f, NSMidY(self.bounds), NSWidth(self.bounds), minDimension);
         frame = NSIntersectionRect(frame, dirtyRect);
-        point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMidY(frame) - 1.0f));
-        point2 = NSMakePoint(roundf(NSMaxX(frame)), roundf(NSMidY(frame) - 1.0f));
+        point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMidY(frame) - minDimension));
+        point2 = NSMakePoint(roundf(NSMaxX(frame)), roundf(NSMidY(frame) - minDimension));
 
         [NSBezierPath strokeLineFromPoint:point1 toPoint:point2];
 
         // draw right line
 
-        frame = NSMakeRect(NSWidth(self.bounds)-1.0f, 0.0f, 1.0f, NSHeight(self.bounds));
+        frame = NSMakeRect(NSWidth(self.bounds)-minDimension, 0.0f, minDimension, NSHeight(self.bounds));
 //        frame = NSIntersectionRect(frame, dirtyRect);
         point1 = NSMakePoint(roundf(NSMinX(frame)), roundf(NSMinY(frame)));
         point2 = NSMakePoint(roundf(NSMaxX(frame)), roundf(NSMaxY(frame)));

@@ -24,6 +24,8 @@ static NSTimeInterval const kPBPopoverAnimationDuration = .15f;
 
 @implementation PBPopoverView
 
+@synthesize flipped = _flipped;
+
 - (id)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
     if (self) {

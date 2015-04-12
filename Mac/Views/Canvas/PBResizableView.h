@@ -31,7 +31,6 @@
 @property (nonatomic, strong) NSArray *borderDashPattern;
 @property (nonatomic) NSInteger borderDashPhase;
 @property (nonatomic) NSInteger borderWidth;
-@property (nonatomic) NSInteger tag;
 @property (nonatomic, getter = isShowingInfo) BOOL showingInfo;
 @property (nonatomic, getter = isShowingInfoLabel) BOOL showingInfoLabel;
 @property (nonatomic, getter = isUpdating) BOOL updating;
@@ -70,5 +69,6 @@
 - (void)unhighlight;
 - (void)setDropTarget;
 - (void)clearDropTarget;
+- (void)setTag:(NSInteger)tag;
 
 @end

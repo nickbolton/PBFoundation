@@ -22,6 +22,8 @@
 
 @implementation PBClickableImageView
 
+@synthesize enabled = _enabled;
+
 - (id)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
     if (self) {

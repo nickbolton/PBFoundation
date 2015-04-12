@@ -21,7 +21,6 @@
 @property (nonatomic) BOOL didResize;
 @property (nonatomic) BOOL didCreate;
 @property (nonatomic) BOOL moving;
-@property (nonatomic) BOOL shouldSnapOnResize;
 
 - (PBResizableView *)mouseInteractingViewInCanvas:(PBDrawingCanvas *)canvas;
 
@@ -34,57 +33,5 @@
 - (void)determineSelectedViewAnchorPoint:(PBDrawingCanvas *)canvas forView:(PBResizableView *)selectedView;
 - (void)resizeSelectedViewAtPoint:(NSPoint)point
                          inCanvas:(PBDrawingCanvas *)canvas;
-
-// edge operations
-
-- (NSRect)topSnapRect:(NSRect)rect
-         resizingRect:(BOOL)resizingRect
-               canvas:(PBDrawingCanvas *)canvas
-             snapView:(PBResizableView **)snapView;
-- (NSRect)bottomSnapRect:(NSRect)rect
-            resizingRect:(BOOL)resizingRect
-                  canvas:(PBDrawingCanvas *)canvas
-                snapView:(PBResizableView **)snapView;
-- (NSRect)leftSnapRect:(NSRect)rect
-          resizingRect:(BOOL)resizingRect
-                canvas:(PBDrawingCanvas *)canvas
-              snapView:(PBResizableView **)snapView;
-- (NSRect)rightSnapRect:(NSRect)rect
-           resizingRect:(BOOL)resizingRect
-                 canvas:(PBDrawingCanvas *)canvas
-               snapView:(PBResizableView **)snapView;
-- (BOOL)topEdgesIntersect:(NSRect)rect1
-                    rect2:(NSRect)rect2
-            containerSize:(NSSize)containerSize
-            snapThreshold:(CGFloat)snapThreshold;
-- (BOOL)topEdgeIntersects:(NSRect)rect1
-               bottomEdge:(NSRect)rect2
-            containerSize:(NSSize)containerSize
-            snapThreshold:(CGFloat)snapThreshold;
-- (BOOL)bottomEdgesIntersect:(NSRect)rect1
-                       rect2:(NSRect)rect2
-               containerSize:(NSSize)containerSize
-               snapThreshold:(CGFloat)snapThreshold;
-- (BOOL)bottomEdgeIntersects:(NSRect)rect1
-                     topEdge:(NSRect)rect2
-               containerSize:(NSSize)containerSize
-               snapThreshold:(CGFloat)snapThreshold;
-- (BOOL)leftEdgesIntersect:(NSRect)rect1
-                     rect2:(NSRect)rect2
-             containerSize:(NSSize)containerSize
-             snapThreshold:(CGFloat)snapThreshold;
-- (BOOL)leftEdgeIntersects:(NSRect)rect1
-                 rightEdge:(NSRect)rect2
-             containerSize:(NSSize)containerSize
-             snapThreshold:(CGFloat)snapThreshold;
-- (BOOL)rightEdgesIntersect:(NSRect)rect1
-                      rect2:(NSRect)rect2
-              containerSize:(NSSize)containerSize
-              snapThreshold:(CGFloat)snapThreshold;
-- (BOOL)rightEdgeIntersects:(NSRect)rect1
-                   leftEdge:(NSRect)rect2
-              containerSize:(NSSize)containerSize
-              snapThreshold:(CGFloat)snapThreshold;
-
 
 @end

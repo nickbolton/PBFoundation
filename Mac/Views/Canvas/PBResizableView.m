@@ -20,12 +20,15 @@
 @property (nonatomic, readwrite) NSImageView *backgroundImageView;
 @property (nonatomic, strong) NSColor *previousForegroundColor;
 @property (nonatomic, strong) NSColor *previousBackgroundColor;
+@property (nonatomic, readwrite) NSInteger tag;
 
 //@property (nonatomic, strong) NSTrackingArea *trackingArea;
 
 @end
 
 @implementation PBResizableView
+
+@synthesize tag = _tag;
 
 - (id)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
@@ -532,11 +535,13 @@
     _drawingCanvas.infoLabel.hidden = NO;
 
     _infoLabel.textColor = [_backgroundColor contrastingColor];
+    
+    CGFloat windowScale = self.window != nil ? self.window.backingScaleFactor : 1.0f;
 
     _infoLabel.stringValue =
     [NSString stringWithFormat:@"(%.0f, %.0f)",
-     NSWidth(self.frame) / _drawingCanvas.scaleFactor,
-     NSHeight(self.frame) / _drawingCanvas.scaleFactor];
+     NSWidth(self.frame) / _drawingCanvas.scaleFactor * windowScale,
+     NSHeight(self.frame) / _drawingCanvas.scaleFactor * windowScale];
 
     [_infoLabel sizeToFit];
     [_drawingCanvas setInfoValue:_infoLabel.stringValue];
@@ -580,12 +585,29 @@
      }];
 }
 
+- (CGFloat)roundedValue:(CGFloat)value {
+    
+    CGFloat scale = self.window != nil ? self.window.backingScaleFactor : 1.0f;
+    return roundf(value * scale) / scale;
+}
+
 - (NSSize)roundedSize:(NSSize)size {
-    return NSMakeSize(roundf(size.width), roundf(size.height));
+    return
+    NSMakeSize([self roundedValue:size.width],
+               [self roundedValue:size.height]);
 }
 
 - (NSPoint)roundedPoint:(NSPoint)point {
-    return NSMakePoint(roundf(point.x), roundf(point.y));
+    return
+    NSMakePoint([self roundedValue:point.x],
+                [self roundedValue:point.y]);
+}
+
+- (NSRect)roundedRect:(NSRect)rect {
+    NSRect roundedRect = NSZeroRect;
+    roundedRect.origin = [self roundedPoint:rect.origin];
+    roundedRect.size = [self roundedSize:rect.size];
+    return roundedRect;
 }
 
 - (void)setFrame:(NSRect)frameRect {

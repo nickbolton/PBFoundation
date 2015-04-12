@@ -10,12 +10,7 @@
 #define PBFoundation_PBFoundation_h
 
 # define PBDebugLog(...) if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"debugMode"] boolValue] == YES) { NSLog(@"[%@:%d (%p)]: %@", [[NSString stringWithUTF8String:__FILE__] lastPathComponent], __LINE__, self, [NSString stringWithFormat:__VA_ARGS__]); }
-
-#if DEBUG
-#define PBLog(...) NSLog(__VA_ARGS__)
-#else
-#define PBLog(...) do { } while (0)
-#endif
+# define PBLog(...) if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"debugMode"] boolValue] == YES) { NSLog(@"%@", [NSString stringWithFormat:__VA_ARGS__]); }
 
 // add -DTCDEBUG to Other C Flags for Debug
 
@@ -26,6 +21,7 @@
 #import "NSArray+PBFoundation.h"
 #import "NSObject+PBFoundation.h"
 #import "NSLayoutConstraint+PBFoundation.h"
+#import "NSPersistentStoreCoordinator+PBFoundation.h"
 #import "NSNotification+PBFoundation.h"
 #import "PBDateRange.h"
 #import "PBCalendarManager.h"
@@ -37,10 +33,6 @@
 #import "UIColor+PBFoundation.h"
 #import "UIImage+PBFoundation.h"
 #import "UIView+PBFoundation.h"
-#import "UIButton+PBFoundation.h"
-#import "UIBezierView.h"
-#import "UIBezierButton.h"
-#import "UINavigationController+PBFoundation.h"
 #else
 
 #define PB_WINDOW_ANIMATION_DURATION 0.25f
