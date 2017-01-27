@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name      = 'PBFoundation'
-  s.version   = '0.0.86'
+  s.version   = '0.1.0'
   s.ios.deployment_target = '6.0'
   s.osx.deployment_target = '10.8'
   s.summary   = 'PBFoundation is a collection of useful Mac and iOS utilities.'
@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
 
   s.author    = { 'nickbolton' => 'nick@deucent.com' }             
   s.source    = { :git => 'https://github.com/nickbolton/PBFoundation.git',
-                  :branch => 'master'}
+                  :branch => 'emitters-breakout'}
   s.osx.source_files  = '*.{h,m}', 'Shared', 'Shared/**/*.{h,m}', 'Mac', 'Mac/**/*.{h,m}'
   s.ios.source_files  = '*.{h,m}', 'Shared', 'Shared/**/*.{h,m}', 'iOS', 'iOS/**/*.{h,m}'
   s.ios.resources = 'iOS/ListView/PBListCell.xib', 'iOS/ListView/PBTitleCell.xib'
